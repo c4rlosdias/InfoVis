@@ -260,139 +260,14 @@ class PropTempl:
             return False
 
 class Catalog:
-    types = []
+
     @classmethod
-    def get_types(cls):
-        
-        ent = {
-            'ifc_class': 'IfcPipeSegmentType',
-            'Name': 'Novo14',
-            'ElementType': 'IntermediateSheath',
-            'PredefinedType': 'USERDEFINED'
-        }
+    def get_type(cls, product):
+        with open(f'./resources/{product}.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        print(data)
+        return data
 
-        material = {
-            'ifc_class': 'IfcMaterialProfileSet',
-            'Name' : 'Inner Sheath',
-            'MaterialProfiles' : [
-                    {
-                        'ifc_class' : 'IfcMaterialProfile',
-                        'Material' : {
-                            'ifc_class' : 'IfcMaterial',
-                            'Name' : 'Galvanic Steel 2',
-                            'Category' : 'Umbilical'
-                        },
-                        'Profile' : {
-                            'ifc_class' : 'IfcArbitraryProfileDefWithVoids',
-                            'ProfileType' : 'AREA',
-                            'ProfileName' : 'BubdleSteelTube',
-                            'OuterCurve' : {
-                                'ifc_class' : 'IfcCircle',
-                                'Position' : {
-                                    'ifc_class' : 'IfcAxis2Placement2D',
-                                    'Location' : {
-                                        'ifc_class' : 'IfcCartesianPoint',
-                                        'Coordinates' : (0.0, 0.0)
-                                    },
-                                    'RefDirection' : None
-                                },
-                                'Radius' : 9.4
-                            },
-                            'InnerCurves' : [
-                                {
-                                    'ifc_class' : 'IfcCircle',
-                                    'Position' : {
-                                        'ifc_class' : 'IfcAxis2Placement2D',
-                                        'Location' : {
-                                            'ifc_class' : 'IfcCartesianPoint',
-                                            'Coordinates' : (0.0, 0.0)
-                                        },
-                                        'RefDirection' : None
-
-                                    },
-                                    'Radius' : 6.34
-                                }
-                            ]
-                        }
-                    }
-                ]
-        }
-
-
-        
-        geometry = {
-            'ifc_class' : 'IfcProductShape',
-            'Representations' : [
-                {
-                    'ifc_class' : 'IfcShapeRepresentation',
-                    'RepresentationIdentifier' : 'Body',
-                    'RepresentatonType' : 'SweptSolid',
-                    'Items' : [
-                        {
-                            'ifc_class' : 'IfcExtrudeAreaSolid',
-                            'SweptArea' : {
-                                'ifc_class' : 'IfcArbitraryProfileDefWithVoids',
-                                'ProfileType' : 'AREA',
-                                'OuterCurve': {
-                                    'ifc_class' : 'IfcCircle',
-                                    'Position' : {
-                                        'ifc_class' : 'IfcAxis2Placement2D',
-                                        'Location' : {
-                                            'ifc_class' : 'IfcCartesioanPoint',
-                                            'Coordinates' : [0.0, 0.0]
-                                        },
-                                        'RefDirection' : None
-
-                                    },
-                                    'Radius' : 9.4
-                                },
-                                'InnerCurves' : [
-                                    {
-                                        'ifc_class' : 'IfcCircle',
-                                        'Position' : {
-                                            'ifc_class' : 'IfcAxis2Placement2D',
-                                            'Location' : {
-                                                'ifc_class' : 'IfcCartesioanPoint',
-                                                'Coordinates' : [0.0, 0.0]
-                                            },
-                                            'RefDirection' : None
-
-                                        },
-                                        'Radius' : 6.34
-
-                                    }
-                                ]
-                            },
-                            'Position' : {
-                                'Ifc_class' : 'IfcAxis2Placement3D',
-                                'location' : {
-                                    'ifc_class' : 'IfcCartesioanPoint',
-                                    'Coordinates' : [0.0, 0.0, 0.0]
-                                },
-                                'Axis' : {
-                                    'ifc_class' : 'IfcDirection',
-                                    'DirectionRatios' : [0.0, 0.0, 1.0]
-                                },
-                                'RefDirection' : {
-                                    'ifc_class' : 'IfcDirection',
-                                    'DirectionRatios' : [1.0, 0.0, 0.0]
-                                }  
-                            },
-                            'ExtrudeDirection' : {
-                                    'ifc_class' : 'IfcDirection',
-                                    'DirectionRatios' : [0.0, 0.0, 1.0]
-                                },
-                            'Depth' : 400 
-                        }
-
-                    ]
-                }
-            ] 
-
-        }
-        cls.types = {'entity' : ent, 'material' : material}
-
-        return True
 
 
 

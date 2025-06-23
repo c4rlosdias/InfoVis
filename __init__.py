@@ -58,6 +58,7 @@ classes = [
     Operator_export_ids,
     Operator_element_selection,
     Operator_catalog_export,
+    Operator_load_products,
     Panel_Connect,
     Panel_Import_Properties,
     Panel_Import_Classes,

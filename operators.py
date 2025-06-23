@@ -3,6 +3,7 @@ from ifctester import ids
 import os
 from tqdm import tqdm
 import ifcopenshell.util.element as element
+import ifcopenshell.util.representation as representation
 import ifcopenshell.util.selector as selector
 import ifcopenshell.api.root.create_entity as create_entity
 import ifcopenshell.api.material as material
@@ -659,7 +660,26 @@ class Operator_element_selection(bpy.types.Operator):
 # ==================================================================================================
 
 # ==================================================================================================
-# Export entity in json
+# Load catalog products
+# ==================================================================================================
+
+
+class Operator_load_products(bpy.types.Operator):
+    """"""
+    bl_idname  = "catag.load_products"
+    bl_label   = "load products from catalog"
+    bl_options = {"REGISTER", "UNDO"}    
+
+    def execute(self, context):              
+        props = context.scene.my_props       
+        props.products_loaded = True
+        return {"FINISHED"} 
+
+
+
+
+# ==================================================================================================
+# Create a ifc entity from Json
 # ==================================================================================================
 
 class Operator_catalog_export(bpy.types.Operator):
@@ -668,28 +688,43 @@ class Operator_catalog_export(bpy.types.Operator):
     bl_label   = "export element in json"
     bl_options = {"REGISTER", "UNDO"}    
 
+    # Create a IFC entity 
     def make_entity(self, model, json):
-        model.transaction
-        ent = model.create_entity(json['ifc_class'])
-        if hasattr(ent, 'GlobalId'):
-            ent.GlobalId = ifcopenshell.guid.new()
+        context = representation.get_context(model, "Model", "Body", "MODEL_VIEW")
+        #verify if entity exists in file
+        if 'Name' in json:
+            exist_ents = [e for e in model.by_type(json['ifc_class']) if e.Name == json['Name']]
+        else:
+            exist_ents = []
 
-        for key, value in json.items():
-            if key != 'ifc_class':   
+        # if not exists create entity, if exists return found entity
+        if not len(exist_ents) > 0:
+            ent = model.create_entity(json['ifc_class'])
+            if hasattr(ent, 'GlobalId'):
+                ent.GlobalId = ifcopenshell.guid.new()
 
-                if isinstance(value, list) :
-                    l = []
-                    for item in value:
-                        ent2 = self.make_entity(model, item)
-                        l.append(ent2)
-                        setattr(ent, key, l)
+            for key, value in json.items():
+                if key != 'ifc_class':   
 
-                elif isinstance(value, dict) :
-                    ent2 = self.make_entity(model, value)
-                    setattr(ent, key, ent2)
-                else:
-                    setattr(ent, key, value)
-        model.end_transaction
+                    if isinstance(value, list) and isinstance(value[0], dict):
+                        l = []
+                        for item in value:
+                            ent2 = self.make_entity(model, item)
+                            l.append(ent2)
+                            setattr(ent, key, l)
+
+                    elif isinstance(value, dict) :
+                        ent2 = self.make_entity(model, value)
+                        setattr(ent, key, ent2)
+                    else:
+                        if value == "@Body":
+                            setattr(ent, key, context)
+                        else:
+                            setattr(ent, key, value)
+            
+        else:
+            ent = exist_ents[0]
+
         return ent
 
 
@@ -699,31 +734,58 @@ class Operator_catalog_export(bpy.types.Operator):
         obj = context.active_object        
         model = tool.Ifc.get()
         cat = Catalog()
-        cat.get_types()
+        type = cat.get_type(props.products)
+        if type is not None:
 
-        if 'entity' in cat.types:
+            if 'entity' in type:
 
-            lt = [f'{x.is_a()}{x.Name}' for x in model.by_type('IfcTypeProduct')]
-            if not cat.types['entity']['ifc_class']+cat.types['entity']['Name'] in lt:
+                lt = [f'{x.is_a()}{x.Name}' for x in model.by_type('IfcTypeProduct')]
+                if not type['entity']['ifc_class']+type['entity']['Name'] in lt:
 
-                ent = self.make_entity(model, cat.types['entity'])
-                
-                if 'material' in cat.types:
-                    mat = self.make_entity(model, cat.types['material'])
-                    print(mat)
-                    material.assign_material(model, products=[ent], type=mat.is_a(), material=mat)
-                if 'geometry' in cat.types:
-                    geo = self.make_entity(model, cat.types['geometry'])
-                    geometry.assign_representation(model, product=ent, representation=geo)
+                    # create the entity type and use the Bonsai libraries to add element type
+                    r_props = tool.Root.get_root_props()                
+                    r_props.ifc_product = "IfcElementType"
+                    r_props.ifc_class = type['entity']['ifc_class']
+                    
+                    bpy.ops.bim.add_element()
+                    m_props = tool.Model.get_model_props()
+                    id = m_props.relating_type_id
+                    ent = model.by_id(int(id))
 
-                print('Done!')
-                self.report({'OPERATOR'}, 'Done!')
+                    for key, value in type['entity'].items():
+                        if key != 'ifc_class':   
+                            setattr(ent, key, value)
 
+                    # create the associate material
+                    if 'material' in type:
+                        mat = self.make_entity(model, type['material'])
+                        print(mat)
+                        material.assign_material(model, products=[ent], type=mat.is_a(), material=mat)
+                    
+                    # create the geometry associate
+                    if 'geometry' in type:
+                        maps = []
+                        for map in type['geometry']:
+                            geo = self.make_entity(model, map)
+                            maps.append(geo)
+
+                        ent.RepresentationMaps = maps
+                    
+    
+                    print('Done!')
+                    self.report({'OPERATOR'}, 'Done!')
+                    return {"FINISHED"} 
+
+                else:
+                    print('The type already exists!')
+                    self.report({'ERROR'}, 'The type already exists!')
+                    return {"CANCELLED"}
             else:
-                print('The type already exists!')
-                self.report({'ERROR'}, 'The type already exists!')
-        else:
-            print('No entities was created')
-            self.report({'ERROR'}, 'No entities was created!')
+                print('No entities was created')
+                self.report({'ERROR'}, 'No entities was created!')
+                return {"CANCELLED"}
 
-        return {"FINISHED"} 
+            
+        else:
+            self.report({'ERROR'}, 'Failing connect!')
+            return {"CANCELLED"}

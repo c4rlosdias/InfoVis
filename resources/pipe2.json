@@ -1,0 +1,75 @@
+{
+    "UUID" : "c340baa0-8cbb-4c8d-b11f-7e4e660cb3f8",
+    "entity" : {
+            "ifc_class": "IfcPipeSegmentType",
+            "Name": "Pipe 2",
+            "ElementType": "IntermediateSheath",
+            "PredefinedType": "USERDEFINED"
+    },
+    "material" :{
+            "ifc_class": "IfcMaterialProfileSet",
+            "Name" : "Inner Sheath 2",
+            "MaterialProfiles" : [
+                {
+                    "ifc_class" : "IfcMaterialProfile",
+                    "Material" : {
+                        "ifc_class" : "IfcMaterial",
+                        "Name" : "Galvanic Steel 2",
+                        "Category" : "Umbilical"
+                    },
+                    "Profile" : {
+                        "ifc_class" : "IfcArbitraryProfileDefWithVoids",
+                        "ProfileType" : "AREA",
+                        "ProfileName" : "BubdleSteelTube",
+                        "OuterCurve" : {
+                            "ifc_class" : "IfcCircle",
+                            "Position" : {
+                                "ifc_class" : "IfcAxis2Placement2D",
+                                "Location" : {
+                                    "ifc_class" : "IfcCartesianPoint",
+                                    "Coordinates" : [0.0, 0.0]
+                                }
+                            },
+                            "Radius" : 9.4
+                        },
+                        "InnerCurves" : [
+                            {
+                                "ifc_class" : "IfcCircle",
+                                "Position" : {
+                                    "ifc_class" : "IfcAxis2Placement2D",
+                                    "Location" : {
+                                        "ifc_class" : "IfcCartesianPoint",
+                                        "Coordinates" : [-3.669, 2.557]
+                                    }
+                                },
+                                "Radius" : 2.89
+                            },
+                            {
+                                "ifc_class" : "IfcCircle",
+                                "Position" : {
+                                    "ifc_class" : "IfcAxis2Placement2D",
+                                    "Location" : {
+                                        "ifc_class" : "IfcCartesianPoint",
+                                        "Coordinates" : [4.437, 2.800]
+                                    }
+                                },
+                                "Radius" : 3.09
+                            },
+                            {
+                                "ifc_class" : "IfcCircle",
+                                "Position" : {
+                                    "ifc_class" : "IfcAxis2Placement2D",
+                                    "Location" : {
+                                        "ifc_class" : "IfcCartesianPoint",
+                                        "Coordinates" : [0.0, -5.087]
+                                    }
+                                },
+                                "Radius" : 3.71
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+  
+}

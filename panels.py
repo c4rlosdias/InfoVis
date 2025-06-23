@@ -364,7 +364,7 @@ class BIM_UL_decomposition(bpy.types.UIList):
                 # row.operator("object.uri", text="", icon="URL").uri = item.uri
 
 # ---------------------------------------------------------------------
-# Conecta com o bSDD e apresenta as versões do dicionário
+# Catálogo de produtos
 # ---------------------------------------------------------------------
 
 class Panel_Catalog(bpy.types.Panel):
@@ -381,7 +381,9 @@ class Panel_Catalog(bpy.types.Panel):
         layout = self.layout
         props = context.scene.my_props
         row = layout.row()
-        row.label(text="ssss")
+        row.operator("catag.load_products", text="Load products")
+        row = layout.row()
+        row.prop(props, "products")
         row = layout.row()
         row.operator("catag.exp_json", text="export json")
         

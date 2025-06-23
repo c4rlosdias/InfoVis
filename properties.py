@@ -17,7 +17,18 @@ def active_prop_changed(self, context):
 def active_class_changed(self, context):
     #self.classes_shown.clear()
     self.classes_loaded = False
-    
+
+def load_products(self, context):   
+    props = context.scene.my_props
+    if props.products_loaded:             
+        products = [
+                ('pipe1','Pipe 1','Pipe 1'),
+                ('pipe2','Pipe 2','Pipe 2'),
+                ('valve1','Valve 3','Valve 1')
+            ]
+    else:
+        products = [] 
+    return products
 
 class Ifc_properties(PropertyGroup):       
     name        : StringProperty(name='name')
@@ -82,4 +93,10 @@ class MyProperties(PropertyGroup):
     info_prop_loaded         : BoolProperty(name='info prop loaded', default=False)
     info_class_loaded        : BoolProperty(name='info class loaded', default=False)
     ids_file                 : StringProperty(name='IDS file')
+    
+    # Catalog
+
+    products                 : EnumProperty(items=load_products, name='',  description='Select Product Type') 
+    products_loaded          : BoolProperty(name="products loaded", default=False)
+
 

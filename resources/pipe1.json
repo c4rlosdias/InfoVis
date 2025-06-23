@@ -1,0 +1,53 @@
+{
+    "UUID" : "f00afc51-9186-49fb-a3f2-a721be8639ac",
+    "entity" : {
+            "ifc_class": "IfcPipeSegmentType",
+            "Name": "Pipe 1",
+            "ElementType": "IntermediateSheath",
+            "PredefinedType": "USERDEFINED"
+    },
+    "material" :{
+            "ifc_class": "IfcMaterialProfileSet",
+            "Name" : "Inner Sheath",
+            "MaterialProfiles" : [
+                {
+                    "ifc_class" : "IfcMaterialProfile",
+                    "Material" : {
+                        "ifc_class" : "IfcMaterial",
+                        "Name" : "Galvanic Steel 2",
+                        "Category" : "Umbilical"
+                    },
+                    "Profile" : {
+                        "ifc_class" : "IfcArbitraryProfileDefWithVoids",
+                        "ProfileType" : "AREA",
+                        "ProfileName" : "BubdleSteelTube",
+                        "OuterCurve" : {
+                            "ifc_class" : "IfcCircle",
+                            "Position" : {
+                                "ifc_class" : "IfcAxis2Placement2D",
+                                "Location" : {
+                                    "ifc_class" : "IfcCartesianPoint",
+                                    "Coordinates" : [0.0, 0.0]
+                                }
+                            },
+                            "Radius" : 9.4
+                        },
+                        "InnerCurves" : [
+                            {
+                                "ifc_class" : "IfcCircle",
+                                "Position" : {
+                                    "ifc_class" : "IfcAxis2Placement2D",
+                                    "Location" : {
+                                        "ifc_class" : "IfcCartesianPoint",
+                                        "Coordinates" : [0.0, 0.0]
+                                    }
+                                },
+                                "Radius" : 6.34
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+  
+}
