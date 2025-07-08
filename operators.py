@@ -12,6 +12,7 @@ import ifcopenshell
 import webbrowser
 from .data import bSDD, PropTempl,Catalog, refresh, refresh_container
 import bonsai.tool as tool
+import bonsai.core as core
 
 def set_hide(context, index, is_hidden):
         props = context.scene.my_props
@@ -730,48 +731,72 @@ class Operator_catalog_export(bpy.types.Operator):
 
 
     def execute(self, context):              
-        props = context.scene.my_props       
-        obj = context.active_object        
-        model = tool.Ifc.get()
-        cat = Catalog()
-        type = cat.get_type(props.products)
+        props = context.scene.my_props                     
+        model = tool.Ifc.get()        
+        type = Catalog.get_type(props.products)
         if type is not None:
-
             if 'entity' in type:
-
                 lt = [f'{x.is_a()}{x.Name}' for x in model.by_type('IfcTypeProduct')]
                 if not type['entity']['ifc_class']+type['entity']['Name'] in lt:
 
-                    # create the entity type and use the Bonsai libraries to add element type
-                    r_props = tool.Root.get_root_props()                
-                    r_props.ifc_product = "IfcElementType"
-                    r_props.ifc_class = type['entity']['ifc_class']
-                    
-                    bpy.ops.bim.add_element()
-                    m_props = tool.Model.get_model_props()
-                    id = m_props.relating_type_id
-                    ent = model.by_id(int(id))
+                    # create the geometry associate
+                    if 'geometry' in type:
+                        
+                        body = ifcopenshell.util.representation.get_context(model, "Model", "Body", "MODEL_VIEW")
+                        mesh =  bpy.data.meshes.new(type['entity']['ifc_class'])
+                        obj = bpy.data.objects.new(type['entity']['Name'], mesh)
+                        location = bpy.context.scene.cursor.location.copy()
+                        obj.location = location
+                        element = core.root.assign_class(
+                                tool.Ifc,
+                                tool.Collector,
+                                tool.Root,
+                                obj=obj,
+                                ifc_class=type['entity']['ifc_class'],
+                                should_add_representation=False
+                        )
+   
+                        vertices = [type['geometry']['vertices']]
+                        faces = [type['geometry']['faces']]
+                        
+                        
+                        representation = geometry.add_mesh_representation(model,
+                                context=body,
+                                vertices=vertices,
+                                faces=faces
+                        )
+                        geometry.assign_representation(model, product=element, representation=representation)
 
-                    for key, value in type['entity'].items():
-                        if key != 'ifc_class':   
-                            setattr(ent, key, value)
+                        core.geometry.switch_representation(
+                             tool.Ifc,
+                             tool.Geometry,
+                             obj=obj,
+                             representation=representation,
+                             should_reload=True,
+                             is_global=True,
+                             should_sync_changes_first=False,
+                        )  
+                    else:                 
+                        r_props = tool.Root.get_root_props()                
+                        r_props.ifc_product = "IfcElementType"
+                        r_props.ifc_class = type['entity']['ifc_class']
+                        r_props.name = type['entity']['Name']
+                        
+                        bpy.ops.bim.add_element()
+                        types = [x for x in model.by_type(type['entity']['ifc_class']) if x.Name == type['entity']['Name']]
+                        element = types[0]
 
+                   
                     # create the associate material
                     if 'material' in type:
                         mat = self.make_entity(model, type['material'])
                         print(mat)
-                        material.assign_material(model, products=[ent], type=mat.is_a(), material=mat)
-                    
-                    # create the geometry associate
-                    if 'geometry' in type:
-                        maps = []
-                        for map in type['geometry']:
-                            geo = self.make_entity(model, map)
-                            maps.append(geo)
+                        material.assign_material(model, products=[element], type=mat.is_a(), material=mat)
 
-                        ent.RepresentationMaps = maps
+                    for key, value in type['entity'].items():
+                        if key != 'ifc_class':   
+                            setattr(element, key, value)
                     
-    
                     print('Done!')
                     self.report({'OPERATOR'}, 'Done!')
                     return {"FINISHED"} 

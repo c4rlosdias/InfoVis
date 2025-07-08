@@ -14,13 +14,13 @@
                     "ifc_class" : "IfcMaterialProfile",
                     "Material" : {
                         "ifc_class" : "IfcMaterial",
-                        "Name" : "Galvanic Steel 2",
+                        "Name" : "Galvanic Steel",
                         "Category" : "Umbilical"
                     },
                     "Profile" : {
                         "ifc_class" : "IfcArbitraryProfileDefWithVoids",
                         "ProfileType" : "AREA",
-                        "ProfileName" : "BubdleSteelTube",
+                        "ProfileName" : "BubdleSteelTube 2",
                         "OuterCurve" : {
                             "ifc_class" : "IfcCircle",
                             "Position" : {

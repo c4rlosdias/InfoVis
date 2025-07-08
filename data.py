@@ -265,7 +265,6 @@ class Catalog:
     def get_type(cls, product):
         with open(f'./resources/{product}.json', 'r', encoding='utf-8') as file:
             data = json.load(file)
-        print(data)
         return data
 
 
