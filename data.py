@@ -24,6 +24,23 @@ def refresh(context):
             new_item.is_hidden = classe.is_hidden
             new_item.type = classe.type
 
+def refresh_products(context):
+    props = context.scene.my_props
+    props.products_show.clear()
+    for classe in props.products:
+        if not classe.is_hidden:
+            new_item = props.products_show.add()
+            new_item.code = classe.code
+            new_item.name = classe.name
+            new_item.description = classe.description
+            new_item.level_index = classe.level_index
+            new_item.uri = classe.uri
+            new_item.index = classe.index
+            new_item.has_children = classe.has_children
+            new_item.is_expanded = classe.is_expanded
+            new_item.is_hidden = classe.is_hidden
+            new_item.type = classe.type
+
 def refresh_container(context):
     props = context.scene.my_props
     props.containers_show.clear()
@@ -78,7 +95,8 @@ class bSDD:
         else:
             cls.response = response.text
             return False
-        
+
+           
     @classmethod
     def load_properties(cls, version : str) -> bool:        
         params = {'uri' : f'{cls.uri}/{version}'}
@@ -263,10 +281,15 @@ class Catalog:
 
     @classmethod
     def get_type(cls, product):
-        with open(f'./resources/{product}.json', 'r', encoding='utf-8') as file:
+        with open(f'./resources/{product}.ttl', 'r', encoding='utf-8') as file:
             data = json.load(file)
         return data
 
+    @classmethod
+    def get_type2(cls, product):
+        with open(f'./resources/{product}.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        return data
 
 
 

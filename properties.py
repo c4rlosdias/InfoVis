@@ -18,6 +18,10 @@ def active_class_changed(self, context):
     #self.classes_shown.clear()
     self.classes_loaded = False
 
+def active_product_changed(self, context):
+    #self.classes_shown.clear()
+    self.product_loaded = False
+
 def load_products(self, context):   
     props = context.scene.my_props
     if props.products_loaded:             
@@ -97,7 +101,9 @@ class MyProperties(PropertyGroup):
     
     # Catalog
 
-    products                 : EnumProperty(items=load_products, name='',  description='Select Product Type') 
+    products                 : CollectionProperty(name="products", type=Class_info)
+    products_show            : CollectionProperty(name="products", type=Class_info)
     products_loaded          : BoolProperty(name="products loaded", default=False)
+    active_product_index     : IntProperty(name='product index', default=0, update=active_product_changed)
 
 

@@ -377,13 +377,60 @@ class Panel_Catalog(bpy.types.Panel):
     bl_category     = "O&G Catalog"
     #bl_options      = {"DEFAULT_CLOSED"}
     
-    def draw(self, context):           
-        layout = self.layout
-        props = context.scene.my_props
-        row = layout.row()
-        row.operator("catag.load_products", text="Load products")
-        row = layout.row()
-        row.prop(props, "products")
-        row = layout.row()
-        row.operator("catag.exp_json", text="export json")
+    def draw(self, context):   
+        props = context.scene.my_props 
+        layout = self.layout       
+        row = layout.row()     
+
+        # botão para conectar com o bSDD e obter as propriedades do dicionario selecionado
+        row.operator("catag.load_products", text="Load type products")      
+
+        # Imprime os produtos 
+        if len(props.products) > 0:
+            row = layout.row()
+            row.label(text="Classes Information:", icon='INFO')
+
+            self.layout.template_list(
+                "BIM_UL_products",
+                "",
+                props,
+                "products_show",
+                props,
+                "active_product_index",
+                rows=10
+            )
+
+
+# Painel de produtos             
+class BIM_UL_products(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        if item:
+            row = layout.row(align=True)
+            icontype = 'SNAP_FACE_CENTER'
+
+            if not item.is_hidden:
+                for i in range(0, item.level_index - 1):
+                    row.label(text="", icon="BLANK1")
+                if item.has_children:
+                    if item.is_expanded:
+                        row.operator(
+                            "object.contract_products",
+                            text="",
+                            emboss=False,
+                            icon="DISCLOSURE_TRI_DOWN"
+                        ).index = item.index
+                    else:
+                        row.operator(
+                            "object.expand_products",
+                            text="",
+                            emboss=False,
+                            icon="DISCLOSURE_TRI_RIGHT"
+                        ).index = item.index
+                else:
+                    row.label(text="", icon="BLANK1") 
+
+                row.label(text= f'[{item.code}] {item.name}', icon = icontype ) 
+                if not item.has_children:
+                    row.operator("catag.insert_type", text="", icon="PLUS").uri = item.name
+                row.operator("object.uri", text="", icon="URL").uri = item.uri
         

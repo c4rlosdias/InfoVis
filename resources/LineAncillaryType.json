@@ -2,7 +2,7 @@
     "UUID" : "f00afc51-9186-49fb-a3f2-a721be8639ac",
     "entity" : {
             "ifc_class": "IfcPipeSegmentType",
-            "Name": "Pipe 1",
+            "Name": "LineAncillaryType",
             "ElementType": "IntermediateSheath",
             "PredefinedType": "USERDEFINED"
     },
