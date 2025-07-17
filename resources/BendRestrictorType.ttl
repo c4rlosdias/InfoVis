@@ -1,4 +1,4 @@
-@prefix : <http://example.org/ifc-instances#> .
+@prefix edo: <http://energy-fomain-test.org/ifc-instances#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -7,40 +7,40 @@
 @prefix ifcowl: <http://www.buildingsmart-tech.org/ifcOWL/IFC4_ADD1#> .
 
 ## Instância Principal - IfcPipeSegmentType
-:f00afc51-9186-49fb-a3f2-a721be8639ac a ifc:IfcPipeSegmentType ;
+edo:f00afc51-9186-49fb-a3f2-a721be8639ac a ifc:IfcPipeSegmentType ;
     ifc:globalId "f00afc51-9186-49fb-a3f2-a721be8639ac" ;
     ifc:name "LineAncillaryType" ;
     ifc:predefinedType ifc:USERDEFINED ;
     ifc:elementType "IntermediateSheath" ;
     ifc:hasAssociations [
         a ifc:IfcRelAssociatesMaterial ;
-        ifc:relatingMaterial :InnerSheath_MaterialProfileSet
+        ifc:relatingMaterial edo:InnerSheath_MaterialProfileSet
     ] .
 
 ## Material Profile Set
-:InnerSheath_MaterialProfileSet a ifc:IfcMaterialProfileSet ;
+edo:InnerSheath_MaterialProfileSet a ifc:IfcMaterialProfileSet ;
     ifc:name "Inner Sheath" ;
-    ifc:materialProfiles :GalvanicSteel_MaterialProfile .
+    ifc:materialProfiles edo:GalvanicSteel_MaterialProfile .
 
 ## Material Profile
-:GalvanicSteel_MaterialProfile a ifc:IfcMaterialProfile ;
-    ifc:material :GalvanicSteel_Material ;
-    ifc:profile :BundleSteelTube_Profile .
+edo:GalvanicSteel_MaterialProfile a ifc:IfcMaterialProfile ;
+    ifc:material edo:GalvanicSteel_Material ;
+    ifc:profile  edo:BundleSteelTube_Profile .
 
 ## Material
-:GalvanicSteel_Material a ifc:IfcMaterial ;
+edo:GalvanicSteel_Material a ifc:IfcMaterial ;
     ifc:name "Galvanic Steel" ;
     ifc:category "Umbilical" .
 
 ## Profile Definition
-:BundleSteelTube_Profile a ifc:IfcArbitraryProfileDefWithVoids ;
+edo:BundleSteelTube_Profile a ifc:IfcArbitraryProfileDefWithVoids ;
     ifc:profileType ifc:AREA ;
     ifc:profileName "BubdleSteelTube" ;
-    ifc:outerCurve :OuterCircle ;
-    ifc:innerCurves :InnerCircle .
+    ifc:outerCurve   edo:OuterCircle ;
+    ifc:innerCurves  edo:InnerCircle .
 
 ## Outer Circle
-:OuterCircle a ifc:IfcCircle ;
+edo:OuterCircle a ifc:IfcCircle ;
     ifc:radius 9.4 ;
     ifc:position [
         a ifc:IfcAxis2Placement2D ;
@@ -51,7 +51,7 @@
     ] .
 
 ## Inner Circle
-:InnerCircle a ifc:IfcCircle ;
+edo:InnerCircle a ifc:IfcCircle ;
     ifc:radius 6.34 ;
     ifc:position [
         a ifc:IfcAxis2Placement2D ;

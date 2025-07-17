@@ -5,6 +5,7 @@ import ifcopenshell.util.selector as selector
 import bonsai.tool as tool
 from bonsai.bim.ifc import IfcStore
 import json
+import rdflib
 
 
 def refresh(context):
@@ -286,9 +287,10 @@ class Catalog:
         return data
 
     @classmethod
-    def get_type2(cls, product):
+    def get_type_(cls, product):
         with open(f'./resources/{product}.json', 'r', encoding='utf-8') as file:
             data = json.load(file)
+        print(data)
         return data
 
 

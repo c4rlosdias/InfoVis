@@ -1,6 +1,5 @@
 import bpy
 from ifctester import ids
-import os
 from tqdm import tqdm
 import ifcopenshell.util.element as element
 import ifcopenshell.util.representation as representation
@@ -10,9 +9,13 @@ import ifcopenshell.api.material as material
 import ifcopenshell.api.geometry as geometry
 import ifcopenshell
 import webbrowser
+import json
+import rdflib
+from rdflib import Graph, RDF
 from .data import bSDD, PropTempl,Catalog, refresh, refresh_container, refresh_products
 import bonsai.tool as tool
 import bonsai.core as core
+from bonsai.bim import import_ifc
 
 def set_hide_class(context, index, is_hidden):
         props = context.scene.my_props
@@ -785,6 +788,44 @@ class Operator_catalog_insert_type(bpy.types.Operator):
     uri : bpy.props.StringProperty(name="uri")
 
     # Create a IFC entity 
+    def make_entity_(self, model, json):
+        context = representation.get_context(model, "Model", "Body", "MODEL_VIEW")
+        #verify if entity exists in file
+        if 'Name' in json:
+            exist_ents = [e for e in model.by_type(json['ifc_class']) if e.Name == json['Name']]
+        else:
+            exist_ents = []
+
+        # if not exists create entity, if exists return found entity
+        if not len(exist_ents) > 0:
+            ent = model.create_entity(json['ifc_class'])
+            if hasattr(ent, 'GlobalId'):
+                ent.GlobalId = ifcopenshell.guid.new()
+
+            for key, value in json.items():
+                if key != 'ifc_class':   
+
+                    if isinstance(value, list) and isinstance(value[0], dict):
+                        l = []
+                        for item in value:
+                            ent2 = self.make_entity(model, item)
+                            l.append(ent2)
+                            setattr(ent, key, l)
+
+                    elif isinstance(value, dict) :
+                        ent2 = self.make_entity(model, value)
+                        setattr(ent, key, ent2)
+                    else:
+                        if value == "@Body":
+                            setattr(ent, key, context)
+                        else:
+                            setattr(ent, key, value)
+            
+        else:
+            ent = exist_ents[0]
+
+        return ent
+    
     def make_entity(self, model, json):
         context = representation.get_context(model, "Model", "Body", "MODEL_VIEW")
         #verify if entity exists in file
@@ -822,40 +863,44 @@ class Operator_catalog_insert_type(bpy.types.Operator):
             ent = exist_ents[0]
 
         return ent
+    
+    def split_name(self, uri):
+        if '#' in uri:
+            return uri.split('#')[-1]
+        else:
+            return uri
 
     def execute(self, context):
-        type = Catalog.get_type(self.uri)
+        g = Graph()
+        dic = {}
+        g.parse("./resources/BendRestrictorType.ttl", format="turtle")
+        print(100*'-')
+        # for s, p, o in g:
+        #     #print(f"{s} | {self.split_name(p)} | {o}")
+        #     dic[s] = {p : o}
+        # with open('teste.json', 'w', encoding='utf-8') as file:
+        #     json.dump(dic, file, ensure_ascii=False, indent=4)
+        json_data = g.serialize(format="json-ld", ident=4)
+        with open("dados.json", "w") as file:
+            file.write(json_data)
+
         return {'FINISHED'}
     
     # def execute(self, context): 
     #     props = context.scene.my_props                     
     #     model = tool.Ifc.get()        
-    #     type = Catalog.get_type(self.uri)
+    #     type = Catalog.get_type(self.uri)       
     #     if type is not None:
     #         if 'entity' in type:
     #             lt = [f'{x.is_a()}{x.Name}' for x in model.by_type('IfcTypeProduct')]
     #             if not type['entity']['ifc_class']+type['entity']['Name'] in lt:
-
+    #                 element = model.create_entity(type['entity']['ifc_class'])
     #                 # create the geometry associate
     #                 if 'geometry' in type:
                         
-    #                     body = ifcopenshell.util.representation.get_context(model, "Model", "Body", "MODEL_VIEW")
-    #                     mesh =  bpy.data.meshes.new(type['entity']['ifc_class'])
-    #                     obj = bpy.data.objects.new(type['entity']['Name'], mesh)
-    #                     location = bpy.context.scene.cursor.location.copy()
-    #                     obj.location = location
-    #                     element = core.root.assign_class(
-    #                             tool.Ifc,
-    #                             tool.Collector,
-    #                             tool.Root,
-    #                             obj=obj,
-    #                             ifc_class=type['entity']['ifc_class'],
-    #                             should_add_representation=False
-    #                     )
-   
+    #                     body = ifcopenshell.util.representation.get_context(model, "Model", "Body", "MODEL_VIEW")  
     #                     vertices = [type['geometry']['vertices']]
-    #                     faces = [type['geometry']['faces']]
-                        
+    #                     faces = [type['geometry']['faces']]                        
                         
     #                     representation = geometry.add_mesh_representation(model,
     #                             context=body,
@@ -863,26 +908,6 @@ class Operator_catalog_insert_type(bpy.types.Operator):
     #                             faces=faces
     #                     )
     #                     geometry.assign_representation(model, product=element, representation=representation)
-
-    #                     core.geometry.switch_representation(
-    #                          tool.Ifc,
-    #                          tool.Geometry,
-    #                          obj=obj,
-    #                          representation=representation,
-    #                          should_reload=True,
-    #                          is_global=True,
-    #                          should_sync_changes_first=False,
-    #                     )  
-    #                 else:                 
-    #                     r_props = tool.Root.get_root_props()                
-    #                     r_props.ifc_product = "IfcElementType"
-    #                     r_props.ifc_class = type['entity']['ifc_class']
-    #                     r_props.name = type['entity']['Name']
-                        
-    #                     bpy.ops.bim.add_element()
-    #                     types = [x for x in model.by_type(type['entity']['ifc_class']) if x.Name == type['entity']['Name']]
-    #                     element = types[0]
-
                    
     #                 # create the associate material
     #                 if 'material' in type:
@@ -894,6 +919,13 @@ class Operator_catalog_insert_type(bpy.types.Operator):
     #                     if key != 'ifc_class':   
     #                         setattr(element, key, value)
                     
+    #                 # create element type in bonsai
+    #                 ifc_import_settings = import_ifc.IfcImportSettings.factory(context)
+    #                 ifc_importer = import_ifc.IfcImporter(ifc_import_settings)
+    #                 ifc_importer.create_element_type(element)
+    #                 ifc_importer.place_objects_in_collections()
+
+
     #                 print('Done!')
     #                 self.report({'OPERATOR'}, 'Done!')
     #                 return {"FINISHED"} 
@@ -911,3 +943,5 @@ class Operator_catalog_insert_type(bpy.types.Operator):
     #     else:
     #         self.report({'ERROR'}, 'Failing connect!')
     #         return {"CANCELLED"}
+
+
