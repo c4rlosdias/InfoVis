@@ -281,15 +281,16 @@ class PropTempl:
 class Catalog:
 
     @classmethod
-    def get_type(cls, product):
+    def get_type_(cls, product):
         with open(f'./resources/{product}.ttl', 'r', encoding='utf-8') as file:
             data = json.load(file)
         return data
 
     @classmethod
-    def get_type_(cls, product):
+    def get_type(cls, product):
         with open(f'./resources/{product}.json', 'r', encoding='utf-8') as file:
             data = json.load(file)
+
         print(data)
         return data
 

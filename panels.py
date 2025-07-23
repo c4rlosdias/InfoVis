@@ -383,7 +383,7 @@ class Panel_Catalog(bpy.types.Panel):
         row = layout.row()     
 
         # botão para conectar com o bSDD e obter as propriedades do dicionario selecionado
-        row.operator("catag.load_products", text="Load type products")      
+        row.operator("catag.load_products", text="Load type products")   
 
         # Imprime os produtos 
         if len(props.products) > 0:
@@ -399,6 +399,7 @@ class Panel_Catalog(bpy.types.Panel):
                 "active_product_index",
                 rows=10
             )
+            
 
 
 # Painel de produtos             
@@ -429,7 +430,7 @@ class BIM_UL_products(bpy.types.UIList):
                 else:
                     row.label(text="", icon="BLANK1") 
 
-                row.label(text= f'[{item.code}] {item.name}', icon = icontype ) 
+                row.label(text= f'{item.name}', icon = icontype ) 
                 if not item.has_children:
                     row.operator("catag.insert_type", text="", icon="PLUS").uri = item.name
                 row.operator("object.uri", text="", icon="URL").uri = item.uri

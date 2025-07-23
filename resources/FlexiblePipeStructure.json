@@ -2,7 +2,7 @@
     "UUID" : "f00afc51-9186-49fb-a3f2-a721be8639ac",
     "entity" : {
             "ifc_class": "IfcPipeSegmentType",
-            "Name": "LineAncillaryType",
+            "Name": "Flexible Pipe Structure 1",
             "ElementType": "IntermediateSheath",
             "PredefinedType": "USERDEFINED"
     },
@@ -30,7 +30,7 @@
                                 "Coordinates" : [0.0, 0.0]
                             }
                         },
-                        "Radius" : 9.4
+                        "Radius" : 0.094
                     },
                     "InnerCurves" : [
                         {
@@ -42,12 +42,36 @@
                                     "Coordinates" : [0.0, 0.0]
                                 }
                             },
-                            "Radius" : 6.34
+                            "Radius" : 0.0634
                         }
                     ]
                 }
+
             }
         ]
+    },
+    "style" : {
+        "ifc_class" : "IfcStyledItem",
+        "@material" : "Galvanic Steel",
+        "Name" : "Pipe",
+        "Styles" : [
+            {
+                "ifc_class" : "IfcSurfaceStyle",
+                "Name" : "pipe",
+                "Side" : "BOTH",
+                "Styles" : [
+                    {
+                        "ifc_class" : "IfcSurfaceStyleShading",
+                        "SurfaceColour" : {
+                            "ifc_class" : "IfcColourRgb",
+                            "Red" : 0.14,
+                            "Green" : 0.31,
+                            "Blue" : 1.0 
+                        }
+                    }
+                ]
+            }
+        ] 
     }
   
 }
