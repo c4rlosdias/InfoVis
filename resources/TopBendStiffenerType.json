@@ -1,9 +1,9 @@
 {
     "UUID" : "485124e8-aedf-4b14-98dc-76b309530255",
     "entity" : {
-            "ifc_class": "IfcValveType",
+            "ifc_class": "IfcPipeFittingType",
             "Name": "Top Bend Stiffener Type 1",
-            "ElementType": "IntermediateSheath",
+            "ElementType": "TopBendStiffenerType",
             "PredefinedType": "USERDEFINED"
     },
     "geometry" : {
@@ -1047,5 +1047,34 @@
                 [343, 254, 61],
                 [343, 61, 344]
             ]
-    } 
+    },    
+    "material" : {
+        "ifc_class" : "IfcMaterial",
+        "Name" : "Steel",
+        "Category" : "Valves"
+    },
+    "style" : {
+        "ifc_class" : "IfcStyledItem",
+        "@material" : "Steel",
+        "Name" : "Valve",
+        "Styles" : [
+            {
+                "ifc_class" : "IfcSurfaceStyle",
+                "Name" : "Valve",
+                "Side" : "BOTH",
+                "Styles" : [
+                    {
+                        "ifc_class" : "IfcSurfaceStyleShading",
+                        "SurfaceColour" : {
+                            "ifc_class" : "IfcColourRgb",
+                            "Red" : 1,
+                            "Green" : 0.375,
+                            "Blue" : 0.05 
+                        }
+                    }
+                ]
+            }
+        ] 
+    }
+
 }

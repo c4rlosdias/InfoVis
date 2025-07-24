@@ -1,5 +1,6 @@
 import bonsai.core
 import bonsai.core.geometry
+import bonsai.core.material
 import bonsai.core.type
 import bpy
 from ifctester import ids
@@ -16,10 +17,11 @@ import webbrowser
 import json
 import rdflib
 from rdflib import Graph, RDF
-from .data import bSDD, PropTempl,Catalog, refresh, refresh_container, refresh_products
-import bonsai.tool as tool
+from .data import bSDD, PropTempl,Catalog, Import_ifc, refresh, refresh_container, refresh_products
 import bonsai.core as core
 import bonsai
+import bonsai.tool as tool
+import bonsai.core.root
 from bonsai.bim import import_ifc
 
 def set_hide_class(context, index, is_hidden):
@@ -720,9 +722,9 @@ class Operator_load_products(bpy.types.Operator):
         result = bSDD.load_classes(props.dictionary)
         if result:
             for classe in bSDD.data_class:  
-                #if classe['name'].endswith('Type') or classe['name'].endswith('Structure'):
-                new_c = build_products(context, classe, c, 1, '', False)
-                c = new_c
+                if classe['name'].endswith('Type') or classe['name'].endswith('Structure'):
+                    new_c = build_products(context, classe, c, 1, '', False)
+                    c = new_c
             refresh_products(context)
             return {"FINISHED"} 
         else:
@@ -878,134 +880,80 @@ class Operator_catalog_insert_type(bpy.types.Operator):
             return uri.split('#')[-1]
         else:
             return uri
-
-    def execute_(self, context):
-        g = Graph()
-        dic = {}
-        g.parse("./resources/BendRestrictorType.ttl", format="turtle")
-        print(100*'-')
-        json_data = g.serialize(format="json-ld", ident=4)
-
-        # with open("dados.json", "w") as file:
-        #     file.write(json_data)
-
-        return {'FINISHED'}
-
-
+        
     def execute(self, context): 
-        props = context.scene.my_props                     
-        model = tool.Ifc.get()        
-        type = Catalog.get_type(self.uri)       
-        if type is not None:
-            if 'entity' in type:
-                obj_name = f"{type['entity']['ifc_class']}/{type['entity']['Name']}"
-                lt = [f'{x.is_a()}/{x.Name}' for x in model.by_type('IfcTypeProduct')]
-                if not obj_name in lt:
-                    sty = None
+            props = context.scene.my_props                     
+            model = bonsai.tool.Ifc.get()        
+            type = Catalog.get_type(self.uri)       
+            if type is not None:
+                if 'entity' in type:
+                    obj_name = f"{type['entity']['ifc_class']}/{type['entity']['Name']}"
+                    lt = [f'{x.is_a()}/{x.Name}' for x in model.by_type('IfcTypeProduct')]
+                    if not obj_name in lt:
+                        sty = None
 
-                    # create element
-                    body = ifcopenshell.util.representation.get_context(model, "Model", "Body", "MODEL_VIEW") 
-                    props_root = tool.Root.get_root_props()
-                    props_root.ifc_product = "IfcElementType"
-                    props_root.ifc_class = type['entity']['ifc_class']
-
-                    if type['entity']['ifc_class'] == "IfcPipeSegmentType":
-                        mesh = None
-                    else:
-                        mesh = bpy.data.meshes.new("Mesh")
-                    
-                    obj = bpy.data.objects.new(type['entity']['Name'], mesh)    
-                    element_type = bonsai.core.root.assign_class(
-                        tool.Ifc,
-                        tool.Collector,
-                        tool.Root,
-                        obj=obj,
-                        ifc_class=type['entity']['ifc_class'],
-                        should_add_representation=False
-                    )
-                    print(element_type)
-                    
-                    # add values to attributes
-                    for key, value in type['entity'].items():
-                        if key != 'ifc_class':   
-                            setattr(element_type, key, value)
-
-                    
-                    # create the geometry associate
-                    if 'geometry' in type:                                                 
-                        vertices = [type['geometry']['vertices']]
-                        faces = [type['geometry']['faces']]  
-
-                        builder = ifcopenshell.util.shape_builder.ShapeBuilder(tool.Ifc.get())
-                        item = builder.mesh(vertices[0], faces[0])
-                        representation = builder.get_representation(body, [item])
-                        geometry.assign_representation(model, product=element_type, representation=representation)
-                        bonsai.core.geometry.switch_representation(
-                            tool.Ifc,
-                            tool.Geometry,
-                            obj=obj,
-                            representation=representation,
-                            should_reload=True,
-                            is_global=True,
-                            should_sync_changes_first=False,
-                        )                  
+                        # create element
+                        representation = None
+                        body = ifcopenshell.util.representation.get_context(model, "Model", "Body", "MODEL_VIEW") 
+                        element_type = model.create_entity(type['entity']['ifc_class'])
+                        element_type.GlobalId = ifcopenshell.guid.new()
+                        print(element_type)
                         
-                        # create the associate style
-                        if 'style' in type:
-                            sty = self.make_entity(model, type['style'])
-                            print(sty)
-                            style.assign_item_style(model, item=representation.Items[0], style=sty)
+                        # add values to attributes
+                        for key, value in type['entity'].items():
+                            if key != 'ifc_class':   
+                                setattr(element_type, key, value)
 
-                            
-                   
-                    # create the associate material
-                    if 'material' in type:
-                        mat = self.make_entity(model, type['material'])
-                        p = tool.Material.get_material_props()
-                        print(mat)
-                        material.assign_material(model, products=[element_type], type=mat.is_a(), material=mat)
+                        
+                        # create the geometry associate
+                        if 'geometry' in type:                                                 
+                            vertices = [type['geometry']['vertices']]
+                            faces = [type['geometry']['faces']]  
 
-                        ifc_import_settings = import_ifc.IfcImportSettings.factory(context)
-                        mat_importer = import_ifc.MaterialCreator(ifc_import_settings)
-                        mat_importer.create(element_type)
-
-                        # create the associate style
-                        if 'style' in type:
-                            sty = self.make_entity(model, type['style'])
-                            print(sty)
-                            mat2 = [m for m in model.by_type('IfcMaterial') if m.Name == type['style']['@material']] 
-                            print(mat2)
-                            if len(mat2) > 0: 
-                                style.assign_material_style(model, material=mat2[0], style=sty, context=body)
-                                
-                                #core.material.load_materials(tool.Material, p.material_type)
-                                #tool.Material.update_elements_using_material(mat2[0])
-                                # material2 = bpy.data.materials.new(sty.Name)
-                                # tool.Ifc.link(sty, material2)
-                                # material2.use_fake_user = True
-                                # tool.Loader.create_surface_style_shading(material2, sty)
-                                print(mat2[0])
-                            else:
-                                print(f'material {mat2["style"]["@material"]} não encontrado!')
-
-                    #context.view_layer.update()                    
-
-                    print('Done!')
-                    self.report({'OPERATOR'}, 'Done!')
-                    return {"FINISHED"} 
-
-                else:
-                    print('The type already exists!')
-                    self.report({'ERROR'}, 'The type already exists!')
-                    return {"CANCELLED"}
-            else:
-                print('No entities was created')
-                self.report({'ERROR'}, 'No entities was created!')
-                return {"CANCELLED"}
-
+                            builder = ifcopenshell.util.shape_builder.ShapeBuilder(tool.Ifc.get())
+                            item = builder.mesh(vertices[0], faces[0])
+                            representation = builder.get_representation(body, [item])
+                            geometry.assign_representation(model, product=element_type, representation=representation)
             
-        else:
-            self.report({'ERROR'}, 'Failing connect!')
-            return {"CANCELLED"}
 
+                        # create the associate material
+                        if 'material' in type:
+                            mat = self.make_entity(model, type['material'])
+                            print(mat)
+                            material.assign_material(model, products=[element_type], type=mat.is_a(), material=mat)
 
+                            # create the associate style
+                            if 'style' in type:
+                                sty = self.make_entity(model, type['style'])
+                                print(sty)
+                                materials = [m for m in model.by_type('IfcMaterial') if m.Name == type['style']['@material']] 
+                                print(materials)
+                                if len(materials) > 0: 
+                                    style.assign_material_style(model, material=materials[0], style=sty, context=body)
+                                    if representation is not None:
+                                        sty.Item = representation.Items[0]
+                                    print(materials[0])
+                                else:
+                                    print(f'material {materials["style"]["@material"]} não encontrado!')
+                            
+                        # import element type in bonsai
+                        i = Import_ifc()
+                        i.import_type_from_ifc(element_type, context)                        
+                    
+                        print('Done!')
+                        self.report({'OPERATOR'}, 'Done!')
+                        return {"FINISHED"} 
+
+                    else:
+                        print('The type already exists!')
+                        self.report({'ERROR'}, 'The type already exists!')
+                        return {"CANCELLED"}
+                else:
+                    print('No entities was created')
+                    self.report({'ERROR'}, 'No entities was created!')
+                    return {"CANCELLED"}
+
+                
+            else:
+                self.report({'ERROR'}, 'Failing connect!')
+                return {"CANCELLED"}

@@ -1,9 +1,9 @@
 {
     "UUID" : "485124e8-aedf-4b14-98dc-76b309530255",
     "entity" : {
-            "ifc_class": "IfcValveType",
+            "ifc_class": "IfcPipeFittingType",
             "Name": "Hang Off Collar Type 1",
-            "ElementType": "IntermediateSheath",
+            "ElementType": "HangOffCollarType",
             "PredefinedType": "USERDEFINED"
     },
     "geometry" : {
@@ -1098,5 +1098,33 @@
                 [368, 369, 372]
 
             ]
-    } 
+    },
+    "material" : {
+        "ifc_class" : "IfcMaterial",
+        "Name" : "Steel 2",
+        "Category" : "Valves"
+    },
+    "style" : {
+        "ifc_class" : "IfcStyledItem",
+        "@material" : "Steel 2",
+        "Name" : "Valve 2",
+        "Styles" : [
+            {
+                "ifc_class" : "IfcSurfaceStyle",
+                "Name" : "Valve 2",
+                "Side" : "BOTH",
+                "Styles" : [
+                    {
+                        "ifc_class" : "IfcSurfaceStyleShading",
+                        "SurfaceColour" : {
+                            "ifc_class" : "IfcColourRgb",
+                            "Red" : 0.165,
+                            "Green" : 0.089,
+                            "Blue" : 1
+                        }
+                    }
+                ]
+            }
+        ] 
+    }
 }

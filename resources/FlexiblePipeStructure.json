@@ -3,7 +3,7 @@
     "entity" : {
             "ifc_class": "IfcPipeSegmentType",
             "Name": "Flexible Pipe Structure 1",
-            "ElementType": "IntermediateSheath",
+            "ElementType": "FlexiblePipeStructure",
             "PredefinedType": "USERDEFINED"
     },
     "material" :{
@@ -64,9 +64,9 @@
                         "ifc_class" : "IfcSurfaceStyleShading",
                         "SurfaceColour" : {
                             "ifc_class" : "IfcColourRgb",
-                            "Red" : 0.14,
-                            "Green" : 0.31,
-                            "Blue" : 1.0 
+                            "Red" : 0.03,
+                            "Green" : 0.03,
+                            "Blue" : 0.062 
                         }
                     }
                 ]

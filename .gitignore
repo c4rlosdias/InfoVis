@@ -6,8 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
-#ifc files
+#files
 *.ifc
+.files
+/files
 
 # Distribution / packaging
 .Python

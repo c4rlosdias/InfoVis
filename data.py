@@ -1,12 +1,14 @@
 import requests
+import logging
 import os
+import json
+import bpy
 import ifcopenshell
 import ifcopenshell.util.selector as selector
 import bonsai.tool as tool
 from bonsai.bim.ifc import IfcStore
-import json
-import rdflib
-
+from bonsai.bim import import_ifc
+from bonsai.bim.ifc import IfcStore
 
 def refresh(context):
     props = context.scene.my_props
@@ -57,6 +59,58 @@ def refresh_container(context):
             new_item.is_hidden = classe.is_hidden
             new_item.type = classe.type  
             new_item.is_selected = classe.is_selected  
+
+class Import_ifc():
+
+    file : ifcopenshell.file
+
+    @classmethod
+    def import_type_from_ifc(self, element: ifcopenshell.entity_instance, context: bpy.types.Context) -> None:
+        self.file = tool.Ifc.get()
+        logger = logging.getLogger("ImportIFC")
+        ifc_import_settings = import_ifc.IfcImportSettings.factory(context, IfcStore.path, logger)
+
+        ifc_importer = import_ifc.IfcImporter(ifc_import_settings)
+        ifc_importer.file = self.file
+        ifc_importer.process_context_filter()
+        ifc_importer.material_creator.load_existing_materials()
+        self.import_materials(element, ifc_importer)
+        self.import_styles(element, ifc_importer)
+        ifc_importer.create_element_type(element)
+        ifc_importer.place_objects_in_collections()
+
+    @classmethod
+    def import_materials(self, element: ifcopenshell.entity_instance, ifc_importer: import_ifc.IfcImporter) -> None:
+        for material in ifcopenshell.util.element.get_materials(element):
+            if tool.Ifc.get_object_by_identifier(material.id()):
+                continue
+            self.import_material_styles(material, ifc_importer)
+
+    @classmethod
+    def import_styles(self, element: ifcopenshell.entity_instance, ifc_importer: import_ifc.IfcImporter) -> None:
+        if element.is_a("IfcTypeProduct"):
+            representations = element.RepresentationMaps or []
+        elif element.is_a("IfcProduct"):
+            representations = [element.Representation] if element.Representation else []
+        for representation in representations or []:
+            for element in self.file.traverse(representation):
+                if not element.is_a("IfcRepresentationItem") or not element.StyledByItem:
+                    continue
+                for element2 in self.file.traverse(element.StyledByItem[0]):
+                    if element2.is_a("IfcSurfaceStyle") and not tool.Ifc.get_object_by_identifier(element2.id()):
+                        ifc_importer.create_style(element2)
+
+    @classmethod
+    def import_material_styles(
+        self,
+        material: ifcopenshell.entity_instance,
+        ifc_importer: import_ifc.IfcImporter,
+    ) -> None:
+        if not material.HasRepresentation:
+            return
+        for element in self.file.traverse(material.HasRepresentation[0]):
+            if element.is_a("IfcSurfaceStyle") and not tool.Ifc.get_object_by_identifier(element.id()):
+                ifc_importer.create_style(element)
 
 class bSDD:
     data_dic =[]
@@ -290,8 +344,6 @@ class Catalog:
     def get_type(cls, product):
         with open(f'./resources/{product}.json', 'r', encoding='utf-8') as file:
             data = json.load(file)
-
-        print(data)
         return data
 
 
