@@ -1,5 +1,6 @@
 import bpy
 from .operators import *
+from .data import refresh_props
 import bonsai.tool as tool
 import textwrap
 
@@ -10,6 +11,13 @@ def _label_multiline(context, text, parent):
     text_lines = wrapper.wrap(text=text)
     for text_line in text_lines:
         parent.label(text=text_line)
+
+def get_properties(ifc_obj):
+
+    result = []
+    result.append()
+    
+
 
 # ---------------------------------------------------------------------
 # Conecta com o bSDD e apresenta as versões do dicionário
@@ -434,4 +442,45 @@ class BIM_UL_products(bpy.types.UIList):
                 if not item.has_children:
                     row.operator("catag.insert_type", text="", icon="PLUS").uri = item.name
                 row.operator("object.uri", text="", icon="URL").uri = item.uri
+
+
+# ---------------------------------------------------------------------
+# Propriedades 
+# ---------------------------------------------------------------------
+
+class Panel_Properties(bpy.types.Panel):
+    
+    bl_label        = "Properties"
+    bl_idname       = "VIEW3D_PT_properties"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"
+    bl_category     = "O&G Properties"
+    #bl_options      = {"DEFAULT_CLOSED"}
+    
+    def draw(self, context):   
+        props = context.scene.my_props 
+        layout = self.layout       
+        row = layout.row()   
+
+        objs = context.selected_objects
         
+        # select objects 
+        if len(objs) > 0: 
+            row = layout.row()
+            row.label(text="Properties:", icon='INFO')
+            row = layout.row()
+            row.operator("props.load_properties", text="Load properties") 
+
+            if len(props.prop_metadata) > 0:
+                for pset in props.prop_metadata:
+                    row = layout.row()
+                    row.label(text=pset.name, icon='COPY_ID')
+                    box = layout.box()
+                    for item in pset.props:                                         
+                        rowb = box.row(align=True)
+                        rowb.scale_y =0.8
+                        rowb.label(text=item.name)
+                        act_prop = f"value{item.type_value}"
+                        rowb.prop(item, act_prop, text="")
+

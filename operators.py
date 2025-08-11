@@ -17,7 +17,7 @@ import webbrowser
 import json
 import rdflib
 from rdflib import Graph, RDF
-from .data import bSDD, PropTempl,Catalog, Import_ifc, refresh, refresh_container, refresh_products
+from .data import bSDD, PropTempl,Catalog, Import_ifc, refresh, refresh_container, refresh_products, refresh_props
 import bonsai.core as core
 import bonsai
 import bonsai.tool as tool
@@ -957,3 +957,16 @@ class Operator_catalog_insert_type(bpy.types.Operator):
             else:
                 self.report({'ERROR'}, 'Failing connect!')
                 return {"CANCELLED"}
+
+# ==================================================================================================
+# Load object properties
+# ==================================================================================================
+class Operator_props_load(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.load_properties"
+    bl_label   = "load object properties"
+    bl_options = {"REGISTER", "UNDO"} 
+
+    def execute(self, context):
+        refresh_props(context)
+        return {"FINISHED"} 

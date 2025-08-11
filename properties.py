@@ -14,6 +14,7 @@ def active_prop_changed(self, context):
     self.info_prop_loaded = False
     self.class_info.clear()
 
+
 def active_class_changed(self, context):
     #self.classes_shown.clear()
     self.classes_loaded = False
@@ -55,6 +56,21 @@ class Class_info(PropertyGroup):
     parent      : StringProperty(name="parent")
     level_index : IntProperty(name="level index")
     type        : StringProperty(name="class type")
+
+
+
+class Property_info(PropertyGroup):    
+    name        : StringProperty(name='property name')
+    valuestr    : StringProperty(name='value str')
+    valueint    : IntProperty(name='value int')
+    valuefloat  : FloatProperty(name='value float')
+    valuebool   : BoolProperty(name="value bool")
+    type_value  : StringProperty(name="type value")
+
+class Pset_info(PropertyGroup):    
+    name        : StringProperty(name='pset name')
+    id          : IntProperty(name='id')
+    props       : CollectionProperty(name="properties", type=Property_info)
 
 class Container(PropertyGroup):
     has_children: BoolProperty(name="has children")    
@@ -105,5 +121,11 @@ class MyProperties(PropertyGroup):
     products_show            : CollectionProperty(name="products", type=Class_info)
     products_loaded          : BoolProperty(name="products loaded", default=False)
     active_product_index     : IntProperty(name='product index', default=0, update=active_product_changed)
+
+    # Properties
+    pset_metadata            : CollectionProperty(name="psets", type=Pset_info)
+    active_pset_index        : IntProperty(name='pset index', default=0)
+    prop_metadata            : CollectionProperty(name="psets", type=Pset_info)
+    active_property_index    : IntProperty(name='property index', default=0)
 
 
