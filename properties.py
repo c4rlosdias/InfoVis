@@ -58,7 +58,6 @@ class Class_info(PropertyGroup):
     type        : StringProperty(name="class type")
 
 
-
 class Property_info(PropertyGroup):    
     name        : StringProperty(name='property name')
     valuestr    : StringProperty(name='value str')
@@ -69,8 +68,9 @@ class Property_info(PropertyGroup):
 
 class Pset_info(PropertyGroup):    
     name        : StringProperty(name='pset name')
-    id          : IntProperty(name='id')
+    index       : IntProperty(name='index')
     props       : CollectionProperty(name="properties", type=Property_info)
+    is_expanded : BoolProperty(name="Is Expanded", default=False)
 
 class Container(PropertyGroup):
     has_children: BoolProperty(name="has children")    
@@ -123,7 +123,6 @@ class MyProperties(PropertyGroup):
     active_product_index     : IntProperty(name='product index', default=0, update=active_product_changed)
 
     # Properties
-    pset_metadata            : CollectionProperty(name="psets", type=Pset_info)
     active_pset_index        : IntProperty(name='pset index', default=0)
     prop_metadata            : CollectionProperty(name="psets", type=Pset_info)
     active_property_index    : IntProperty(name='property index', default=0)

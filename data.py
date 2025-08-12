@@ -131,27 +131,26 @@ def refresh_props(context):
     ifc_obj = tool.Ifc.get_entity(obj)
     # get psets
     psets = ifcopenshell.util.element.get_psets(ifc_obj)
+    i = 0
     for pset, _props in psets.items():          
         new_item = props.prop_metadata.add()            
-        new_item.name = pset            
-        #new_item.id = int(pset['id'])
-              
+        new_item.name = pset      
+        new_item.index = i        
         for prop, value in _props.items():           
            if prop != 'id':                 
-                #new_item = props.prop_metadata.add()            
-                                  
                 if type(value) == list:
                     c = 0
                     for item_prop in value:    
                         new_prop = new_item.props.add()                      
-                        new_prop.name = f'{prop} [{c}]'
+                        #new_prop.name = f'{prop} [{c}]'
+                        new_prop.name = prop
                         set_prop_type(new_prop, item_prop)
                         c += 1
                 else:
                     new_prop = new_item.props.add()  
                     new_prop.name = prop
                     set_prop_type(new_prop, value)
-    
+        i += 1
 
 class Import_ifc():
 

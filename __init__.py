@@ -62,6 +62,7 @@ classes = [
     Operator_catalog_insert_type,
     Operator_load_products,
     Operator_props_load,
+    Operator_props_expand,
     Panel_Connect,
     Panel_Import_Properties,
     Panel_Import_Classes,

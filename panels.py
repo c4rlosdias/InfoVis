@@ -128,8 +128,6 @@ class Panel_Import_Properties(bpy.types.Panel):
 class BIM_UL_ifc_properties(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         if item:
-            
-
             row = layout.row(align=True)
             if item.is_selected == True:
                 row.prop(item, "is_selected", text="", icon="RADIOBUT_ON")  
@@ -475,12 +473,43 @@ class Panel_Properties(bpy.types.Panel):
             if len(props.prop_metadata) > 0:
                 for pset in props.prop_metadata:
                     row = layout.row()
-                    row.label(text=pset.name, icon='COPY_ID')
-                    box = layout.box()
-                    for item in pset.props:                                         
-                        rowb = box.row(align=True)
-                        rowb.scale_y =0.8
-                        rowb.label(text=item.name)
-                        act_prop = f"value{item.type_value}"
-                        rowb.prop(item, act_prop, text="")
+                    if pset.is_expanded:
+                        icon = 'TRIA_DOWN'
+                    else:
+                        icon = 'TRIA_RIGHT'
+                    row.operator("props.expand", icon=icon, text="").index = pset.index
+                    row.label(text=pset.name, icon='COPY_ID')   
+                                    
+                    if pset.is_expanded:
+                        box = layout.box()
+                        old_title="" 
+                        old_col = ""
+                        for item in pset.props:                                         
+                            
+                            if 'Table' in  item.name:
+                                names = item.name.split('_')
+                                title = names[0]
+                                col = names[1]
+                                
+                                if title != old_title:
+                                    rowb = box.row(align=True)
+                                    rowb.scale_y =0.8
+                                    rowb.label(text=title, icon='VIEW_ORTHO')
+                                    rowb = box.row(align=True)
+                                if col != old_col:
+                                    rowb = box.row(align=True)                                    
+                                    rowb.label(text=col)
+                                else:
+                                    rowb.label(text="")
+                                act_prop = f"value{item.type_value}"
+                                rowb.prop(item, act_prop, text="")
+                                old_title =title
+                                old_col = col
+                                
+                            else:
+                                rowb = box.row(align=True)
+                                rowb.scale_y =0.8
+                                rowb.label(text=item.name)
+                                act_prop = f"value{item.type_value}"
+                                rowb.prop(item, act_prop, text="")
 

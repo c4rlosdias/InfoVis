@@ -970,3 +970,19 @@ class Operator_props_load(bpy.types.Operator):
     def execute(self, context):
         refresh_props(context)
         return {"FINISHED"} 
+    
+class Operator_props_expand(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.expand"
+    bl_label   = "expand properties"
+    bl_options = {"REGISTER", "UNDO"}   
+
+    index : bpy.props.IntProperty(name="index")  
+
+    def execute(self, context):
+        props = context.scene.my_props 
+        for pset in props.prop_metadata:
+            if pset.index == self.index:
+                pset.is_expanded = not(pset.is_expanded)
+                pass
+        return {"FINISHED"} 
