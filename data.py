@@ -1,5 +1,6 @@
 import requests
 import logging
+import pandas as pd
 import os
 import json
 import bpy
@@ -60,54 +61,7 @@ def refresh_container(context):
             new_item.type = classe.type  
             new_item.is_selected = classe.is_selected  
 
-# def refresh_props(context):
-#     props = context.scene.my_props
-#     props.prop_metadata.clear()
-#     # get active object
-#     obj = context.active_object
-#     ifc_obj = tool.Ifc.get_entity(obj)
-#     # get psets
-#     psets = ifcopenshell.util.element.get_psets(ifc_obj)
-#     for pset, _props in psets.items():          
-#         new_item = props.prop_metadata.add()            
-#         new_item.name = pset            
-#         new_item.value = "" 
-#         new_item.type_value = 'pset'       
-#         for prop, value in _props.items():           
-#            if prop != 'id':                 
-#                 new_item = props.prop_metadata.add()            
-#                 new_item.name = prop    
-#                 if type(value) == list:
-#                     c = 0
-#                     for item_prop in value:
-#                         new_item_ = props.prop_metadata.add()  
-#                         new_item_.name = f'     [{c}]'
-#                         if type(item_prop) == str:
-#                             new_item_.valuestr = item_prop
-#                             new_item_.type_value = "str"
-#                         elif type(item_prop) == int:
-#                             new_item_.valueint = item_prop
-#                             new_item_.type_value = "int"
-#                         elif type(item_prop) == float:
-#                             new_item_.valuefloat = item_prop
-#                             new_item_.type_value = "float"
-#                         elif type(item_prop) == bool:
-#                             new_item_.valuebool = item_prop
-#                             new_item_.type_value = "bool"
-#                         c += 1
-#                 else:
-#                     if type(value) == str:
-#                         new_item.valuestr = value
-#                         new_item.type_value = "str"
-#                     elif type(value) == int:
-#                         new_item.valueint = value
-#                         new_item.type_value = "int"
-#                     elif type(value) == float:
-#                         new_item.valuefloat = value
-#                         new_item.type_value = "float"
-#                     elif type(item_prop) == bool:
-#                         new_item.valuebool = item_prop
-#                         new_item.type_value = "bool"
+
 def set_prop_type( prop, value_prop):
     res = ""
     if type(value_prop) == str:
@@ -132,26 +86,83 @@ def refresh_props(context):
     # get psets
     psets = ifcopenshell.util.element.get_psets(ifc_obj)
     i = 0
-    for pset, _props in psets.items():          
+    
+    for pset, _props in psets.items():      
+        table = {}    
         new_item = props.prop_metadata.add()            
         new_item.name = pset      
         new_item.index = i        
         for prop, value in _props.items():           
-           if prop != 'id':                 
-                if type(value) == list:
-                    c = 0
-                    for item_prop in value:    
-                        new_prop = new_item.props.add()                      
-                        #new_prop.name = f'{prop} [{c}]'
+           if prop != 'id':  
+                if 'Table' in prop:
+                    #table[prop.split('_')[1]]=value
+                    table[prop]=value
+                else:               
+                    if type(value) == list:
+                        c = 0
+                        for item_prop in value:    
+                            new_prop = new_item.props.add()                      
+                            #new_prop.name = f'{prop} [{c}]'
+                            new_prop.name = prop
+                            set_prop_type(new_prop, item_prop)
+                            c += 1
+                    else:
+                        new_prop = new_item.props.add()  
                         new_prop.name = prop
-                        set_prop_type(new_prop, item_prop)
-                        c += 1
-                else:
-                    new_prop = new_item.props.add()  
-                    new_prop.name = prop
-                    set_prop_type(new_prop, value)
+                        set_prop_type(new_prop, value)        
+        
+        if len(table) > 0:
+            df = pd.DataFrame(table)
+            columns = df.columns.tolist()    
+            n = len(columns)  
+
+            for column in columns:                  
+                new_prop = new_item.props.add()
+                new_prop.name = column
+                new_prop.n_columns = n
+                #set_prop_type(new_prop, column.split('_')[1])  
+                new_prop.type_value = '!coluna!'
+
+            
+            for index, row in df.iterrows():                 
+                 for column in columns:
+                     new_prop = new_item.props.add()
+                     new_prop.name = column
+                     new_prop.n_columns = n
+                     set_prop_type(new_prop, row[column])
+
         i += 1
 
+
+
+# def refresh_props(context):
+#     props = context.scene.my_props
+#     props.prop_metadata.clear()
+#     # get active object
+#     obj = context.active_object
+#     ifc_obj = tool.Ifc.get_entity(obj)
+#     # get psets
+#     psets = ifcopenshell.util.element.get_psets(ifc_obj)
+#     i = 0
+#     for pset, _props in psets.items():          
+#         new_item = props.prop_metadata.add()            
+#         new_item.name = pset      
+#         new_item.index = i        
+#         for prop, value in _props.items():           
+#            if prop != 'id':                 
+#                 if type(value) == list:
+#                     c = 0
+#                     for item_prop in value:    
+#                         new_prop = new_item.props.add()                      
+#                         #new_prop.name = f'{prop} [{c}]'
+#                         new_prop.name = prop
+#                         set_prop_type(new_prop, item_prop)
+#                         c += 1
+#                 else:
+#                     new_prop = new_item.props.add()  
+#                     new_prop.name = prop
+#                     set_prop_type(new_prop, value)
+#         i += 1
 class Import_ifc():
 
     file : ifcopenshell.file

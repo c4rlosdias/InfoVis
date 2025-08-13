@@ -483,33 +483,54 @@ class Panel_Properties(bpy.types.Panel):
                     if pset.is_expanded:
                         box = layout.box()
                         old_title="" 
-                        old_col = ""
+                        old_name_prop = ""
+                        i = 1
                         for item in pset.props:                                         
                             
                             if 'Table' in  item.name:
                                 names = item.name.split('_')
                                 title = names[0]
-                                col = names[1]
+                                name_prop = names[1]
                                 
                                 if title != old_title:
                                     rowb = box.row(align=True)
                                     rowb.scale_y =0.8
+                                    rowb.operator("props.edit", icon='FILE_REFRESH', text="")
                                     rowb.label(text=title, icon='VIEW_ORTHO')
                                     rowb = box.row(align=True)
-                                if col != old_col:
-                                    rowb = box.row(align=True)                                    
-                                    rowb.label(text=col)
-                                else:
-                                    rowb.label(text="")
-                                act_prop = f"value{item.type_value}"
-                                rowb.prop(item, act_prop, text="")
-                                old_title =title
-                                old_col = col
+                                    col = rowb.column(align=True)
+                                    col.scale_x = 0.3
+                                    col.label(text="")
+                                    i = 1
                                 
-                            else:
-                                rowb = box.row(align=True)
-                                rowb.scale_y =0.8
-                                rowb.label(text=item.name)
+                                col = rowb.column()
+                                col.scale_x =0.5
+                                if item.type_value == '!coluna!':
+                                    col.label(text=item.name.split('_')[1])
+                                else:
+                                    act_prop = f"value{item.type_value}"
+                                    col.prop(item, act_prop, text="")
+ 
+                                if i%item.n_columns == 0:
+                                    rowb = box.row(align=True)
+                                    col = rowb.column()
+                                    col.scale_x = 0.3
+                                    col.label(text="")
+
+                                old_title =title
+                                old_name_prop = name_prop
+                                
+                            else:                               
+                                if item.name != old_name_prop:
+                                    rowb = box.row(align=True)
+                                    rowb.operator("props.edit", icon='FILE_REFRESH', text="")                                    
+                                    rowb.label(text=item.name)
+                                col = rowb.column()
+                                col.scale_x =0.6
                                 act_prop = f"value{item.type_value}"
-                                rowb.prop(item, act_prop, text="")
+                                col.prop(item, act_prop, text="")
+                                #col = rowb.column()
+                                # col.operator("props.edit", icon='CHECKMARK', text="")
+                                old_name_prop = item.name
+                            i += 1
 

@@ -961,6 +961,16 @@ class Operator_catalog_insert_type(bpy.types.Operator):
 # ==================================================================================================
 # Load object properties
 # ==================================================================================================
+class Operator_props_edit(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.edit"
+    bl_label   = "edit object properties"
+    bl_options = {"REGISTER", "UNDO"} 
+
+    def execute(self, context):
+        
+        return {"FINISHED"} 
+    
 class Operator_props_load(bpy.types.Operator):
     """"""
     bl_idname  = "props.load_properties"
