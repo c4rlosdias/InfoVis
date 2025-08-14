@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import json
 import bpy
+import numpy as np
 import ifcopenshell
 import ifcopenshell.util.selector as selector
 import bonsai.tool as tool
@@ -70,56 +71,59 @@ def set_prop_type( prop, value_prop):
     elif type(value_prop) == int:
         prop.valueint = value_prop
         prop.type_value = "int"
-    elif type(value_prop) == float:
+    elif type(value_prop) == float or type(value_prop) == np.float64:
         prop.valuefloat = value_prop
         prop.type_value = "float"
     elif type(value_prop) == bool:
         prop.valuebool = value_prop
         prop.type_value = "bool"
+    else:
+        prop.valuestr = str(value_prop)
+        prop.type_value = "str"
+        print(type(value_prop))
 
-def refresh_props(context):
-    props = context.scene.my_props
-    props.prop_metadata.clear()
-    # get active object
-    obj = context.active_object
-    ifc_obj = tool.Ifc.get_entity(obj)
+def set_properties(props, ifc_obj, is_a, i):
+    id = ifc_obj.id()
     # get psets
-    psets = ifcopenshell.util.element.get_psets(ifc_obj)
-    i = 0
-    
-    for pset, _props in psets.items():      
+    psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
+    for pset, _props in psets.items():             
         table = {}    
         new_item = props.prop_metadata.add()            
-        new_item.name = pset      
-        new_item.index = i        
+        new_item.name = pset  
+        new_item.is_a = is_a 
+        new_item.id_obj = id          
+        new_item.index = i  
+        j = 0      
         for prop, value in _props.items():           
-           if prop != 'id':  
+            if prop != 'id':  
                 if 'Table' in prop:
-                    #table[prop.split('_')[1]]=value
                     table[prop]=value
                 else:               
                     if type(value) == list:
                         c = 0
                         for item_prop in value:    
-                            new_prop = new_item.props.add()                      
-                            #new_prop.name = f'{prop} [{c}]'
+                            new_prop = new_item.props.add() 
                             new_prop.name = prop
+                            new_prop.index = j
                             set_prop_type(new_prop, item_prop)
                             c += 1
                     else:
                         new_prop = new_item.props.add()  
                         new_prop.name = prop
+                        new_prop.index = j
                         set_prop_type(new_prop, value)        
-        
+            j += 1
+
         if len(table) > 0:
             df = pd.DataFrame(table)
             columns = df.columns.tolist()    
             n = len(columns)  
-
+            
             for column in columns:                  
                 new_prop = new_item.props.add()
                 new_prop.name = column
                 new_prop.n_columns = n
+                
                 #set_prop_type(new_prop, column.split('_')[1])  
                 new_prop.type_value = '!coluna!'
 
@@ -129,40 +133,24 @@ def refresh_props(context):
                      new_prop = new_item.props.add()
                      new_prop.name = column
                      new_prop.n_columns = n
+                     print(type(row[column]))
                      set_prop_type(new_prop, row[column])
 
         i += 1
+    return i
+
+def refresh_props(context):
+    # get active object
+    props = context.scene.my_props
+    props.prop_metadata.clear() 
+    obj = context.active_object
+    ifc_obj = tool.Ifc.get_entity(obj)
+    ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
+    i = set_properties(props, ifc_obj, "instance", 0)
+    set_properties(props, ifc_type_obj, "type", i)
 
 
 
-# def refresh_props(context):
-#     props = context.scene.my_props
-#     props.prop_metadata.clear()
-#     # get active object
-#     obj = context.active_object
-#     ifc_obj = tool.Ifc.get_entity(obj)
-#     # get psets
-#     psets = ifcopenshell.util.element.get_psets(ifc_obj)
-#     i = 0
-#     for pset, _props in psets.items():          
-#         new_item = props.prop_metadata.add()            
-#         new_item.name = pset      
-#         new_item.index = i        
-#         for prop, value in _props.items():           
-#            if prop != 'id':                 
-#                 if type(value) == list:
-#                     c = 0
-#                     for item_prop in value:    
-#                         new_prop = new_item.props.add()                      
-#                         #new_prop.name = f'{prop} [{c}]'
-#                         new_prop.name = prop
-#                         set_prop_type(new_prop, item_prop)
-#                         c += 1
-#                 else:
-#                     new_prop = new_item.props.add()  
-#                     new_prop.name = prop
-#                     set_prop_type(new_prop, value)
-#         i += 1
 class Import_ifc():
 
     file : ifcopenshell.file

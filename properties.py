@@ -5,6 +5,7 @@ import bonsai.tool as tool
 import requests
 from .data import bSDD
 
+
 def get_dictionaries(self, context):                
     if not bSDD.is_loaded:
         bSDD.load_dictionaries()
@@ -60,18 +61,24 @@ class Class_info(PropertyGroup):
 
 class Property_info(PropertyGroup):    
     name        : StringProperty(name='property name')
+    index       : IntProperty(name='prop index')
     valuestr    : StringProperty(name='value str')
     valueint    : IntProperty(name='value int')
     valuefloat  : FloatProperty(name='value float')
     valuebool   : BoolProperty(name="value bool")
     type_value  : StringProperty(name="type value")
     n_columns   : IntProperty(name='n columns', default=1)
+    x_axis      : EnumProperty(items=[('111','111','111')], name="")
+    y_axis      : EnumProperty(items=[('111','111','111')], name="")
 
 class Pset_info(PropertyGroup):    
     name        : StringProperty(name='pset name')
+    is_a        : StringProperty(name= "is a")
+    id_obj      : IntProperty(name="id object")       
     index       : IntProperty(name='index')
     props       : CollectionProperty(name="properties", type=Property_info)
     is_expanded : BoolProperty(name="Is Expanded", default=False)
+    
 
 class Container(PropertyGroup):
     has_children: BoolProperty(name="has children")    

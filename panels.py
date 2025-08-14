@@ -471,14 +471,28 @@ class Panel_Properties(bpy.types.Panel):
             row.operator("props.load_properties", text="Load properties") 
 
             if len(props.prop_metadata) > 0:
+                old_is_a = ""
                 for pset in props.prop_metadata:
+                    row = layout.row()
+                    if old_is_a != pset.is_a:
+                        if pset.is_a == 'instance':
+                            row = layout.row()
+                            row.label(text="Occurence Properties:", icon='HOLDOUT_OFF') 
+                            row = layout.row()
+ 
+                        else:
+                            row = layout.row()
+                            row.label(text="Inherited Type Properties:", icon='CON_CHILDOF') 
+                            row = layout.row()
+                            
+
                     row = layout.row()
                     if pset.is_expanded:
                         icon = 'TRIA_DOWN'
                     else:
                         icon = 'TRIA_RIGHT'
                     row.operator("props.expand", icon=icon, text="").index = pset.index
-                    row.label(text=pset.name, icon='COPY_ID')   
+                    row.label(text=pset.name, icon='COPY_ID') 
                                     
                     if pset.is_expanded:
                         box = layout.box()
@@ -495,16 +509,27 @@ class Panel_Properties(bpy.types.Panel):
                                 if title != old_title:
                                     rowb = box.row(align=True)
                                     rowb.scale_y =0.8
-                                    rowb.operator("props.edit", icon='FILE_REFRESH', text="")
+                                    op = rowb.operator("props.edit", icon='FILE_REFRESH', text="")
+                                    op.pset_index = pset.index
+                                    op.prop_index = item.index
+                                    
                                     rowb.label(text=title, icon='VIEW_ORTHO')
+                                    rowb = box.row()
+                                    
+                                    rowb.operator("props.graph", icon='FORCE_HARMONIC', text="")                                    
+                                    rowb.prop(item, "x_axis", icon='EVENT_X')
+                                    rowb.prop(item, "y_axis", icon="EVENT_Y")
+
                                     rowb = box.row(align=True)
                                     col = rowb.column(align=True)
-                                    col.scale_x = 0.3
+                                    col.scale_x = 0.7
                                     col.label(text="")
                                     i = 1
+
+                                    
                                 
                                 col = rowb.column()
-                                col.scale_x =0.5
+                                col.scale_x =0.7
                                 if item.type_value == '!coluna!':
                                     col.label(text=item.name.split('_')[1])
                                 else:
@@ -519,11 +544,15 @@ class Panel_Properties(bpy.types.Panel):
 
                                 old_title =title
                                 old_name_prop = name_prop
+
+                                
                                 
                             else:                               
                                 if item.name != old_name_prop:
                                     rowb = box.row(align=True)
-                                    rowb.operator("props.edit", icon='FILE_REFRESH', text="")                                    
+                                    op=rowb.operator("props.edit", icon='FILE_REFRESH', text="")   
+                                    op.pset_index = pset.index
+                                    op.prop_index = item.index                                 
                                     rowb.label(text=item.name)
                                 col = rowb.column()
                                 col.scale_x =0.6
@@ -533,4 +562,5 @@ class Panel_Properties(bpy.types.Panel):
                                 # col.operator("props.edit", icon='CHECKMARK', text="")
                                 old_name_prop = item.name
                             i += 1
+                    old_is_a = pset.is_a
 

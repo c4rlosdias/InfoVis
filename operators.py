@@ -966,9 +966,36 @@ class Operator_props_edit(bpy.types.Operator):
     bl_idname  = "props.edit"
     bl_label   = "edit object properties"
     bl_options = {"REGISTER", "UNDO"} 
-
+    pset_index : bpy.props.IntProperty(name='pset index')
+    prop_index : bpy.props.IntProperty(name='prop index')    
+    
+    
+    def get_prop_type( self, prop):
+        res = None
+        if prop.type_value == "str":
+            res = prop.valuestr
+        elif prop.type_value == "int":
+            res = prop.valueint
+        elif prop.type_value == "bool":
+            res = prop.valuebool
+        elif prop.type_value == "float":
+            res = prop.valuefloat
+        return res
+    
+    
     def execute(self, context):
-        
+        props = context.scene.my_props 
+        model = tool.Ifc.get()
+        for pset in props.prop_metadata:
+            if pset.index == self.pset_index:                
+                for prop in pset.props:
+                    if prop.index == self.prop_index:
+                        product = model.by_id(pset.id_obj)
+                        _value = self.get_prop_type(prop)
+                        _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=pset.name)
+                        ifcopenshell.api.pset.edit_pset(model, pset=_pset, properties={prop.name : _value})
+
+                
         return {"FINISHED"} 
     
 class Operator_props_load(bpy.types.Operator):
@@ -995,4 +1022,14 @@ class Operator_props_expand(bpy.types.Operator):
             if pset.index == self.index:
                 pset.is_expanded = not(pset.is_expanded)
                 pass
+        return {"FINISHED"} 
+
+class Operator_props_graph(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.graph"
+    bl_label   = "load object properties"
+    bl_options = {"REGISTER", "UNDO"} 
+
+    def execute(self, context):
+        
         return {"FINISHED"} 
