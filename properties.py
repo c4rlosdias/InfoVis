@@ -68,8 +68,10 @@ class Property_info(PropertyGroup):
     valuebool   : BoolProperty(name="value bool")
     type_value  : StringProperty(name="type value")
     n_columns   : IntProperty(name='n columns', default=1)
-    x_axis      : EnumProperty(items=[('111','111','111')], name="")
-    y_axis      : EnumProperty(items=[('111','111','111')], name="")
+    is_xaxis    : BoolProperty(name="is x axis", default=False)
+    is_yaxis    : BoolProperty(name="is y axis", default=False)
+    axis        : EnumProperty(items=[('N/A', 'N/A', 'N/A'), ('X','X', 'X'), ('Y','Y', 'Y')], name="axis")
+
 
 class Pset_info(PropertyGroup):    
     name        : StringProperty(name='pset name')

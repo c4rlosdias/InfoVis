@@ -460,10 +460,9 @@ class Panel_Properties(bpy.types.Panel):
         props = context.scene.my_props 
         layout = self.layout       
         row = layout.row()   
-
-        objs = context.selected_objects
-        
         # select objects 
+        objs = context.selected_objects        
+        
         if len(objs) > 0: 
             row = layout.row()
             row.label(text="Properties:", icon='INFO')
@@ -485,7 +484,7 @@ class Panel_Properties(bpy.types.Panel):
                             row.label(text="Inherited Type Properties:", icon='CON_CHILDOF') 
                             row = layout.row()
                             
-
+                    # propriedade é ou não expandida
                     row = layout.row()
                     if pset.is_expanded:
                         icon = 'TRIA_DOWN'
@@ -493,14 +492,15 @@ class Panel_Properties(bpy.types.Panel):
                         icon = 'TRIA_RIGHT'
                     row.operator("props.expand", icon=icon, text="").index = pset.index
                     row.label(text=pset.name, icon='COPY_ID') 
-                                    
+
+                    # se o pset está expandido                
                     if pset.is_expanded:
                         box = layout.box()
                         old_title="" 
                         old_name_prop = ""
                         i = 1
                         for item in pset.props:                                         
-                            
+                            # se for tabela
                             if 'Table' in  item.name:
                                 names = item.name.split('_')
                                 title = names[0]
@@ -509,29 +509,33 @@ class Panel_Properties(bpy.types.Panel):
                                 if title != old_title:
                                     rowb = box.row(align=True)
                                     rowb.scale_y =0.8
+                                    
                                     op = rowb.operator("props.edit", icon='FILE_REFRESH', text="")
                                     op.pset_index = pset.index
                                     op.prop_index = item.index
                                     
                                     rowb.label(text=title, icon='VIEW_ORTHO')
-                                    rowb = box.row()
-                                    
-                                    rowb.operator("props.graph", icon='FORCE_HARMONIC', text="")                                    
-                                    rowb.prop(item, "x_axis", icon='EVENT_X')
-                                    rowb.prop(item, "y_axis", icon="EVENT_Y")
+                                    # operador para gerar gráfico
+                                    op2 = rowb.operator("props.graph", icon='FORCE_HARMONIC', text="")
+                                    op2.pset_index = pset.index
+                                    op2.prop_index = item.index  
 
+                                    rowb = box.row() 
                                     rowb = box.row(align=True)
                                     col = rowb.column(align=True)
                                     col.scale_x = 0.7
                                     col.label(text="")
                                     i = 1
-
                                     
-                                
+                                    
+                                # monta a tabela
                                 col = rowb.column()
                                 col.scale_x =0.7
-                                if item.type_value == '!coluna!':
+                                if item.type_value == '!coluna!':                                    
                                     col.label(text=item.name.split('_')[1])
+                                    # col.prop(item, "is_xaxis", text="X")
+                                    # col.prop(item, "is_yaxis", text="Y")
+                                    col.prop(item, "axis")
                                 else:
                                     act_prop = f"value{item.type_value}"
                                     col.prop(item, act_prop, text="")
@@ -541,12 +545,12 @@ class Panel_Properties(bpy.types.Panel):
                                     col = rowb.column()
                                     col.scale_x = 0.3
                                     col.label(text="")
-
+                                # controla a mudança de propriedades e colunas
                                 old_title =title
                                 old_name_prop = name_prop
 
                                 
-                                
+                            #se não for tabela   
                             else:                               
                                 if item.name != old_name_prop:
                                     rowb = box.row(align=True)
@@ -558,9 +562,9 @@ class Panel_Properties(bpy.types.Panel):
                                 col.scale_x =0.6
                                 act_prop = f"value{item.type_value}"
                                 col.prop(item, act_prop, text="")
-                                #col = rowb.column()
-                                # col.operator("props.edit", icon='CHECKMARK', text="")
                                 old_name_prop = item.name
+
                             i += 1
-                    old_is_a = pset.is_a
+
+                    old_is_a = pset.is_a # type or instance
 

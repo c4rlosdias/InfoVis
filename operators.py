@@ -1029,7 +1029,23 @@ class Operator_props_graph(bpy.types.Operator):
     bl_idname  = "props.graph"
     bl_label   = "load object properties"
     bl_options = {"REGISTER", "UNDO"} 
+    pset_index : bpy.props.IntProperty(name='pset index')
+    prop_index : bpy.props.IntProperty(name='prop index')  
 
     def execute(self, context):
-        
+        props = context.scene.my_props 
+        model = tool.Ifc.get()
+        dic = {}
+        title = ""
+        for pset in props.prop_metadata:
+            if pset.index == self.pset_index:             
+                for prop in pset.props:
+                    if prop.index == self.prop_index and prop.axis in ['X', 'Y']:
+                        product = model.by_id(pset.id_obj)
+                        props = element.get_pset(product, name=pset.name, prop=prop.name)
+                        title = prop.name.split('_')[0]
+                        dic[prop.name.split('_')[1]]=props
+                        
+        print(title)
+        print(dic)
         return {"FINISHED"} 
