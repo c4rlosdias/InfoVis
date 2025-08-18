@@ -2,6 +2,8 @@ import bonsai.core
 import bonsai.core.geometry
 import bonsai.core.material
 import bonsai.core.type
+import webbrowser
+import os
 import bpy
 from ifctester import ids
 from tqdm import tqdm
@@ -14,15 +16,14 @@ import ifcopenshell.api.geometry as geometry
 import ifcopenshell.api.style as style
 import ifcopenshell
 import webbrowser
-import json
-import rdflib
-from rdflib import Graph, RDF
 from .data import bSDD, PropTempl,Catalog, Import_ifc, refresh, refresh_container, refresh_products, refresh_props
 import bonsai.core as core
 import bonsai
 import bonsai.tool as tool
-import bonsai.core.root
 from bonsai.bim import import_ifc
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
 
 def set_hide_class(context, index, is_hidden):
         props = context.scene.my_props
@@ -967,7 +968,8 @@ class Operator_props_edit(bpy.types.Operator):
     bl_label   = "edit object properties"
     bl_options = {"REGISTER", "UNDO"} 
     pset_index : bpy.props.IntProperty(name='pset index')
-    prop_index : bpy.props.IntProperty(name='prop index')    
+    prop_index : bpy.props.IntProperty(name='prop index')   
+    type_prop  : bpy.props.StringProperty(name='prop type') 
     
     
     def get_prop_type( self, prop):
@@ -986,6 +988,8 @@ class Operator_props_edit(bpy.types.Operator):
     def execute(self, context):
         props = context.scene.my_props 
         model = tool.Ifc.get()
+
+        print(100*'-')
         for pset in props.prop_metadata:
             if pset.index == self.pset_index:                
                 for prop in pset.props:
@@ -994,7 +998,6 @@ class Operator_props_edit(bpy.types.Operator):
                         _value = self.get_prop_type(prop)
                         _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=pset.name)
                         ifcopenshell.api.pset.edit_pset(model, pset=_pset, properties={prop.name : _value})
-
                 
         return {"FINISHED"} 
     
@@ -1024,6 +1027,7 @@ class Operator_props_expand(bpy.types.Operator):
                 pass
         return {"FINISHED"} 
 
+# Ainda não implementado
 class Operator_props_graph(bpy.types.Operator):
     """"""
     bl_idname  = "props.graph"
@@ -1033,19 +1037,4 @@ class Operator_props_graph(bpy.types.Operator):
     prop_index : bpy.props.IntProperty(name='prop index')  
 
     def execute(self, context):
-        props = context.scene.my_props 
-        model = tool.Ifc.get()
-        dic = {}
-        title = ""
-        for pset in props.prop_metadata:
-            if pset.index == self.pset_index:             
-                for prop in pset.props:
-                    if prop.index == self.prop_index and prop.axis in ['X', 'Y']:
-                        product = model.by_id(pset.id_obj)
-                        props = element.get_pset(product, name=pset.name, prop=prop.name)
-                        title = prop.name.split('_')[0]
-                        dic[prop.name.split('_')[1]]=props
-                        
-        print(title)
-        print(dic)
         return {"FINISHED"} 

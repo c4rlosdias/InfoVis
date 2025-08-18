@@ -492,19 +492,23 @@ class Panel_Properties(bpy.types.Panel):
                         icon = 'TRIA_RIGHT'
                     row.operator("props.expand", icon=icon, text="").index = pset.index
                     row.label(text=pset.name, icon='COPY_ID') 
+                    layout.separator()
 
                     # se o pset está expandido                
                     if pset.is_expanded:
+                        
                         box = layout.box()
                         old_title="" 
                         old_name_prop = ""
                         i = 1
+                        
                         for item in pset.props:                                         
                             # se for tabela
                             if 'Table' in  item.name:
                                 names = item.name.split('_')
                                 title = names[0]
                                 name_prop = names[1]
+                                
                                 
                                 if title != old_title:
                                     rowb = box.row(align=True)
@@ -515,48 +519,39 @@ class Panel_Properties(bpy.types.Panel):
                                     op.prop_index = item.index
                                     
                                     rowb.label(text=title, icon='VIEW_ORTHO')
-                                    # operador para gerar gráfico
-                                    op2 = rowb.operator("props.graph", icon='FORCE_HARMONIC', text="")
-                                    op2.pset_index = pset.index
-                                    op2.prop_index = item.index  
-
                                     rowb = box.row() 
                                     rowb = box.row(align=True)
                                     col = rowb.column(align=True)
                                     col.scale_x = 0.7
-                                    col.label(text="")
+                                    #col.label(text="")
                                     i = 1
-                                    
-                                    
+
                                 # monta a tabela
-                                col = rowb.column()
-                                col.scale_x =0.7
-                                if item.type_value == '!coluna!':                                    
-                                    col.label(text=item.name.split('_')[1])
-                                    # col.prop(item, "is_xaxis", text="X")
-                                    # col.prop(item, "is_yaxis", text="Y")
-                                    col.prop(item, "axis")
+                                col = rowb.column(align=True)
+                                
+                                if item.type_value == '!coluna!':               
+
+                                    col.label(text=item.name.split('_')[1])                                                           
                                 else:
                                     act_prop = f"value{item.type_value}"
                                     col.prop(item, act_prop, text="")
  
                                 if i%item.n_columns == 0:
                                     rowb = box.row(align=True)
-                                    col = rowb.column()
-                                    col.scale_x = 0.3
-                                    col.label(text="")
+                                    col = rowb.column()   
+                                    col.alignment = 'CENTER'                                 
+
                                 # controla a mudança de propriedades e colunas
                                 old_title =title
                                 old_name_prop = name_prop
-
-                                
+  
                             #se não for tabela   
                             else:                               
                                 if item.name != old_name_prop:
                                     rowb = box.row(align=True)
                                     op=rowb.operator("props.edit", icon='FILE_REFRESH', text="")   
                                     op.pset_index = pset.index
-                                    op.prop_index = item.index                                 
+                                    op.prop_index = item.index                               
                                     rowb.label(text=item.name)
                                 col = rowb.column()
                                 col.scale_x =0.6
