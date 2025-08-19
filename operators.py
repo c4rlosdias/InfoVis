@@ -971,7 +971,25 @@ class Operator_props_edit(bpy.types.Operator):
     prop_index : bpy.props.IntProperty(name='prop index')   
     type_prop  : bpy.props.StringProperty(name='prop type') 
     
-    
+    def change_prop(self, pset, props):
+        model = tool.Ifc.get()   
+        for name_prop, values in props.items():
+            for prop in pset.HasProperties:
+                if prop.Name == name_prop:
+                    if prop.is_a() == 'IfcPropertyListValue':
+                        list_values = prop.ListValues
+                        new_list_values = []
+                        for value in values:    
+                            if value is not None:
+                                new_value = model.create_entity(list_values[values.index(value)].is_a(), value) 
+                                new_list_values.append(new_value)
+                        print(prop.ListValues)
+                        print(new_list_values)
+                        prop.ListValues = new_list_values
+                    else:                        
+                        new_value = model.create_entity(prop.NominalValue.is_a(), values[0])                        
+                        prop.NominalValue = new_value
+
     def get_prop_type( self, prop):
         res = None
         if prop.type_value == "str":
@@ -988,17 +1006,26 @@ class Operator_props_edit(bpy.types.Operator):
     def execute(self, context):
         props = context.scene.my_props 
         model = tool.Ifc.get()
-
-        print(100*'-')
-        for pset in props.prop_metadata:
-            if pset.index == self.pset_index:                
-                for prop in pset.props:
+        new_pset = ''
+        new_values = []
+        new_props = {}
+        print(100*'_')
+        # cria um dicionario com as propriedades e valores
+        for pset in props.prop_metadata:            
+            if pset.index == self.pset_index:                              
+                for prop in pset.props:                                      
                     if prop.index == self.prop_index:
                         product = model.by_id(pset.id_obj)
-                        _value = self.get_prop_type(prop)
-                        _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=pset.name)
-                        ifcopenshell.api.pset.edit_pset(model, pset=_pset, properties={prop.name : _value})
-                
+                        new_pset = pset.name
+                        if prop.name in new_props:
+                            new_props[prop.name].append(self.get_prop_type(prop))                        
+                        else:
+                            new_props[prop.name] = [self.get_prop_type(prop)]
+                        
+        print(new_pset)
+        print(new_props)        
+        _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=new_pset)   
+        self.change_prop(_pset, new_props)
         return {"FINISHED"} 
     
 class Operator_props_load(bpy.types.Operator):

@@ -104,7 +104,8 @@ def set_properties(props, ifc_obj, is_a, i):
                         for item_prop in value:    
                             new_prop = new_item.props.add() 
                             new_prop.name = prop
-                            new_prop.index = j                                                       
+                            new_prop.index = j      
+                            new_prop.type_prop = 'list'                                                 
                             set_prop_type(new_prop, item_prop)
                             c += 1
                     else:
@@ -120,12 +121,13 @@ def set_properties(props, ifc_obj, is_a, i):
             columns = df.columns.tolist()    
             n = len(columns)  
             # cria o cabecalho de colunas
-            for column in columns:                  
-                new_prop = new_item.props.add()
-                new_prop.name = column
-                new_prop.n_columns = n
-                new_prop.index = j
-                new_prop.type_value = '!coluna!'
+            # for column in columns:                  
+            #     new_prop = new_item.props.add()
+            #     new_prop.name = column
+            #     new_prop.n_columns = n
+            #     new_prop.index = j
+            #     new_prop.type_prop = 'table'
+            #     new_prop.type_value = '!coluna!'
                 
 
             # iterage no datafreme para cria as propriedades com valor
@@ -134,7 +136,8 @@ def set_properties(props, ifc_obj, is_a, i):
                      new_prop = new_item.props.add()
                      new_prop.name = column
                      new_prop.n_columns = n                          
-                     new_prop.index = j               
+                     new_prop.index = j    
+                     new_prop.type_prop = 'table'           
                      set_prop_type(new_prop, row[column])
 
         i += 1

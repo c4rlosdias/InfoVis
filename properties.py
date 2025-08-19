@@ -67,6 +67,7 @@ class Property_info(PropertyGroup):
     valuefloat  : FloatProperty(name='value float')
     valuebool   : BoolProperty(name="value bool")
     type_value  : StringProperty(name="type value")
+    type_prop   : StringProperty(name='typr prop')
     n_columns   : IntProperty(name='n columns', default=1)
 
 

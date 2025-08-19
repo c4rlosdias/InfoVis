@@ -501,8 +501,9 @@ class Panel_Properties(bpy.types.Panel):
                         old_title="" 
                         old_name_prop = ""
                         i = 1
-                        
-                        for item in pset.props:                                         
+                        titulos = '' 
+                        for item in pset.props:   
+                                                                 
                             # se for tabela
                             if 'Table' in  item.name:
                                 names = item.name.split('_')
@@ -529,12 +530,14 @@ class Panel_Properties(bpy.types.Panel):
                                 # monta a tabela
                                 col = rowb.column(align=True)
                                 
-                                if item.type_value == '!coluna!':               
-
-                                    col.label(text=item.name.split('_')[1])                                                           
-                                else:
+                                if item.name not in titulos:
+                                    col.label(text=item.name.split('_')[1]) 
+                                    #col.label(text=titulos)    
+                                    titulos = titulos + item.name                                                      
+                                else:                                    
                                     act_prop = f"value{item.type_value}"
                                     col.prop(item, act_prop, text="")
+                                    
  
                                 if i%item.n_columns == 0:
                                     rowb = box.row(align=True)
