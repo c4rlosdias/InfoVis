@@ -143,60 +143,7 @@ def set_properties(props, ifc_obj, is_a, i):
         i += 1
     return i
 
-# def set_properties(props, ifc_obj, is_a, i):
-#     id = ifc_obj.id()
-#     # get psets
-#     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
-#     for pset, _props in psets.items():             
-#         table = {}    
-#         new_item = props.prop_metadata.add()            
-#         new_item.name = pset  
-#         new_item.is_a = is_a 
-#         new_item.id_obj = id          
-#         new_item.index = i  
-#         j = 0      
-#         for prop, value in _props.items():           
-#             if prop != 'id':  
-#                 if 'Table' in prop:
-#                     table[prop]=value
-#                 else:               
-#                     if type(value) == list:
-#                         c = 0
-#                         for item_prop in value:    
-#                             new_prop = new_item.props.add() 
-#                             new_prop.name = prop
-#                             new_prop.index = j
-#                             set_prop_type(new_prop, item_prop)
-#                             c += 1
-#                     else:
-#                         new_prop = new_item.props.add()  
-#                         new_prop.name = prop
-#                         new_prop.index = j
-#                         set_prop_type(new_prop, value)        
-#             j += 1
 
-#         # trata a tabela
-#         if len(table) > 0:
-#             df = pd.DataFrame(table)
-#             columns = df.columns.tolist()    
-#             n = len(columns)  
-#             # cria o cabecalho de colunas
-#             for column in columns:                  
-#                 new_prop = new_item.props.add()
-#                 new_prop.name = column
-#                 new_prop.n_columns = n
-#                 new_prop.type_value = '!coluna!'
-
-#             # iterage no datafreme para cria as propriedades com valor
-#             for index, row in df.iterrows():                 
-#                  for column in columns:
-#                      new_prop = new_item.props.add()
-#                      new_prop.name = column
-#                      new_prop.n_columns = n
-#                      set_prop_type(new_prop, row[column])
-
-#         i += 1
-#     return i
 
 def refresh_props(context):
     # get active object
@@ -207,6 +154,7 @@ def refresh_props(context):
     ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
     i = set_properties(props, ifc_obj, "instance", 0)
     set_properties(props, ifc_type_obj, "type", i)
+    
 
 
 

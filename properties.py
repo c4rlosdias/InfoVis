@@ -123,6 +123,7 @@ class MyProperties(PropertyGroup):
     info_class_loaded        : BoolProperty(name='info class loaded', default=False)
     ids_file                 : StringProperty(name='IDS file')
     
+    
     # Catalog
 
     products                 : CollectionProperty(name="products", type=Class_info)
@@ -134,5 +135,6 @@ class MyProperties(PropertyGroup):
     active_pset_index        : IntProperty(name='pset index', default=0)
     prop_metadata            : CollectionProperty(name="psets", type=Pset_info)
     active_property_index    : IntProperty(name='property index', default=0)
+    icon_edit_prop           : StringProperty(name='icon edit property', default='GREASEPENCIL')
 
 

@@ -971,7 +971,7 @@ class Operator_props_edit(bpy.types.Operator):
     prop_index : bpy.props.IntProperty(name='prop index')   
     type_prop  : bpy.props.StringProperty(name='prop type') 
     
-    def change_prop(self, pset, props):
+    def change_prop(self, pset, props):        
         model = tool.Ifc.get()   
         for name_prop, values in props.items():
             for prop in pset.HasProperties:
@@ -1005,6 +1005,7 @@ class Operator_props_edit(bpy.types.Operator):
     
     def execute(self, context):
         props = context.scene.my_props 
+        props.icon_edit_prop = 'CHECKMARK'
         model = tool.Ifc.get()
         new_pset = ''
         new_values = []
@@ -1026,6 +1027,7 @@ class Operator_props_edit(bpy.types.Operator):
         print(new_props)        
         _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=new_pset)   
         self.change_prop(_pset, new_props)
+        bpy.context.scene.update_tag()
         return {"FINISHED"} 
     
 class Operator_props_load(bpy.types.Operator):
