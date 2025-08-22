@@ -482,7 +482,7 @@ class Panel_Properties(bpy.types.Panel):
                             row.label(text="Inherited Type Properties:", icon='CON_CHILDOF') 
                             row = layout.row()
                             
-                    # propriedade é ou não expandida
+                    # pset é ou não expandida
                     row = layout.row()
                     if pset.is_expanded:
                         icon = 'TRIA_DOWN'
@@ -493,22 +493,22 @@ class Panel_Properties(bpy.types.Panel):
                     layout.separator()
 
                     # se o pset está expandido                
-                    if pset.is_expanded:
-                        
+                    if pset.is_expanded:                        
                         box = layout.box()
                         old_title="" 
-                        old_name_prop = ""
-                        i = 1
+                        old_name_prop = ""                        
                         titulos = '' 
+                        i = 1
+
                         for item in pset.props:   
-                                                                 
+                                                             
                             # se for tabela
                             if 'Table' in  item.name:
                                 names = item.name.split('_')
                                 title = names[0]
                                 name_prop = names[1]
                                 
-                                
+                                # imprime o titulo da tabela
                                 if title != old_title:
                                     rowb = box.row(align=True)
                                     rowb.scale_y =0.8
@@ -522,25 +522,24 @@ class Panel_Properties(bpy.types.Panel):
                                     rowb = box.row(align=True)
                                     col = rowb.column(align=True)
                                     col.scale_x = 0.7
-                                    #col.label(text="")
+                                    
                                     i = 1
 
                                 # monta a tabela
-                                col = rowb.column(align=True)
+                                if i==1:
+                                    col = rowb.column(align=True)
+                                    
+                                    #col.alignment = 'CENTER'                                    
                                 
                                 if item.name not in titulos:
-                                    col.label(text=item.name.split('_')[1]) 
-                                    #col.label(text=titulos)    
-                                    titulos = titulos + item.name                                                      
-                                else:                                    
-                                    act_prop = f"value{item.type_value}"
-                                    col.prop(item, act_prop, text="")
-                                   
- 
-                                if i%item.n_columns == 0:
-                                    rowb = box.row(align=True)
-                                    col = rowb.column()   
-                                    col.alignment = 'CENTER'                                 
+                                    col.label(text=item.name.split('_')[1])                                        
+                                    titulos = titulos + item.name  
+
+                                act_prop = f"value{item.type_value}"
+                                col.prop(item, act_prop, text="")
+                                if i%item.n_rows == 0:
+                                    col = rowb.column(align=True)   
+                                    #col.alignment = 'CENTER' 
 
                                 # controla a mudança de propriedades e colunas
                                 old_title =title

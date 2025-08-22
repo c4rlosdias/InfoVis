@@ -118,8 +118,10 @@ def set_properties(props, ifc_obj, is_a, i):
         # trata a tabela
         if len(table) > 0:
             df = pd.DataFrame(table)
+            dft = df.transpose()
             columns = df.columns.tolist()    
-            n = len(columns)  
+            nc = len(columns)  
+            nr = len(df)
             # cria o cabecalho de colunas
             # for column in columns:                  
             #     new_prop = new_item.props.add()
@@ -131,14 +133,16 @@ def set_properties(props, ifc_obj, is_a, i):
                 
 
             # iterage no datafreme para cria as propriedades com valor
-            for index, row in df.iterrows():                 
-                 for column in columns:
-                     new_prop = new_item.props.add()
-                     new_prop.name = column
-                     new_prop.n_columns = n                          
-                     new_prop.index = j    
-                     new_prop.type_prop = 'table'           
-                     set_prop_type(new_prop, row[column])
+            print(dft)
+            for index, row in dft.iterrows():   
+                for col, val in row.items():
+                    new_prop = new_item.props.add()
+                    new_prop.name = index
+                    new_prop.n_columns = nc 
+                    new_prop.n_rows = nr                         
+                    new_prop.index = j    
+                    new_prop.type_prop = 'table'           
+                    set_prop_type(new_prop, val)
 
         i += 1
     return i

@@ -69,6 +69,7 @@ class Property_info(PropertyGroup):
     type_value  : StringProperty(name="type value")
     type_prop   : StringProperty(name='typr prop')
     n_columns   : IntProperty(name='n columns', default=1)
+    n_rows      : IntProperty(name='n columns', default=1)
 
 
 class Pset_info(PropertyGroup):    
