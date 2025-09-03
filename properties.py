@@ -24,6 +24,7 @@ def active_product_changed(self, context):
     #self.classes_shown.clear()
     self.product_loaded = False
 
+
 def load_products(self, context):   
     props = context.scene.my_props
     if props.products_loaded:             
@@ -96,16 +97,22 @@ class Container(PropertyGroup):
 
 class MyProperties(PropertyGroup): 
     
-    active_info_prop_index   : IntProperty(name='object index', default=0)
+    # O&G Dictionary
+
+    dictionary               : EnumProperty(items=get_dictionaries, name='',  description='Get Dictionaries')  
     active_property_index    : IntProperty(name='property index', default=0, update=active_prop_changed)
+    ifc_prop                 : CollectionProperty(name='properties', type=Ifc_properties) 
+    active_info_prop_index   : IntProperty(name='object index', default=0)
+    class_info               : CollectionProperty(name='info class', type=Class_info)    
     active_class_index       : IntProperty(name='class index', default=0, update=active_class_changed)
-    active_element_index     : IntProperty(name='element index', default=0)
-    add_prop_clicked         : BoolProperty(name="add property clicked", default=False)
-    class_info               : CollectionProperty(name='info class', type=Class_info)
     classes                  : CollectionProperty(name='classes', type=Class_info) 
-    classes_shown            : CollectionProperty(name='classes', type=Class_info) 
+    classes_shown            : CollectionProperty(name='classes show', type=Class_info) 
+    active_element_index     : IntProperty(name='element index', default=0)
     elements_containers      : CollectionProperty(name='elements containers', type=Container) 
     containers_show          : CollectionProperty(name='containers show', type=Container) 
+
+
+    add_prop_clicked         : BoolProperty(name="add property clicked", default=False)
     class_description        : StringProperty(name='class description')
     class_definition         : StringProperty(name='class definition')
     class_version            : StringProperty(name='class version date') 
@@ -113,26 +120,27 @@ class MyProperties(PropertyGroup):
     class_ifctype            : StringProperty(name='ifc class') 
     classes_loaded           : BoolProperty(name='classes loaded', default=False)   
     dictionaries_loaded      : BoolProperty(name='Dictionaries loaded')
-    dictionary               : EnumProperty(items=get_dictionaries, name='',  description='Get Dictionaries')    
+      
     prop_datatype            : StringProperty(name='property data type')
     prop_units               : StringProperty(name='property units')
     prop_type                : StringProperty(name='property type')
     prop_description         : StringProperty(name='property description')
     prop_definition          : StringProperty(name='property definition')
-    ifc_prop                 : CollectionProperty(name='properties', type=Ifc_properties) 
+    
     info_prop_loaded         : BoolProperty(name='info prop loaded', default=False)
     info_class_loaded        : BoolProperty(name='info class loaded', default=False)
     ids_file                 : StringProperty(name='IDS file')
     
     
-    # Catalog
+    # O&G Catalog
 
     products                 : CollectionProperty(name="products", type=Class_info)
     products_show            : CollectionProperty(name="products", type=Class_info)
     products_loaded          : BoolProperty(name="products loaded", default=False)
     active_product_index     : IntProperty(name='product index', default=0, update=active_product_changed)
+    product_description      : StringProperty(name='product description', default='')
 
-    # Properties
+    # O&G Properties
     active_pset_index        : IntProperty(name='pset index', default=0)
     prop_metadata            : CollectionProperty(name="psets", type=Pset_info)
     active_property_index    : IntProperty(name='property index', default=0)

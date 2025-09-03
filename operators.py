@@ -72,7 +72,32 @@ def build_classes(context, classe, c, level, parent, hide):
         new_class.has_children = False
     return c
 
-def build_products(context, classe, c, level, parent, hide):
+def build_products(context, classe, c, level, parent, hide, children):
+    c += 1 
+    props = context.scene.my_props
+    new_product = props.products.add()
+    new_product.code        = classe["code"]                 
+    new_product.name        = classe["name"]                
+    new_product.description = classe['descriptionPart']   
+    new_product.uri         = classe["uri"] 
+    new_product.index       =   c  
+    new_product.level_index = level
+    new_product.parent = parent
+    new_product.is_expanded = False
+    new_product.is_hidden = hide
+    new_product.has_children = children
+    
+    # if 'children' in classe:   
+    #     level = level + 1     
+    #     new_product.has_children = True
+    #     for child in classe['children']:            
+    #        c = build_products(context, child , c, level, classe['name'], True)
+   
+    # else:
+    #     new_product.has_children = False
+    return c
+
+def _build_products(context, classe, c, level, parent, hide):
     c += 1 
     props = context.scene.my_props
     new_product = props.products.add()
@@ -98,87 +123,59 @@ def build_products(context, classe, c, level, parent, hide):
     else:
         new_product.has_children = False
     return c
+   
+# ==================================================================================================
+# ==================================================================================================
+# 
+# O&G Dictionary
+# 
+# ==================================================================================================
+# ==================================================================================================
 
 # ==================================================================================================
-# Cria o elemento IFc a partir dos dados do dicionário
+# clear the list of properties loaded
 # ==================================================================================================
-class Operator_create(bpy.types.Operator):
-    """create IFC element from bSDD data"""
-    bl_idname  = "object.create"
-    bl_label   = "uri property"
+class Operator_clear_properties(bpy.types.Operator):
+    """"""
+    bl_idname  = "object.clear_prop"
+    bl_label   = "Clear properties"
     bl_options = {"REGISTER", "UNDO"}
-    uri : bpy.props.StringProperty(name="uri")
 
-    @classmethod
-    def classify(self, entity, data):
-        objecttype = data['referenceCode']
-        if objecttype[-4:] == 'Type':
-            type = element.get_type(entity)
-            if type is not None:
-                type=type[0]
-                type.ElementType = objecttype
-                type.Description = data['description']
-                type.PredefinedType = 'USERDEFINED'
-                entity.PredefinedType = None
-                entity.ObjectType = None
-                return True
-            else:
-                return False
-
-        else:
-            entity.PredefinedType = 'USERDEFINED'
-            entity.ObjectType = objecttype
-            entity.Description = data['description']
-            return True
-    
     def execute(self, context):                
-        objs = context.selected_objects
-        if len(objs)>0:    
-            result = bSDD.get_class(self.uri)                         
-            if result: 
-                if 'relatedIfcEntityNames' in bSDD.data_info_class:
-                    ifc_type = bSDD.data_info_class['relatedIfcEntityNames'][0]
-                    for obj in objs:
-                        entity = tool.Ifc.get_entity(obj)
-                        if entity.is_a(ifc_type) or entity.is_a(ifc_type[:-4]):
-                            result = self.classify(entity, bSDD.data_info_class)
-                            if result:
-                                print(f'{entity.Name} classified')
-                            else:
-                                print(f'{entity.Name} not classified')
-
-                        else:
-                            self.report({'ERROR'}, 'this class is not compatible')
-                            return {'CANCELLED'}
-                    return {"FINISHED"}
-                else:
-                    self.report({'ERROR'}, 'this class is not compatible')
-                    return {'CANCELLED'} 
-            else:
-                self.report({'ERROR'}, 'error connecting bSDD')
-                return {'CANCELLED'}
-        else:
-            self.report({'ERROR'}, 'No selected objects')
-            return {"CANCELLED"}
+        props = context.scene.my_props
+        props.ifc_prop.clear()              
+        return {"FINISHED"}    
     
 # ==================================================================================================
-# acerra a uri na propriedade no bSDD
+# assign all objects
 # ==================================================================================================
-class Operator_uri(bpy.types.Operator):
-    """acerra a uri na propriedade no bSDD"""
-    bl_idname  = "object.uri"
-    bl_label   = "uri property"
+class Operator_assign_all(bpy.types.Operator):
+    """"""
+    bl_idname  = "object.assign_all"
+    bl_label   = "Assign all objects"
     bl_options = {"REGISTER", "UNDO"}
-    uri : bpy.props.StringProperty(name="uri")
 
-    @classmethod
-    def description(cls, context, properties):
-        return f"Open the URL in your web Browser: '{properties.uri}'"
-    
     def execute(self, context):                
-        webbrowser.open(self.uri)        
-        return {"FINISHED"}
-    
+        props = context.scene.my_props
+        for obj in props.ifc_prop:
+            obj.is_selected = True              
+        return {"FINISHED"}         
+
+# ==================================================================================================
+# unassign all objects
+# ==================================================================================================
+class Operator_unassign_all(bpy.types.Operator):
+    """"""
+    bl_idname  = "object.unassign_all"
+    bl_label   = "Assign all objects"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):                
+        props = context.scene.my_props
+        for obj in props.ifc_prop:
+            obj.is_selected = False              
+        return {"FINISHED"}    
+
 # ==================================================================================================
 # connect to bSDD and get the properties of Oil & Gas Subsea data dictionary
 # ==================================================================================================
@@ -205,6 +202,25 @@ class Operator_get_properties(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}
 
+
+# ==================================================================================================
+# acerra a uri na propriedade no bSDD
+# ==================================================================================================
+class Operator_uri(bpy.types.Operator):
+    """acerra a uri na propriedade no bSDD"""
+    bl_idname  = "object.uri"
+    bl_label   = "uri property"
+    bl_options = {"REGISTER", "UNDO"}
+    uri : bpy.props.StringProperty(name="uri")
+
+    @classmethod
+    def description(cls, context, properties):
+        return f"Open the URL in your web Browser: '{properties.uri}'"
+    
+    def execute(self, context):                
+        webbrowser.open(self.uri)        
+        return {"FINISHED"}
+    
 # ==================================================================================================
 # connect to bSDD and get the classes of Oil & Gas Subsea data dictionary
 # ==================================================================================================
@@ -219,7 +235,7 @@ class Operator_get_classes(bpy.types.Operator):
         props.classes.clear()
         props.classes_loaded = False
         c = -1
-        result = bSDD.load_classes(props.dictionary)
+        result = bSDD.load_classes(props.dictionary, True)
         if result:
             for classe in bSDD.data_class:  
                 new_c = build_classes(context, classe, c, 1, '', False)
@@ -281,50 +297,6 @@ class Operator_contract_classes(bpy.types.Operator):
                     break
         refresh(context)          
         return {"FINISHED"} 
-
-# ==================================================================================================
-# clear the list of properties loaded
-# ==================================================================================================
-class Operator_clear_properties(bpy.types.Operator):
-    """"""
-    bl_idname  = "object.clear_prop"
-    bl_label   = "Clear properties"
-    bl_options = {"REGISTER", "UNDO"}
-
-    def execute(self, context):                
-        props = context.scene.my_props
-        props.ifc_prop.clear()              
-        return {"FINISHED"}    
-    
-# ==================================================================================================
-# assign all objects
-# ==================================================================================================
-class Operator_assign_all(bpy.types.Operator):
-    """"""
-    bl_idname  = "object.assign_all"
-    bl_label   = "Assign all objects"
-    bl_options = {"REGISTER", "UNDO"}
-
-    def execute(self, context):                
-        props = context.scene.my_props
-        for obj in props.ifc_prop:
-            obj.is_selected = True              
-        return {"FINISHED"}         
-
-# ==================================================================================================
-# unassign all objects
-# ==================================================================================================
-class Operator_unassign_all(bpy.types.Operator):
-    """"""
-    bl_idname  = "object.unassign_all"
-    bl_label   = "Assign all objects"
-    bl_options = {"REGISTER", "UNDO"}
-
-    def execute(self, context):                
-        props = context.scene.my_props
-        for obj in props.ifc_prop:
-            obj.is_selected = False              
-        return {"FINISHED"}    
 
 # ==================================================================================================
 # Add selected properties to Pset template
@@ -704,7 +676,7 @@ class Operator_element_selection(bpy.types.Operator):
 # CATALOG
 # ==================================================================================================
 # ==================================================================================================
-
+ 
 # ==================================================================================================
 # Load catalog products
 # ==================================================================================================
@@ -718,9 +690,59 @@ class Operator_load_products(bpy.types.Operator):
         props = context.scene.my_props               
         props.products.clear()
         props.products_loaded = True
+        ifc_reference = {
+            'TopBendStiffnerType'           : 'Pipe Fitting',
+            'IntermediateBendStiffenerType' : 'Pipe Fitting',
+            'StopperCollarType'             : 'Pipe Fitting',
+            'PulInCollarType'               : 'Pipe Fitting',
+            'AnchoringCollarType'           : 'Pipe Fitting',
+            'DeadweightCollarType'          : 'Pipe Fitting',
+            'BuoyancyModuleType'            : 'Pipe Fitting',
+            'HangOffCollarType'             : 'Pipe Fitting',
+            'BendRestrictorType'            : 'Pipe Fitting',
+            'EndFittingType'                : 'Pipe Fitting',
+            'PipePullingHeadType'           : 'Pipe Fitting',
+            'FlexiblePipeStructure'         : 'Pipe Segment'
+
+        }
+        dic = {}
+        classe_title = {
+            'name': '',
+            'uri' : '',
+            'code': '',
+            'descriptionPart' : ''
+        }
+        c = -1
+        result = bSDD.load_classes(props.dictionary, False)
+        if result:
+            for classe in bSDD.data_class:  
+                
+                if classe['name'].endswith('Type') or classe['name'].endswith('Structure'):                    
+                    if classe['name'] in  ifc_reference:
+                        if ifc_reference[classe['name']] not in dic:
+                            dic[ifc_reference[classe['name']]] = []
+                        dic[ifc_reference[classe['name']]].append(classe)
+            
+            for key, values in  dic.items():
+                    classe_title['name'] = key
+                    new_c = build_products(context, classe_title, c, 1, '', False, True)
+                    c += 1
+                    for value in values:
+                        new_c = build_products(context, value, c, 2, '', True, False)
+                        c = new_c
+            refresh_products(context)
+            return {"FINISHED"} 
+        else:
+            self.report({'ERROR'}, bSDD.response)
+            return {"CANCELLED"}
+        
+    def execute_(self, context): 
+        props = context.scene.my_props               
+        props.products.clear()
+        props.products_loaded = True
         
         c = -1
-        result = bSDD.load_classes(props.dictionary)
+        result = bSDD.load_classes(props.dictionary, False)
         if result:
             for classe in bSDD.data_class:  
                 if classe['name'].endswith('Type') or classe['name'].endswith('Structure'):
@@ -960,6 +982,12 @@ class Operator_catalog_insert_type(bpy.types.Operator):
                 return {"CANCELLED"}
 
 # ==================================================================================================
+# ==================================================================================================
+# PROPERTIES
+# ==================================================================================================
+# ==================================================================================================
+
+# ==================================================================================================
 # Load object properties
 # ==================================================================================================
 class Operator_props_edit(bpy.types.Operator):
@@ -1056,7 +1084,9 @@ class Operator_props_expand(bpy.types.Operator):
                 pass
         return {"FINISHED"} 
 
-# Ainda não implementado
+# ==================================================================================================
+# To Do
+# ==================================================================================================
 class Operator_props_graph(bpy.types.Operator):
     """"""
     bl_idname  = "props.graph"

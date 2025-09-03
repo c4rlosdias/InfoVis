@@ -56,7 +56,6 @@ classes = [
     Operator_assign_all,
     Operator_unassign_all,
     Operator_uri,
-    Operator_create,
     Operator_export_ids,
     Operator_element_selection,
     Operator_catalog_insert_type,

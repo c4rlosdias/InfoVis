@@ -80,7 +80,7 @@ def set_prop_type( prop, value_prop):
     else:
         prop.valuestr = str(value_prop)
         prop.type_value = "str"
-        print(type(value_prop))
+        
 
 def set_properties(props, ifc_obj, is_a, i):
     id = ifc_obj.id()
@@ -240,10 +240,10 @@ class bSDD:
             cls.data_dic = [('0', 'ERROR connecting to bSDD', '')]
 
     @classmethod
-    def load_classes(cls, version : str) -> bool:        
+    def load_classes(cls, version : str, use_nested : bool) -> bool:        
         params = {
             'uri' : f'{cls.uri}/{version}',
-            'UseNestedClasses' : True
+            'UseNestedClasses' : use_nested
         }
         response = requests.get(f'{cls.endpoint}Dictionary/v1/Classes', params=params)        
         if response.status_code == 200:            

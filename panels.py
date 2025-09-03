@@ -6,7 +6,7 @@ import textwrap
 
 
 def _label_multiline(context, text, parent):
-    chars = int(context.region.width / 6)   # 7 pix on 1 character
+    chars = int(context.region.width / 8)   # 7 pix on 1 character
     wrapper = textwrap.TextWrapper(width=chars)
     text_lines = wrapper.wrap(text=text)
     for text_line in text_lines:
@@ -16,12 +16,22 @@ def get_properties(ifc_obj):
 
     result = []
     result.append()
+
+def get_product_description(context, index):
+    props = context.scene.my_props 
+    products = props.products_show
+    for product in products:
+        if product.index == index:
+            return product.description
     
 
+# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# O&G Dictionary
+# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
 
-# ---------------------------------------------------------------------
 # Conecta com o bSDD e apresenta as versões do dicionário
-# ---------------------------------------------------------------------
 
 class Panel_Connect(bpy.types.Panel):
     
@@ -30,7 +40,7 @@ class Panel_Connect(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G Dictionary"
     #bl_options      = {"DEFAULT_CLOSED"}
     
     def draw(self, context):           
@@ -52,7 +62,7 @@ class Panel_Import_Properties(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G Dictionary"
     bl_options      = {"DEFAULT_CLOSED"}
     
     
@@ -162,7 +172,7 @@ class Panel_Import_Classes(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G Dictionary"
     bl_options      = {"DEFAULT_CLOSED"}
 
 
@@ -247,8 +257,7 @@ class BIM_UL_classes(bpy.types.UIList):
                 else:
                     row.label(text="", icon="BLANK1") 
 
-                row.label(text= f'[{item.code}] {item.name}', icon = icontype ) 
-                row.operator("object.create", text="", icon="RESTRICT_SELECT_OFF").uri = item.uri
+                row.label(text= f'[{item.code}] {item.name}', icon = icontype )                 
                 row.operator("object.uri", text="", icon="URL").uri = item.uri
 
 
@@ -264,7 +273,7 @@ class Panel_Export_Properties(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G Dictionary"
     bl_options      = {"DEFAULT_CLOSED"}
     
     
@@ -277,8 +286,9 @@ class Panel_Export_Properties(bpy.types.Panel):
 
 
 # ---------------------------------------------------------------------
-# Mostra a arvore de decomposicao dos elementos
-#
+# ---------------------------------------------------------------------
+# O&G Decomposition
+# ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
 
 class Panel_Decompositions(bpy.types.Panel):
@@ -320,13 +330,8 @@ class Panel_Decompositions(bpy.types.Panel):
 class BIM_UL_decomposition(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
         if item:
-            
-                    
-
             row = layout.row(align=True)
-
-            objs = [tool.Ifc.get_entity(x).id()  for x in context.selected_objects]
-            
+            objs = [tool.Ifc.get_entity(x).id()  for x in context.selected_objects]           
 
             if item.type == "IfcProject":
                 icon = 'CURRENT_FILE'
@@ -370,7 +375,9 @@ class BIM_UL_decomposition(bpy.types.UIList):
                 # row.operator("object.uri", text="", icon="URL").uri = item.uri
 
 # ---------------------------------------------------------------------
-# Catálogo de produtos
+# ---------------------------------------------------------------------
+# O&G Catalog
+# ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
 
 class Panel_Catalog(bpy.types.Panel):
@@ -406,6 +413,14 @@ class Panel_Catalog(bpy.types.Panel):
                 rows=10
             )
             
+            row = layout.row()
+            row.label(text="Product Information:", icon='INFO')
+            box = layout.box()
+            rowb = box.row()
+            text = get_product_description(context, props.active_product_index)
+            _label_multiline(context = context, parent = box, text = text)
+
+            
 
 
 # Painel de produtos             
@@ -413,7 +428,15 @@ class BIM_UL_products(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
         if item:
             row = layout.row(align=True)
-            icontype = 'SNAP_FACE_CENTER'
+            icons = {
+                'Pipe Fitting' : 'MOD_SIMPLEDEFORM',
+                'Pipe Segment' : 'IPO_EASE_IN_OUT'
+            }
+            if item.name in icons:
+                icontype = icons[item.name]
+            else:
+                icontype = 'LAYER_ACTIVE'
+
 
             if not item.is_hidden:
                 for i in range(0, item.level_index - 1):
@@ -436,14 +459,18 @@ class BIM_UL_products(bpy.types.UIList):
                 else:
                     row.label(text="", icon="BLANK1") 
 
-                row.label(text= f'{item.name}', icon = icontype ) 
+
+                row.label(text= f'{item.name}', icon = icontype )
+
                 if not item.has_children:
                     row.operator("catag.insert_type", text="", icon="PLUS").uri = item.name
-                row.operator("object.uri", text="", icon="URL").uri = item.uri
-
+                if item.uri != '':
+                    row.operator("object.uri", text="", icon="URL").uri = item.uri
 
 # ---------------------------------------------------------------------
-# Propriedades 
+# ---------------------------------------------------------------------
+# O&G Properties
+# ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
 
 class Panel_Properties(bpy.types.Panel):
