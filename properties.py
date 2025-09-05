@@ -59,6 +59,9 @@ class Class_info(PropertyGroup):
     level_index : IntProperty(name="level index")
     type        : StringProperty(name="class type")
 
+class Enumeration_values(PropertyGroup):        
+    enumerated  : BoolProperty(name="enumerated", default=False)
+    value_str    : StringProperty(name="value str")
 
 class Property_info(PropertyGroup):    
     name        : StringProperty(name='property name')
@@ -71,6 +74,8 @@ class Property_info(PropertyGroup):
     type_prop   : StringProperty(name='typr prop')
     n_columns   : IntProperty(name='n columns', default=1)
     n_rows      : IntProperty(name='n columns', default=1)
+    datatype    : StringProperty(name='data type', default='')
+    enumerations: CollectionProperty(name="enumerated", type=Enumeration_values)
 
 
 class Pset_info(PropertyGroup):    

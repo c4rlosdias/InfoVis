@@ -77,10 +77,11 @@ classes = [
     BIM_UL_property_class,
     BIM_UL_decomposition,
     Ifc_properties,
+    Enumeration_values,
     Class_info,
     Property_info,
     Pset_info,
-    Container,
+    Container,    
     MyProperties,
 ]
 

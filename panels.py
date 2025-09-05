@@ -526,7 +526,7 @@ class Panel_Properties(bpy.types.Panel):
                         old_name_prop = ""                        
                         titulos = '' 
                         i = 1
-
+                        # para cada propriedade
                         for item in pset.props:   
                                                              
                             # se for tabela
@@ -554,16 +554,14 @@ class Panel_Properties(bpy.types.Panel):
 
                                 # monta a tabela
                                 if i==1:
-                                    col = rowb.column(align=True)
-                                    
-                                    #col.alignment = 'CENTER'                                    
+                                    col = rowb.column(align=True)                                
                                 
                                 if item.name not in titulos:
                                     col.label(text=item.name.split('_')[1])                                        
                                     titulos = titulos + item.name  
 
-                                act_prop = f"value{item.type_value}"
-                                col.prop(item, act_prop, text="")
+                                act_prop = f"value{item.type_value}"                                                                                              
+                                col.prop(item, act_prop, text=item.datatype)                                
                                 if i%item.n_rows == 0:
                                     col = rowb.column(align=True)   
                                     #col.alignment = 'CENTER' 
@@ -580,11 +578,22 @@ class Panel_Properties(bpy.types.Panel):
                                     op.pset_index = pset.index
                                     op.prop_index = item.index                               
                                     rowb.label(text=f' {item.name}')
-                                col = rowb.column()
-                                col.scale_x =0.6
-                                act_prop = f"value{item.type_value}"                                
-                                col.prop(item, act_prop, text="")
-                                old_name_prop = item.name
+                                
+                                if item.type_prop == 'IfcPropertyEnumeratedValue':
+                                    rowb = box.row(align=True)   
+                                    col = rowb.column(align=True)
+                                    col.prop(item, "enumerated", text='')
+
+                                    col = rowb.column(align=True)
+                                    #col.alignment = 'LEFT'                                                                   
+                                    col.label(text=getattr(item, f"value{item.type_value}"))
+                                    old_name_prop = item.name                                  
+                                else:
+                                    col = rowb.column()
+                                    col.scale_x =0.6
+                                    act_prop = f"value{item.type_value}"                                
+                                    col.prop(item, act_prop, text=item.datatype)
+                                    old_name_prop = item.name 
 
                             i += 1
 

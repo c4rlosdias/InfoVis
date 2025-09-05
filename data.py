@@ -80,7 +80,32 @@ def set_prop_type( prop, value_prop):
     else:
         prop.valuestr = str(value_prop)
         prop.type_value = "str"
+
         
+def get_unit(ifc_obj, pset_name, prop_name):
+    model = tool.Ifc.get()
+    psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
+    pset = model.by_id(psets[pset_name]['id'])
+    symbol = ''
+    for prop in pset.HasProperties:
+        print(f'{prop.Name} - {prop_name}')
+        if prop.Name == prop_name:
+            unit = ifcopenshell.util.unit.get_property_unit(ifc_file=model, prop=prop)
+            if unit is not None:
+                symbol =f'[{ifcopenshell.util.unit.get_unit_symbol(unit)}]'
+            else:
+                symbol=''
+            return symbol
+    return symbol
+
+def get_property(ifc_obj, pset_name, prop_name):
+    model = tool.Ifc.get()
+    pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
+    for prop in pset.HasProperties:
+        if prop.Name == prop_name:
+            return prop
+    return None
+
 
 def set_properties(props, ifc_obj, is_a, i):
     id = ifc_obj.id()
@@ -92,7 +117,7 @@ def set_properties(props, ifc_obj, is_a, i):
         new_item.name = pset  
         new_item.is_a = is_a 
         new_item.id_obj = id          
-        new_item.index = i  
+        new_item.index = i          
         j = 0      
         for prop, value in _props.items():           
             if prop != 'id':  
@@ -100,17 +125,37 @@ def set_properties(props, ifc_obj, is_a, i):
                     table[prop]=value
                 else:               
                     if type(value) == list:
+                        # verifica o tipo da propriedade
+                        _prop = get_property(ifc_obj, pset, prop)
+                         
+                        
+                        # verifica o tipo da propriedade
+                        if _prop is not None: 
+                            type_prop = _prop.is_a()
+                        else:
+                            type_prop = ''
+
                         c = 0
                         for item_prop in value:    
                             new_prop = new_item.props.add() 
                             new_prop.name = prop
+                            new_prop.datatype = get_unit(ifc_obj, pset, prop)
                             new_prop.index = j      
-                            new_prop.type_prop = 'list'                                                 
+                            new_prop.type_prop = type_prop  
+                            if type_prop == 'IfcPropertyEnumeratedValue':
+                                enum = _prop.EnumerationReference.EnumerationValues
+                                enumerate_values = [x.wrappedValue for x in enum ]
+                                for enumval in  enumerate_values:
+                                    new_value = new_prop.enumerations.add()
+                                    new_value.enumerated = False
+                                    new_value.valuestr = enumval
+                                
                             set_prop_type(new_prop, item_prop)
                             c += 1
                     else:
                         new_prop = new_item.props.add()  
                         new_prop.name = prop
+                        new_prop.datatype = get_unit(ifc_obj, pset, prop)
                         new_prop.index = j                                                
                         set_prop_type(new_prop, value)        
             j += 1
@@ -122,17 +167,6 @@ def set_properties(props, ifc_obj, is_a, i):
             columns = df.columns.tolist()    
             nc = len(columns)  
             nr = len(df)
-            # cria o cabecalho de colunas
-            # for column in columns:                  
-            #     new_prop = new_item.props.add()
-            #     new_prop.name = column
-            #     new_prop.n_columns = n
-            #     new_prop.index = j
-            #     new_prop.type_prop = 'table'
-            #     new_prop.type_value = '!coluna!'
-                
-
-            # iterage no datafreme para cria as propriedades com valor
             print(dft)
             for index, row in dft.iterrows():   
                 for col, val in row.items():
@@ -141,7 +175,8 @@ def set_properties(props, ifc_obj, is_a, i):
                     new_prop.n_columns = nc 
                     new_prop.n_rows = nr                         
                     new_prop.index = j    
-                    new_prop.type_prop = 'table'           
+                    new_prop.type_prop = 'table'  
+                    new_prop.datatype = get_unit(ifc_obj, pset, index)         
                     set_prop_type(new_prop, val)
 
         i += 1
