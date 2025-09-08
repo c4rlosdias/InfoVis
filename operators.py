@@ -1011,9 +1011,19 @@ class Operator_props_edit(bpy.types.Operator):
                             if value is not None:
                                 new_value = model.create_entity(list_values[values.index(value)].is_a(), value) 
                                 new_list_values.append(new_value)
-                        print(prop.ListValues)
-                        print(new_list_values)
+
                         prop.ListValues = new_list_values
+                    elif prop.is_a() == 'IfcPropertyEnumeratedValue':
+                        list_values = prop.EnumerationReference.EnumerationValues
+                        new_list_values = []
+                        print(values)
+                        for value in values:    
+                            if value is not None:
+                                new_value = model.create_entity(list_values[values.index(value)].is_a(), value) 
+                                new_list_values.append(new_value)
+
+                        #print(new_list_values)
+                        prop.EnumerationValues = new_list_values
                     else:                        
                         new_value = model.create_entity(prop.NominalValue.is_a(), values[0])                        
                         prop.NominalValue = new_value
@@ -1042,18 +1052,29 @@ class Operator_props_edit(bpy.types.Operator):
         # cria um dicionario com as propriedades e valores
         for pset in props.prop_metadata:            
             if pset.index == self.pset_index:                              
-                for prop in pset.props:                                      
+                for prop in pset.props:                                   
                     if prop.index == self.prop_index:
                         product = model.by_id(pset.id_obj)
                         new_pset = pset.name
-                        if prop.name in new_props:
-                            new_props[prop.name].append(self.get_prop_type(prop))                        
+
+                        if prop.type_prop == 'IfcPropertyEnumeratedValue':
+                            for enum in prop.enumerations:
+                                print(enum.type_value)
+                                if enum.enumerated:
+                                    if prop.name in new_props:
+                                        new_props[prop.name].append(self.get_prop_type(enum))                        
+                                    else:
+                                        new_props[prop.name] = [self.get_prop_type(enum)]
+
+
                         else:
-                            new_props[prop.name] = [self.get_prop_type(prop)]
-                        
-        print(new_pset)
-        print(new_props)        
-        _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=new_pset)   
+                            if prop.name in new_props:
+                                new_props[prop.name].append(self.get_prop_type(prop))                        
+                            else:
+                                new_props[prop.name] = [self.get_prop_type(prop)]
+      
+        _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=new_pset) 
+        print(new_props)  
         self.change_prop(_pset, new_props)
         bpy.context.scene.update_tag()
         return {"FINISHED"} 
@@ -1065,6 +1086,7 @@ class Operator_props_load(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"} 
 
     def execute(self, context):
+        print(100*'-')
         refresh_props(context)
         return {"FINISHED"} 
     

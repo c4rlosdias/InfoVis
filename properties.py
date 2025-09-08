@@ -61,7 +61,12 @@ class Class_info(PropertyGroup):
 
 class Enumeration_values(PropertyGroup):        
     enumerated  : BoolProperty(name="enumerated", default=False)
-    value_str    : StringProperty(name="value str")
+    valuestr    : StringProperty(name="value str")
+    valueint    : IntProperty(name='value int')
+    valuefloat  : FloatProperty(name='value float')
+    valuebool   : BoolProperty(name="value bool")
+    datatype    : StringProperty(name='data type', default='')
+    type_value  : StringProperty(name="type value")
 
 class Property_info(PropertyGroup):    
     name        : StringProperty(name='property name')

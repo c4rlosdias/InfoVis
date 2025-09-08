@@ -571,14 +571,15 @@ class Panel_Properties(bpy.types.Panel):
                                 old_name_prop = name_prop
   
                             #se não for tabela   
-                            else:                               
+                            else:    
+                                # se for o nome da propriedade                           
                                 if item.name != old_name_prop:
                                     rowb = box.row(align=True)
                                     op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
                                     op.pset_index = pset.index
                                     op.prop_index = item.index                               
                                     rowb.label(text=f' {item.name}')
-                                
+                                # se for o valor da propriedade
                                 if item.type_prop == 'IfcPropertyEnumeratedValue':
                                     rowb = box.row(align=True)   
                                     col = rowb.column(align=True)
@@ -586,8 +587,11 @@ class Panel_Properties(bpy.types.Panel):
 
                                     col = rowb.column(align=True)
                                     #col.alignment = 'LEFT'                                                                   
-                                    col.label(text=getattr(item, f"value{item.type_value}"))
-                                    old_name_prop = item.name                                  
+                                    #col.label(text=getattr(item, f"value{item.type_value}"))
+                                    for enum in item.enumerations:
+                                        col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
+                                    old_name_prop = item.name   
+                                # se for o valor da propriedade                               
                                 else:
                                     col = rowb.column()
                                     col.scale_x =0.6

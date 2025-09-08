@@ -87,8 +87,7 @@ def get_unit(ifc_obj, pset_name, prop_name):
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
     pset = model.by_id(psets[pset_name]['id'])
     symbol = ''
-    for prop in pset.HasProperties:
-        print(f'{prop.Name} - {prop_name}')
+    for prop in pset.HasProperties:        
         if prop.Name == prop_name:
             unit = ifcopenshell.util.unit.get_property_unit(ifc_file=model, prop=prop)
             if unit is not None:
@@ -127,8 +126,7 @@ def set_properties(props, ifc_obj, is_a, i):
                     if type(value) == list:
                         # verifica o tipo da propriedade
                         _prop = get_property(ifc_obj, pset, prop)
-                         
-                        
+
                         # verifica o tipo da propriedade
                         if _prop is not None: 
                             type_prop = _prop.is_a()
@@ -142,14 +140,18 @@ def set_properties(props, ifc_obj, is_a, i):
                             new_prop.datatype = get_unit(ifc_obj, pset, prop)
                             new_prop.index = j      
                             new_prop.type_prop = type_prop  
-                            if type_prop == 'IfcPropertyEnumeratedValue':
-                                enum = _prop.EnumerationReference.EnumerationValues
-                                enumerate_values = [x.wrappedValue for x in enum ]
-                                for enumval in  enumerate_values:
+
+                            if type_prop == 'IfcPropertyEnumeratedValue':                                                               
+                                values = [x.wrappedValue for x in _prop.EnumerationValues ]
+                                for enumval in  _prop.EnumerationReference.EnumerationValues:
                                     new_value = new_prop.enumerations.add()
-                                    new_value.enumerated = False
-                                    new_value.valuestr = enumval
-                                
+                                    if enumval.wrappedValue in values:
+                                        new_value.enumerated = True
+                                    else:
+                                        new_value.enumerated = False      
+                            
+                                    set_prop_type(new_value, enumval.wrappedValue)                                    
+                                                                
                             set_prop_type(new_prop, item_prop)
                             c += 1
                     else:
@@ -167,7 +169,6 @@ def set_properties(props, ifc_obj, is_a, i):
             columns = df.columns.tolist()    
             nc = len(columns)  
             nr = len(df)
-            print(dft)
             for index, row in dft.iterrows():   
                 for col, val in row.items():
                     new_prop = new_item.props.add()
