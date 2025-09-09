@@ -488,9 +488,9 @@ class Panel_Properties(bpy.types.Panel):
         layout = self.layout       
         row = layout.row()   
         # select objects 
-        objs = context.selected_objects        
+        obj = context.active_object       
         
-        if len(objs) > 0:             
+        if obj is not None:        
             row = layout.row()
             row.label(text="Properties:", icon='INFO')
             row = layout.row()
@@ -589,6 +589,7 @@ class Panel_Properties(bpy.types.Panel):
                                     #col.alignment = 'LEFT'                                                                   
                                     #col.label(text=getattr(item, f"value{item.type_value}"))
                                     for enum in item.enumerations:
+                                        print('ok')
                                         col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
                                     old_name_prop = item.name   
                                 # se for o valor da propriedade                               

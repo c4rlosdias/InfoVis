@@ -78,6 +78,7 @@ class Property_info(PropertyGroup):
     type_value  : StringProperty(name="type value")
     type_prop   : StringProperty(name='typr prop')
     n_columns   : IntProperty(name='n columns', default=1)
+
     n_rows      : IntProperty(name='n columns', default=1)
     datatype    : StringProperty(name='data type', default='')
     enumerations: CollectionProperty(name="enumerated", type=Enumeration_values)

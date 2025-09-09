@@ -133,27 +133,32 @@ def set_properties(props, ifc_obj, is_a, i):
                         else:
                             type_prop = ''
 
-                        c = 0
-                        for item_prop in value:    
-                            new_prop = new_item.props.add() 
-                            new_prop.name = prop
-                            new_prop.datatype = get_unit(ifc_obj, pset, prop)
-                            new_prop.index = j      
-                            new_prop.type_prop = type_prop  
+                        if type_prop == 'IfcPropertyListValue':
+                            #c = 0
+                            for item_prop in value:    
+                                new_prop = new_item.props.add() 
+                                new_prop.name = prop
+                                new_prop.datatype = get_unit(ifc_obj, pset, prop)
+                                new_prop.index = j      
+                                new_prop.type_prop = type_prop                                                                     
+                                                                    
+                                set_prop_type(new_prop, item_prop)
+                                #c += 1
 
-                            if type_prop == 'IfcPropertyEnumeratedValue':                                                               
-                                values = [x.wrappedValue for x in _prop.EnumerationValues ]
-                                for enumval in  _prop.EnumerationReference.EnumerationValues:
-                                    new_value = new_prop.enumerations.add()
-                                    if enumval.wrappedValue in values:
-                                        new_value.enumerated = True
-                                    else:
-                                        new_value.enumerated = False      
-                            
-                                    set_prop_type(new_value, enumval.wrappedValue)                                    
-                                                                
-                            set_prop_type(new_prop, item_prop)
-                            c += 1
+                        if type_prop == 'IfcPropertyEnumeratedValue':  
+                            new_prop = new_item.props.add() 
+                            new_prop.name = prop   
+                            new_prop.index = j      
+                            new_prop.type_prop = type_prop   
+                            new_prop.datatype = get_unit(ifc_obj, pset, prop)                                                        
+                            values = [x.wrappedValue for x in _prop.EnumerationValues ]
+                            for enumval in  _prop.EnumerationReference.EnumerationValues:
+                                new_value = new_prop.enumerations.add()
+                                if enumval.wrappedValue in values:
+                                    new_value.enumerated = True
+                                else:
+                                    new_value.enumerated = False
+                                set_prop_type(new_value, enumval.wrappedValue) 
                     else:
                         new_prop = new_item.props.add()  
                         new_prop.name = prop

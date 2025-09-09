@@ -1001,6 +1001,7 @@ class Operator_props_edit(bpy.types.Operator):
     
     def change_prop(self, pset, props):        
         model = tool.Ifc.get()   
+        print(props)
         for name_prop, values in props.items():
             for prop in pset.HasProperties:
                 if prop.Name == name_prop:
@@ -1015,15 +1016,13 @@ class Operator_props_edit(bpy.types.Operator):
                         prop.ListValues = new_list_values
                     elif prop.is_a() == 'IfcPropertyEnumeratedValue':
                         list_values = prop.EnumerationReference.EnumerationValues
-                        new_list_values = []
-                        print(values)
+                        new_list_values = set()                        
                         for value in values:    
                             if value is not None:
-                                new_value = model.create_entity(list_values[values.index(value)].is_a(), value) 
-                                new_list_values.append(new_value)
-
-                        #print(new_list_values)
-                        prop.EnumerationValues = new_list_values
+                                new_value = model.create_entity(list_values[values.index(value)].is_a(), value)                                 
+                                new_list_values.add(new_value)
+                        print(new_list_values)
+                        prop.EnumerationValues = list(new_list_values)
                     else:                        
                         new_value = model.create_entity(prop.NominalValue.is_a(), values[0])                        
                         prop.NominalValue = new_value
@@ -1059,13 +1058,12 @@ class Operator_props_edit(bpy.types.Operator):
 
                         if prop.type_prop == 'IfcPropertyEnumeratedValue':
                             for enum in prop.enumerations:
-                                print(enum.type_value)
                                 if enum.enumerated:
+
                                     if prop.name in new_props:
                                         new_props[prop.name].append(self.get_prop_type(enum))                        
                                     else:
                                         new_props[prop.name] = [self.get_prop_type(enum)]
-
 
                         else:
                             if prop.name in new_props:
@@ -1074,7 +1072,7 @@ class Operator_props_edit(bpy.types.Operator):
                                 new_props[prop.name] = [self.get_prop_type(prop)]
       
         _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=new_pset) 
-        print(new_props)  
+
         self.change_prop(_pset, new_props)
         bpy.context.scene.update_tag()
         return {"FINISHED"} 
