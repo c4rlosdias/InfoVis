@@ -156,5 +156,6 @@ class MyProperties(PropertyGroup):
     prop_metadata            : CollectionProperty(name="psets", type=Pset_info)
     active_property_index    : IntProperty(name='property index', default=0)
     icon_edit_prop           : StringProperty(name='icon edit property', default='GREASEPENCIL')
+    invert_xy                : BoolProperty(name="invert xy", default=False)
 
 

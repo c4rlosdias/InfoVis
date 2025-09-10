@@ -3,6 +3,8 @@ import bonsai.core.geometry
 import bonsai.core.material
 import bonsai.core.type
 import webbrowser
+import base64
+from io import BytesIO
 import os
 import bpy
 from ifctester import ids
@@ -16,7 +18,7 @@ import ifcopenshell.api.geometry as geometry
 import ifcopenshell.api.style as style
 import ifcopenshell
 import webbrowser
-from .data import bSDD, PropTempl,Catalog, Import_ifc, refresh, refresh_container, refresh_products, refresh_props
+from .data import bSDD, PropTempl,Catalog, Import_ifc, refresh, refresh_container, refresh_products, refresh_props, get_prop_type
 import bonsai.core as core
 import bonsai
 import bonsai.tool as tool
@@ -1000,8 +1002,7 @@ class Operator_props_edit(bpy.types.Operator):
     type_prop  : bpy.props.StringProperty(name='prop type') 
     
     def change_prop(self, pset, props):        
-        model = tool.Ifc.get()   
-        print(props)
+        model = tool.Ifc.get() 
         for name_prop, values in props.items():
             for prop in pset.HasProperties:
                 if prop.Name == name_prop:
@@ -1061,15 +1062,14 @@ class Operator_props_edit(bpy.types.Operator):
                                 if enum.enumerated:
 
                                     if prop.name in new_props:
-                                        new_props[prop.name].append(self.get_prop_type(enum))                        
+                                        new_props[prop.name].append(get_prop_type(enum))                        
                                     else:
-                                        new_props[prop.name] = [self.get_prop_type(enum)]
-
+                                        new_props[prop.name] = [get_prop_type(enum)]
                         else:
                             if prop.name in new_props:
-                                new_props[prop.name].append(self.get_prop_type(prop))                        
+                                new_props[prop.name].append(get_prop_type(prop))                        
                             else:
-                                new_props[prop.name] = [self.get_prop_type(prop)]
+                                new_props[prop.name] = [get_prop_type(prop)]
       
         _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=new_pset) 
 
@@ -1104,11 +1104,8 @@ class Operator_props_expand(bpy.types.Operator):
                 pass
         return {"FINISHED"} 
 
-# ==================================================================================================
-# To Do
-# ==================================================================================================
 class Operator_props_graph(bpy.types.Operator):
-    """"""
+    """Generate a curve based on the information from the table"""
     bl_idname  = "props.graph"
     bl_label   = "load object properties"
     bl_options = {"REGISTER", "UNDO"} 
@@ -1116,4 +1113,76 @@ class Operator_props_graph(bpy.types.Operator):
     prop_index : bpy.props.IntProperty(name='prop index')  
 
     def execute(self, context):
+        props = context.scene.my_props
+        table = {}
+        print(100*'=')
+        # cria um dicionario com as propriedades e valores
+        for pset in props.prop_metadata:            
+            if pset.index == self.pset_index:                              
+                for prop in pset.props:                                   
+                    if prop.index == self.prop_index: 
+                        title = prop.name.split('_')[0]
+                        col =  prop.name.split('_')[1]                      
+                        if col in table:
+                            table[col].append(get_prop_type(prop)) 
+                        else:
+                            table[col] = [get_prop_type(prop)]
+        df = pd.DataFrame(table)
+
+        print(df)
+        
+        # Criar gráfico com Matplotlib
+        fig, ax = plt.subplots()
+        cols =list( table.keys())
+        x = cols[0]
+        y = cols[1]
+        
+        ax.set_title(title)
+        
+        if props.invert_xy:
+            ax.plot(df[y], df[x], marker='o')
+            ax.set_xlabel(y)
+            ax.set_ylabel(x)
+        else:
+            ax.plot(df[x], df[y], marker='o')
+            ax.set_xlabel(x)
+            ax.set_ylabel(y)
+        
+        fig.autofmt_xdate()
+
+        # Salvar imagem em memória
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+
+        # Criar HTML com a imagem embutida
+        html = f"""
+        <html>
+        <head><title>{title}</title></head>
+        <body>
+        <h2>{title}</h2>
+        <img src="data:image/png;base64,{img_base64}" />
+        </body>
+        </html>
+        """
+
+        # Salvar HTML e abrir no navegador
+        with open("graphic.html", "w") as f:
+            f.write(html)
+
+        webbrowser.open("graphic.html")
+
+
         return {"FINISHED"} 
+    
+class Operator_props_invert(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.invert"
+    bl_label   = "invert x y"
+    bl_options = {"REGISTER", "UNDO"} 
+
+    def execute(self, context):
+        props = context.scene.my_props
+        props.invert_xy = not(props.invert_xy)
+        return {"FINISHED"}

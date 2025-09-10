@@ -539,12 +539,16 @@ class Panel_Properties(bpy.types.Panel):
                                 if title != old_title:
                                     rowb = box.row(align=True)
                                     rowb.scale_y =0.8
-                                    
                                     op = rowb.operator("props.edit", icon='CHECKMARK', text="")
                                     op.pset_index = pset.index
                                     op.prop_index = item.index
-                                    
                                     rowb.label(text=f' {title}', icon='VIEW_ORTHO')
+                                    if 'Curve' in pset.name:
+                                       op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                                       op.pset_index = pset.index
+                                       op.prop_index = item.index
+                                       rowb = box.row()
+                                       rowb.operator("props.invert", icon='ARROW_LEFTRIGHT', text="invert X | Y") 
                                     rowb = box.row() 
                                     rowb = box.row(align=True)
                                     col = rowb.column(align=True)

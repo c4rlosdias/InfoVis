@@ -64,6 +64,7 @@ classes = [
     Operator_props_expand,
     Operator_props_edit,
     Operator_props_graph,
+    Operator_props_invert,
     Panel_Connect,
     Panel_Import_Properties,
     Panel_Import_Classes,

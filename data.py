@@ -81,7 +81,18 @@ def set_prop_type( prop, value_prop):
         prop.valuestr = str(value_prop)
         prop.type_value = "str"
 
-        
+def get_prop_type(prop):
+        res = None
+        if prop.type_value == "str":
+            res = prop.valuestr
+        elif prop.type_value == "int":
+            res = prop.valueint
+        elif prop.type_value == "bool":
+            res = prop.valuebool
+        elif prop.type_value == "float":
+            res = prop.valuefloat
+        return res        
+
 def get_unit(ifc_obj, pset_name, prop_name):
     model = tool.Ifc.get()
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
