@@ -84,6 +84,8 @@ class Property_info(PropertyGroup):
     enumerations: CollectionProperty(name="enumerated", type=Enumeration_values)
 
 
+
+
 class Pset_info(PropertyGroup):    
     name        : StringProperty(name='pset name')
     is_a        : StringProperty(name= "is a")
@@ -91,6 +93,13 @@ class Pset_info(PropertyGroup):
     index       : IntProperty(name='index')
     props       : CollectionProperty(name="properties", type=Property_info)
     is_expanded : BoolProperty(name="Is Expanded", default=False)
+
+    min_x       : FloatProperty(name='min X', default=0)
+    max_x       : FloatProperty(name='max X', default=0)
+    min_y       : FloatProperty(name='min Y', default=0)
+    max_y       : FloatProperty(name='max Y', default=0)
+    mult_x      : IntProperty(name='interval X', default=0)
+    mult_y      : IntProperty(name='interval Y', default=0)
     
 
 class Container(PropertyGroup):

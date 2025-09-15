@@ -25,6 +25,7 @@ import bonsai.tool as tool
 from bonsai.bim import import_ifc
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import matplotlib
 
 def set_hide_class(context, index, is_hidden):
@@ -1116,11 +1117,23 @@ class Operator_props_graph(bpy.types.Operator):
         props = context.scene.my_props
         table = {}
         print(100*'=')
+        min_x = 0
+        min_y = 0
+        max_x = 100
+        max_y = 100
+        mult_x = 10
+        mult_y = 10
         # cria um dicionario com as propriedades e valores
         for pset in props.prop_metadata:            
-            if pset.index == self.pset_index:                              
+            if pset.index == self.pset_index:
+                min_x = pset.min_x
+                max_x = pset.max_x 
+                min_y = pset.min_y
+                max_y = pset.max_y 
+                mult_x = pset.mult_x         
+                mult_y = pset.mult_y                    
                 for prop in pset.props:                                   
-                    if prop.index == self.prop_index: 
+                    if prop.index == self.prop_index:
                         title = prop.name.split('_')[0]
                         col =  prop.name.split('_')[1]                      
                         if col in table:
@@ -1129,29 +1142,40 @@ class Operator_props_graph(bpy.types.Operator):
                             table[col] = [get_prop_type(prop)]
         df = pd.DataFrame(table)
 
-        print(df)
+        #print(df)  
         
         # Criar gráfico com Matplotlib
         fig, ax = plt.subplots()
         cols =list( table.keys())
         x = cols[0]
-        y = cols[1]
-        
+        lines = []
+
+        for col in cols:
+            
+            if col != x:
+                lines.append(ax.plot(df[x],df[col], label=col))
+      
+        # configura o grafico
+        print(f'min x: {min_x} | max x: {max_x} | min y : {min_y} | max x : {max_y}')
+
         ax.set_title(title)
-        
-        if props.invert_xy:
-            ax.plot(df[y], df[x], marker='o')
-            ax.set_xlabel(y)
-            ax.set_ylabel(x)
-        else:
-            ax.plot(df[x], df[y], marker='o')
-            ax.set_xlabel(x)
-            ax.set_ylabel(y)
-        
-        fig.autofmt_xdate()
+        ax.set_xlabel(x)      
+        ax.grid(True) 
+        ax.xaxis.set
+        ax.set_box_aspect(0.5)
+        if mult_x > 0:
+            ax.xaxis.set_major_locator(MultipleLocator(mult_x))
+        if mult_y > 0:
+            ax.yaxis.set_major_locator(MultipleLocator(mult_y))
+        if max_x > 0:
+            ax.set_xlim(min_x, max_x)
+        if max_y > 0:
+            ax.set_ylim(min_y, max_y)  
+
+        fig.legend()
 
         # Salvar imagem em memória
-        buffer = BytesIO()
+        buffer = BytesIO()        
         plt.savefig(buffer, format='png')
         buffer.seek(0)
         img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
@@ -1159,7 +1183,7 @@ class Operator_props_graph(bpy.types.Operator):
         # Criar HTML com a imagem embutida
         html = f"""
         <html>
-        <head><title>{title}</title></head>
+        <head><title>BIM Report</title></head>
         <body>
         <h2>{title}</h2>
         <img src="data:image/png;base64,{img_base64}" />

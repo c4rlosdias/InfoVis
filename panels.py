@@ -544,11 +544,24 @@ class Panel_Properties(bpy.types.Panel):
                                     op.prop_index = item.index
                                     rowb.label(text=f' {title}', icon='VIEW_ORTHO')
                                     if 'Curve' in pset.name:
-                                       op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                                       op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="plot") 
                                        op.pset_index = pset.index
                                        op.prop_index = item.index
-                                       rowb = box.row()
-                                       rowb.operator("props.invert", icon='ARROW_LEFTRIGHT', text="invert X | Y") 
+                                       # imprime dados para a plotagem do gráfico
+                                       rowb = box.row(align=True)
+                                       rowb.label(text='')
+                                       rowb.prop(pset, 'min_x')
+                                       rowb.prop(pset, 'max_x')
+                                       rowb = box.row(align=True)
+                                       rowb.label(text='')
+                                       rowb.prop(pset, 'min_y')
+                                       rowb.prop(pset, 'max_y')
+                                       rowb = box.row(align=True)
+                                       rowb.label(text='')
+                                       rowb.prop(pset, 'mult_x')
+                                       rowb.prop(pset, 'mult_y')
+                                    #    rowb = box.row()
+                                    #    rowb.operator("props.invert", icon='ARROW_LEFTRIGHT', text="invert X | Y") 
                                     rowb = box.row() 
                                     rowb = box.row(align=True)
                                     col = rowb.column(align=True)
