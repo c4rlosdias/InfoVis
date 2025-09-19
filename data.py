@@ -62,7 +62,6 @@ def refresh_container(context):
             new_item.type = classe.type  
             new_item.is_selected = classe.is_selected  
 
-
 def set_prop_type( prop, value_prop):
     res = ""
     if type(value_prop) == str:
@@ -93,6 +92,18 @@ def get_prop_type(prop):
             res = prop.valuefloat
         return res        
 
+def get_unit_symbol(unit):
+    symbol = ''
+    if unit.is_a() == 'IfcDerivedUnit':                    
+        for sub_unit in unit.Elements: 
+            sub_symbol = ifcopenshell.util.unit.get_unit_symbol(sub_unit.Unit)
+            complement = str(sub_unit.Exponent)
+            sep = '/' if '-'in complement else ''
+            symbol += sep + sub_symbol + complement.replace('-', '')
+    else:
+        symbol=ifcopenshell.util.unit.get_unit_symbol(unit)
+    return symbol.replace('1', '')
+
 def get_unit(ifc_obj, pset_name, prop_name):
     model = tool.Ifc.get()
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
@@ -102,7 +113,7 @@ def get_unit(ifc_obj, pset_name, prop_name):
         if prop.Name == prop_name:
             unit = ifcopenshell.util.unit.get_property_unit(ifc_file=model, prop=prop)
             if unit is not None:
-                symbol =f'[{ifcopenshell.util.unit.get_unit_symbol(unit)}]'
+                symbol =f'[{get_unit_symbol(unit)}]'
             else:
                 symbol=''
             return symbol
@@ -116,12 +127,14 @@ def get_property(ifc_obj, pset_name, prop_name):
             return prop
     return None
 
-
-def set_properties(props, ifc_obj, is_a, i):
+def set_properties(props, ifc_obj, is_a, i):     
     id = ifc_obj.id()
     # get psets
+    print(ifc_obj)
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
-    for pset, _props in psets.items():             
+    print(psets)
+    for pset, _props in psets.items():     
+        print(pset)        
         table = {}    
         new_item = props.prop_metadata.add()            
         new_item.name = pset  
@@ -151,8 +164,7 @@ def set_properties(props, ifc_obj, is_a, i):
                                 new_prop.name = prop
                                 new_prop.datatype = get_unit(ifc_obj, pset, prop)
                                 new_prop.index = j      
-                                new_prop.type_prop = type_prop                                                                     
-                                                                    
+                                new_prop.type_prop = type_prop     
                                 set_prop_type(new_prop, item_prop)
                                 #c += 1
 
@@ -199,8 +211,6 @@ def set_properties(props, ifc_obj, is_a, i):
         i += 1
     return i
 
-
-
 def refresh_props(context):
     # get active object
     props = context.scene.my_props
@@ -211,7 +221,6 @@ def refresh_props(context):
     i = set_properties(props, ifc_obj, "instance", 0)
     set_properties(props, ifc_type_obj, "type", i)
     
-
 
 
 class Import_ifc():

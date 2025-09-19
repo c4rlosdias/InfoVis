@@ -1,6 +1,6 @@
 import bpy
 from .operators import *
-from .data import refresh_props
+
 import bonsai.tool as tool
 import textwrap
 
@@ -473,6 +473,7 @@ class BIM_UL_products(bpy.types.UIList):
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
 
+
 class Panel_Properties(bpy.types.Panel):
     
     bl_label        = "Properties"
@@ -491,8 +492,6 @@ class Panel_Properties(bpy.types.Panel):
         obj = context.active_object       
         
         if obj is not None:        
-            row = layout.row()
-            row.label(text="Properties:", icon='INFO')
             row = layout.row()
             row.operator("props.load_properties", text="Load properties")                       
             if len(props.prop_metadata) > 0:
@@ -540,28 +539,13 @@ class Panel_Properties(bpy.types.Panel):
                                     rowb = box.row(align=True)
                                     rowb.scale_y =0.8
                                     op = rowb.operator("props.edit", icon='CHECKMARK', text="")
-                                    op.pset_index = pset.index
-                                    op.prop_index = item.index
                                     rowb.label(text=f' {title}', icon='VIEW_ORTHO')
-                                    if 'Curve' in pset.name:
+                                    if 'Crushing' in pset.name:                                                                               
                                        op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="plot") 
                                        op.pset_index = pset.index
                                        op.prop_index = item.index
-                                       # imprime dados para a plotagem do gráfico
-                                       rowb = box.row(align=True)
-                                       rowb.label(text='')
-                                       rowb.prop(pset, 'min_x')
-                                       rowb.prop(pset, 'max_x')
-                                       rowb = box.row(align=True)
-                                       rowb.label(text='')
-                                       rowb.prop(pset, 'min_y')
-                                       rowb.prop(pset, 'max_y')
-                                       rowb = box.row(align=True)
-                                       rowb.label(text='')
-                                       rowb.prop(pset, 'mult_x')
-                                       rowb.prop(pset, 'mult_y')
-                                    #    rowb = box.row()
-                                    #    rowb.operator("props.invert", icon='ARROW_LEFTRIGHT', text="invert X | Y") 
+
+                                    # imprime dados para a plotagem do gráfico
                                     rowb = box.row() 
                                     rowb = box.row(align=True)
                                     col = rowb.column(align=True)
@@ -574,11 +558,11 @@ class Panel_Properties(bpy.types.Panel):
                                     col = rowb.column(align=True)                                
                                 
                                 if item.name not in titulos:
-                                    col.label(text=item.name.split('_')[1])                                        
+                                    col.label(text=f"{item.name.split('_')[1]} {item.datatype}")                                        
                                     titulos = titulos + item.name  
 
                                 act_prop = f"value{item.type_value}"                                                                                              
-                                col.prop(item, act_prop, text=item.datatype)                                
+                                col.prop(item, act_prop, text='')                                
                                 if i%item.n_rows == 0:
                                     col = rowb.column(align=True)   
                                     #col.alignment = 'CENTER' 
@@ -596,20 +580,19 @@ class Panel_Properties(bpy.types.Panel):
                                     op.pset_index = pset.index
                                     op.prop_index = item.index                               
                                     rowb.label(text=f' {item.name}')
-                                # se for o valor da propriedade
+
+                                # se for o tipo enumerado
                                 if item.type_prop == 'IfcPropertyEnumeratedValue':
                                     rowb = box.row(align=True)   
                                     col = rowb.column(align=True)
                                     col.prop(item, "enumerated", text='')
-
                                     col = rowb.column(align=True)
-                                    #col.alignment = 'LEFT'                                                                   
-                                    #col.label(text=getattr(item, f"value{item.type_value}"))
                                     for enum in item.enumerations:
                                         print('ok')
                                         col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
                                     old_name_prop = item.name   
-                                # se for o valor da propriedade                               
+
+                                # se for propriedade simples                               
                                 else:
                                     col = rowb.column()
                                     col.scale_x =0.6
@@ -620,4 +603,3 @@ class Panel_Properties(bpy.types.Panel):
                             i += 1
 
                     old_is_a = pset.is_a # type or instance
-

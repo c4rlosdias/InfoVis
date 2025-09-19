@@ -27,6 +27,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import matplotlib
+import numpy as np
+from scipy.interpolate import interp1d
 
 def set_hide_class(context, index, is_hidden):
         props = context.scene.my_props
@@ -694,7 +696,7 @@ class Operator_load_products(bpy.types.Operator):
         props.products.clear()
         props.products_loaded = True
         ifc_reference = {
-            'TopBendStiffnerType'           : 'Pipe Fitting',
+            'TopBendStiffenerType'           : 'Pipe Fitting',
             'IntermediateBendStiffenerType' : 'Pipe Fitting',
             'StopperCollarType'             : 'Pipe Fitting',
             'PulInCollarType'               : 'Pipe Fitting',
@@ -719,8 +721,9 @@ class Operator_load_products(bpy.types.Operator):
         result = bSDD.load_classes(props.dictionary, False)
         if result:
             for classe in bSDD.data_class:  
-                
-                if classe['name'].endswith('Type') or classe['name'].endswith('Structure'):                    
+                print(classe['code'])
+                if classe['name'].endswith('Type') or classe['name'].endswith('Structure'): 
+                    print('---' + classe['name'])                   
                     if classe['name'] in  ifc_reference:
                         if ifc_reference[classe['name']] not in dic:
                             dic[ifc_reference[classe['name']]] = []
@@ -1108,42 +1111,47 @@ class Operator_props_expand(bpy.types.Operator):
 class Operator_props_graph(bpy.types.Operator):
     """Generate a curve based on the information from the table"""
     bl_idname  = "props.graph"
-    bl_label   = "load object properties"
+    bl_label   = "Plot Graph"
     bl_options = {"REGISTER", "UNDO"} 
-    pset_index : bpy.props.IntProperty(name='pset index')
-    prop_index : bpy.props.IntProperty(name='prop index')  
+    pset_index : bpy.props.IntProperty(name='')
+    prop_index : bpy.props.IntProperty(name='')
+    min_x      : bpy.props.FloatProperty(name='Min Axis X')
+    max_x      : bpy.props.FloatProperty(name='Max Axis X') 
+    min_y      : bpy.props.FloatProperty(name='Min Axis Y')
+    max_y      : bpy.props.FloatProperty(name='Max Axis Y') 
+    mult_x     : bpy.props.FloatProperty(name='Grid Interval X')         
+    mult_y     : bpy.props.FloatProperty(name='Grid Interval Y') 
+    interpoled : bpy.props.BoolProperty(name='Intepoled Curve')
+    intpl_type : bpy.props.EnumProperty(
+        items=[
+            ('cubic','cubic','cubic'),
+            ('linear', 'linear', 'linear')
+        ],
+        name='interpolation type',
+        description='Get interpoled type'
+    )  
+
+    def invoke(self, context, event):        
+        return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context):
         props = context.scene.my_props
         table = {}
         print(100*'=')
-        min_x = 0
-        min_y = 0
-        max_x = 100
-        max_y = 100
-        mult_x = 10
-        mult_y = 10
+
         # cria um dicionario com as propriedades e valores
         for pset in props.prop_metadata:            
-            if pset.index == self.pset_index:
-                min_x = pset.min_x
-                max_x = pset.max_x 
-                min_y = pset.min_y
-                max_y = pset.max_y 
-                mult_x = pset.mult_x         
-                mult_y = pset.mult_y                    
+            if pset.index == self.pset_index:               
                 for prop in pset.props:                                   
                     if prop.index == self.prop_index:
                         title = prop.name.split('_')[0]
-                        col =  prop.name.split('_')[1]                      
+                        col =  f"{prop.name.split('_')[1]} {prop.datatype}"                      
                         if col in table:
                             table[col].append(get_prop_type(prop)) 
                         else:
                             table[col] = [get_prop_type(prop)]
         df = pd.DataFrame(table)
-
-        #print(df)  
-        
+       
         # Criar gráfico com Matplotlib
         fig, ax = plt.subplots()
         cols =list( table.keys())
@@ -1151,26 +1159,33 @@ class Operator_props_graph(bpy.types.Operator):
         lines = []
 
         for col in cols:
-            
             if col != x:
-                lines.append(ax.plot(df[x],df[col], label=col))
+                if self.interpoled:
+
+                    cubic_interpoletion_model = interp1d(df[x], df[col], kind=self.intpl_type)
+                    x_ = np.linspace(df[x].min(), df[x].max(), 500)
+                    y_ = cubic_interpoletion_model(x_)
+                    lines.append(ax.plot(x_, y_, label=col))
+
+
+                else:
+                    lines.append(ax.plot(df[x],df[col], label=col))
       
         # configura o grafico
-        print(f'min x: {min_x} | max x: {max_x} | min y : {min_y} | max x : {max_y}')
-
         ax.set_title(title)
         ax.set_xlabel(x)      
         ax.grid(True) 
         ax.xaxis.set
         ax.set_box_aspect(0.5)
-        if mult_x > 0:
-            ax.xaxis.set_major_locator(MultipleLocator(mult_x))
-        if mult_y > 0:
-            ax.yaxis.set_major_locator(MultipleLocator(mult_y))
-        if max_x > 0:
-            ax.set_xlim(min_x, max_x)
-        if max_y > 0:
-            ax.set_ylim(min_y, max_y)  
+
+        if self.mult_x > 0:
+            ax.xaxis.set_major_locator(MultipleLocator(self.mult_x))
+        if self.mult_y > 0:
+            ax.yaxis.set_major_locator(MultipleLocator(self.mult_y))
+        if self.max_x > 0:
+            ax.set_xlim(self.min_x, self.max_x)
+        if self.max_y > 0:
+            ax.set_ylim(self.min_y, self.max_y)  
 
         fig.legend()
 
@@ -1194,10 +1209,7 @@ class Operator_props_graph(bpy.types.Operator):
         # Salvar HTML e abrir no navegador
         with open("graphic.html", "w") as f:
             f.write(html)
-
         webbrowser.open("graphic.html")
-
-
         return {"FINISHED"} 
     
 class Operator_props_invert(bpy.types.Operator):

@@ -100,6 +100,7 @@ class Pset_info(PropertyGroup):
     max_y       : FloatProperty(name='max Y', default=0)
     mult_x      : IntProperty(name='interval X', default=0)
     mult_y      : IntProperty(name='interval Y', default=0)
+    interpoled  : BoolProperty(name="Is Interpoled", default=False)
     
 
 class Container(PropertyGroup):
@@ -153,7 +154,6 @@ class MyProperties(PropertyGroup):
     
     
     # O&G Catalog
-
     products                 : CollectionProperty(name="products", type=Class_info)
     products_show            : CollectionProperty(name="products", type=Class_info)
     products_loaded          : BoolProperty(name="products loaded", default=False)
@@ -166,5 +166,7 @@ class MyProperties(PropertyGroup):
     active_property_index    : IntProperty(name='property index', default=0)
     icon_edit_prop           : StringProperty(name='icon edit property', default='GREASEPENCIL')
     invert_xy                : BoolProperty(name="invert xy", default=False)
+    pset_index               : IntProperty(name='pset index', default=0)
+    prop_index               : IntProperty(name='prop index', default=0)
 
 
