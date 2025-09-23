@@ -5,6 +5,7 @@ import bonsai.tool as tool
 import textwrap
 
 
+
 def _label_multiline(context, text, parent):
     chars = int(context.region.width / 8)   # 7 pix on 1 character
     wrapper = textwrap.TextWrapper(width=chars)

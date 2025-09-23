@@ -1115,6 +1115,7 @@ class Operator_props_graph(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"} 
     pset_index : bpy.props.IntProperty(name='')
     prop_index : bpy.props.IntProperty(name='')
+    
     min_x      : bpy.props.FloatProperty(name='Min Axis X')
     max_x      : bpy.props.FloatProperty(name='Max Axis X') 
     min_y      : bpy.props.FloatProperty(name='Min Axis Y')
@@ -1131,8 +1132,19 @@ class Operator_props_graph(bpy.types.Operator):
         description='Get interpoled type'
     )  
 
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "min_x")
+        layout.prop(self, "max_y")
+        layout.prop(self, "min_y")
+        layout.prop(self, "max_y")
+        layout.prop(self, "mult_x")
+        layout.prop(self, "mult_y")
+        layout.prop(self, "interpoled")
+        layout.prop(self, "intpl_type")
+
     def invoke(self, context, event):        
-        return context.window_manager.invoke_props_dialog(self)
+        return context.window_manager.invoke_props_dialog(self, width=400)
 
     def execute(self, context):
         props = context.scene.my_props
