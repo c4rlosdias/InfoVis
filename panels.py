@@ -545,6 +545,7 @@ class Panel_Properties(bpy.types.Panel):
                                        op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="plot") 
                                        op.pset_index = pset.index
                                        op.prop_index = item.index
+                                       
 
                                     # imprime dados para a plotagem do gráfico
                                     rowb = box.row() 
@@ -593,7 +594,7 @@ class Panel_Properties(bpy.types.Panel):
                                         col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
                                     old_name_prop = item.name   
 
-                                # se for propriedade simples                               
+                                # se for o valor da propriedade simples                               
                                 else:
                                     col = rowb.column()
                                     col.scale_x =0.6

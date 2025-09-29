@@ -86,6 +86,7 @@ class Property_info(PropertyGroup):
 
 
 
+
 class Pset_info(PropertyGroup):    
     name        : StringProperty(name='pset name')
     is_a        : StringProperty(name= "is a")
@@ -168,5 +169,7 @@ class MyProperties(PropertyGroup):
     invert_xy                : BoolProperty(name="invert xy", default=False)
     pset_index               : IntProperty(name='pset index', default=0)
     prop_index               : IntProperty(name='prop index', default=0)
+    XAxis                    : StringProperty(name='property of the X axis')
+
 
 

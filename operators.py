@@ -30,25 +30,30 @@ import matplotlib
 import numpy as np
 from scipy.interpolate import interp1d
 
+dynamic_items = []
+
+def get_options(self, context):    
+    return dynamic_items
+
 def set_hide_class(context, index, is_hidden):
-        props = context.scene.my_props
-        level = props.classes[index].level_index
-        for classe in props.classes:
-            if classe.index > index:
-                if classe.level_index > level:
-                    classe.is_hidden = is_hidden                
-                else:
-                    return
+    props = context.scene.my_props
+    level = props.classes[index].level_index
+    for classe in props.classes:
+        if classe.index > index:
+            if classe.level_index > level:
+                classe.is_hidden = is_hidden                
+            else:
+                return
 
 def set_hide_product(context, index, is_hidden):
-        props = context.scene.my_props
-        level = props.products[index].level_index
-        for product in props.products:
-            if product.index > index:
-                if product.level_index > level:
-                    product.is_hidden = is_hidden                
-                else:
-                    return
+    props = context.scene.my_props
+    level = props.products[index].level_index
+    for product in props.products:
+        if product.index > index:
+            if product.level_index > level:
+                product.is_hidden = is_hidden                
+            else:
+                return
                 
 def build_classes(context, classe, c, level, parent, hide):
     c += 1 
@@ -1114,14 +1119,15 @@ class Operator_props_graph(bpy.types.Operator):
     bl_label   = "Plot Graph"
     bl_options = {"REGISTER", "UNDO"} 
     pset_index : bpy.props.IntProperty(name='')
-    prop_index : bpy.props.IntProperty(name='')
+    prop_index : bpy.props.IntProperty(name='')    
+    x_axis   : bpy.props.EnumProperty(items=get_options, name='property for x axis')
     
     min_x      : bpy.props.FloatProperty(name='Min Axis X')
     max_x      : bpy.props.FloatProperty(name='Max Axis X') 
     min_y      : bpy.props.FloatProperty(name='Min Axis Y')
     max_y      : bpy.props.FloatProperty(name='Max Axis Y') 
     mult_x     : bpy.props.FloatProperty(name='Grid Interval X')         
-    mult_y     : bpy.props.FloatProperty(name='Grid Interval Y') 
+    mult_y     : bpy.props.FloatProperty(name='Grid Interval Y')     
     interpoled : bpy.props.BoolProperty(name='Intepoled Curve')
     intpl_type : bpy.props.EnumProperty(
         items=[
@@ -1130,10 +1136,16 @@ class Operator_props_graph(bpy.types.Operator):
         ],
         name='interpolation type',
         description='Get interpoled type'
-    )  
+    )
 
+    table : dict
+    title : str
+    lista : list
+    
+    
     def draw(self, context):
         layout = self.layout
+        
         layout.prop(self, "min_x")
         layout.prop(self, "max_y")
         layout.prop(self, "min_y")
@@ -1141,50 +1153,60 @@ class Operator_props_graph(bpy.types.Operator):
         layout.prop(self, "mult_x")
         layout.prop(self, "mult_y")
         layout.prop(self, "interpoled")
-        layout.prop(self, "intpl_type")
+        layout.prop(self, "intpl_type")   
+        layout.prop(self, "x_axis")
 
-    def invoke(self, context, event):        
-        return context.window_manager.invoke_props_dialog(self, width=400)
-
-    def execute(self, context):
-        props = context.scene.my_props
-        table = {}
-        print(100*'=')
+    def invoke(self, context, event):     
+        self.table={}
+        self.title = ''
+        dynamic_items.clear()
 
         # cria um dicionario com as propriedades e valores
+        props = context.scene.my_props
         for pset in props.prop_metadata:            
             if pset.index == self.pset_index:               
                 for prop in pset.props:                                   
                     if prop.index == self.prop_index:
-                        title = prop.name.split('_')[0]
+                        self.title = prop.name.split('_')[0]
                         col =  f"{prop.name.split('_')[1]} {prop.datatype}"                      
-                        if col in table:
-                            table[col].append(get_prop_type(prop)) 
+                        if col in self.table:
+                            self.table[col].append(get_prop_type(prop)) 
                         else:
-                            table[col] = [get_prop_type(prop)]
-        df = pd.DataFrame(table)
-       
+                            self.table[col] = [get_prop_type(prop)]
+
+        # imprime a opcao de colunas para o eixo x
+        l = list(self.table.keys())
+        for c in l:
+            if (c,c,c) not in dynamic_items:
+                dynamic_items.append((c,c,c)) 
+
+        return context.window_manager.invoke_props_dialog(self, width=500)
+
+    def execute(self, context):
+        
+        df = pd.DataFrame(self.table)
+        print(df)
+
         # Criar gráfico com Matplotlib
         fig, ax = plt.subplots()
-        cols =list( table.keys())
-        x = cols[0]
+        cols =list( self.table.keys())
+        #x = cols[0]
+        x = self.x_axis if self.x_axis != '' else cols[0]
+        print(x)
         lines = []
 
         for col in cols:
             if col != x:
                 if self.interpoled:
-
                     cubic_interpoletion_model = interp1d(df[x], df[col], kind=self.intpl_type)
                     x_ = np.linspace(df[x].min(), df[x].max(), 500)
                     y_ = cubic_interpoletion_model(x_)
                     lines.append(ax.plot(x_, y_, label=col))
-
-
                 else:
                     lines.append(ax.plot(df[x],df[col], label=col))
       
         # configura o grafico
-        ax.set_title(title)
+        ax.set_title(self.title)
         ax.set_xlabel(x)      
         ax.grid(True) 
         ax.xaxis.set
@@ -1212,7 +1234,7 @@ class Operator_props_graph(bpy.types.Operator):
         <html>
         <head><title>BIM Report</title></head>
         <body>
-        <h2>{title}</h2>
+        <h2>{self.title}</h2>
         <img src="data:image/png;base64,{img_base64}" />
         </body>
         </html>
