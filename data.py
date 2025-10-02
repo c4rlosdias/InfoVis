@@ -145,7 +145,8 @@ def set_properties(props, ifc_obj, is_a, i):
         for prop, value in _props.items():           
             if prop != 'id':  
                 if 'Table' in prop:
-                    table[prop]=value
+                    _prop = get_property(ifc_obj, pset, prop)
+                    table[f'{prop}||{_prop.Description}']=value
                 else:               
                     if type(value) == list:
                         # verifica o tipo da propriedade
@@ -157,20 +158,24 @@ def set_properties(props, ifc_obj, is_a, i):
                         else:
                             type_prop = ''
 
+                        # se é uma propriedade de lista
                         if type_prop == 'IfcPropertyListValue':
                             #c = 0
                             for item_prop in value:    
                                 new_prop = new_item.props.add() 
                                 new_prop.name = prop
+                                new_prop.description = _prop.Description
                                 new_prop.datatype = get_unit(ifc_obj, pset, prop)
                                 new_prop.index = j      
                                 new_prop.type_prop = type_prop     
                                 set_prop_type(new_prop, item_prop)
                                 #c += 1
 
+                        # se é uma propriedade enumerada
                         if type_prop == 'IfcPropertyEnumeratedValue':  
                             new_prop = new_item.props.add() 
-                            new_prop.name = prop   
+                            new_prop.name = prop  
+                            new_prop.description = _prop.Description 
                             new_prop.index = j      
                             new_prop.type_prop = type_prop   
                             new_prop.datatype = get_unit(ifc_obj, pset, prop)                                                        
@@ -182,9 +187,12 @@ def set_properties(props, ifc_obj, is_a, i):
                                 else:
                                     new_value.enumerated = False
                                 set_prop_type(new_value, enumval.wrappedValue) 
+                    # se não é uma propriedade de lista nem enumerada
                     else:
+                        _prop = get_property(ifc_obj, pset, prop)
                         new_prop = new_item.props.add()  
                         new_prop.name = prop
+                        new_prop.description = _prop.Description
                         new_prop.datatype = get_unit(ifc_obj, pset, prop)
                         new_prop.index = j                                                
                         set_prop_type(new_prop, value)        
@@ -199,13 +207,16 @@ def set_properties(props, ifc_obj, is_a, i):
             nr = len(df)
             for index, row in dft.iterrows():   
                 for col, val in row.items():
+                    name = index.split('||')[0]
+                    description = index.split('||')[1]
                     new_prop = new_item.props.add()
-                    new_prop.name = index
+                    new_prop.name = name
+                    new_prop.description = description
                     new_prop.n_columns = nc 
                     new_prop.n_rows = nr                         
                     new_prop.index = j    
                     new_prop.type_prop = 'table'  
-                    new_prop.datatype = get_unit(ifc_obj, pset, index)         
+                    new_prop.datatype = get_unit(ifc_obj, pset, name)         
                     set_prop_type(new_prop, val)
 
         i += 1
@@ -391,7 +402,8 @@ class PropTempl:
         }
         prop_name = metadata['code']
         data_type = metadata['dataType']
-        units = metadata['units']    
+        units = metadata['units'] 
+        description = metadata['description']   
         definition = metadata['definition']
         if metadata['propertyValueKind'] in prop_type:
             template_type = prop_type[metadata['propertyValueKind']]
@@ -470,7 +482,7 @@ class PropTempl:
             # Se existe a propriedade naquele pset edita ela
             prop_templ = cls.get_prop(prop_name, pset_name, cls.template)
             if prop_templ is not None:
-                prop_templ.Description=definition
+                prop_templ.Description=description
                 prop_templ.PrimaryMeasureType=data_type
                 prop_templ.TemplateType=template_type
                 prop_templ.Enumerators=enumerators

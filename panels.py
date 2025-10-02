@@ -493,10 +493,12 @@ class Panel_Properties(bpy.types.Panel):
         obj = context.active_object       
         
         if obj is not None:        
-            row = layout.row()
+            row = layout.row()            
             row.operator("props.load_properties", text="Load properties")                       
             if len(props.prop_metadata) > 0:
                 old_is_a = ""
+                row = layout.row()
+                row.prop(props, "show_description")
                 for pset in props.prop_metadata:
                     row = layout.row()
                     if old_is_a != pset.is_a:
@@ -529,11 +531,15 @@ class Panel_Properties(bpy.types.Panel):
                         # para cada propriedade
                         for item in pset.props:   
                                                              
-                            # se for tabela
+                            # se existe a palavra Table no nome da propriedade
                             if 'Table' in  item.name:
                                 names = item.name.split('_')
+                                description = item.description
                                 title = names[0]
-                                name_prop = names[1]
+                                if props.show_description:
+                                    name_prop = item.description
+                                else:
+                                    name_prop = names[1]
                                 
                                 # imprime o titulo da tabela
                                 if title != old_title:
@@ -541,6 +547,8 @@ class Panel_Properties(bpy.types.Panel):
                                     rowb.scale_y =0.8
                                     op = rowb.operator("props.edit", icon='CHECKMARK', text="")
                                     rowb.label(text=f' {title}', icon='VIEW_ORTHO')
+
+                                    # se a tabela representa dados para uma curva de crushing
                                     if 'Crushing' in pset.name:                                                                               
                                        op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="plot") 
                                        op.pset_index = pset.index
@@ -560,7 +568,12 @@ class Panel_Properties(bpy.types.Panel):
                                     col = rowb.column(align=True)                                
                                 
                                 if item.name not in titulos:
-                                    col.label(text=f"{item.name.split('_')[1]} {item.datatype}")                                        
+                                    if props.show_description:
+                                        name_prop = f"{item.description} {item.datatype}"
+                                    else:
+                                        name_prop = f"{item.name.split('_')[1]} {item.datatype}"
+                                    
+                                    col.label(text=name_prop)                                        
                                     titulos = titulos + item.name  
 
                                 act_prop = f"value{item.type_value}"                                                                                              
@@ -580,8 +593,9 @@ class Panel_Properties(bpy.types.Panel):
                                     rowb = box.row(align=True)
                                     op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
                                     op.pset_index = pset.index
-                                    op.prop_index = item.index                               
-                                    rowb.label(text=f' {item.name}')
+                                    op.prop_index = item.index  
+                                    prop_name =  f' {item.description}' if props.show_description else  f' {item.name}'                          
+                                    rowb.label(text=prop_name)
 
                                 # se for o tipo enumerado
                                 if item.type_prop == 'IfcPropertyEnumeratedValue':

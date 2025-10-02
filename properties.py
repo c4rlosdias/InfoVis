@@ -69,8 +69,10 @@ class Enumeration_values(PropertyGroup):
     type_value  : StringProperty(name="type value")
 
 class Property_info(PropertyGroup):    
-    name        : StringProperty(name='property name')
+    
     index       : IntProperty(name='prop index')
+    name        : StringProperty(name='property name')
+    description : StringProperty(name='property description')
     valuestr    : StringProperty(name='value str')
     valueint    : IntProperty(name='value int')
     valuefloat  : FloatProperty(name='value float')
@@ -78,7 +80,6 @@ class Property_info(PropertyGroup):
     type_value  : StringProperty(name="type value")
     type_prop   : StringProperty(name='typr prop')
     n_columns   : IntProperty(name='n columns', default=1)
-
     n_rows      : IntProperty(name='n columns', default=1)
     datatype    : StringProperty(name='data type', default='')
     enumerations: CollectionProperty(name="enumerated", type=Enumeration_values)
@@ -94,7 +95,6 @@ class Pset_info(PropertyGroup):
     index       : IntProperty(name='index')
     props       : CollectionProperty(name="properties", type=Property_info)
     is_expanded : BoolProperty(name="Is Expanded", default=False)
-
     min_x       : FloatProperty(name='min X', default=0)
     max_x       : FloatProperty(name='max X', default=0)
     min_y       : FloatProperty(name='min Y', default=0)
@@ -170,6 +170,7 @@ class MyProperties(PropertyGroup):
     pset_index               : IntProperty(name='pset index', default=0)
     prop_index               : IntProperty(name='prop index', default=0)
     XAxis                    : StringProperty(name='property of the X axis')
+    show_description         : BoolProperty(name='Show property description', default=False ) 
 
 
 
