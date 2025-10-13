@@ -1180,6 +1180,7 @@ class Operator_props_graph(bpy.types.Operator):
         layout = self.layout
         cols = self.df.columns.to_list()
         print(cols)
+        # se tem documento anexado
         if self.prop_index == -1:
             row = layout.row()
             row.label(text='Imported Table :', icon='DOCUMENTS')
@@ -1194,8 +1195,7 @@ class Operator_props_graph(bpy.types.Operator):
                 for c in cols:
                     col = rowb.column(align=True)
                     col.label(text=str(row[c]))
-
-                
+              
 
         layout.prop(self, "min_x")
         layout.prop(self, "max_y")
@@ -1216,24 +1216,29 @@ class Operator_props_graph(bpy.types.Operator):
         
         # cria um dicionario com as propriedades e valores
         props = context.scene.my_props
-        for pset in props.prop_metadata:            
-            if pset.index == self.pset_index:    
-                # se não for documento externo
-                if self.prop_index == -1:           
-                    self.csv = pset.document
-                else:
-                    for prop in pset.props:                                   
-                        if prop.index == self.prop_index:
-                            self.title = prop.name.split('_')[0]
-                            col =  f"{prop.name.split('_')[1]} {prop.datatype}"                      
-                            if col in self.table:
-                                self.table[col].append(get_prop_type(prop)) 
-                            else:
-                                self.table[col] = [get_prop_type(prop)]
+        # se o elemento tem documento associado
+        if self.pset_index > -1:
+            for pset in props.prop_metadata:            
+                if pset.index == self.pset_index:    
+                    # se não for documento externo
+                    if self.prop_index == -1:           
+                        self.csv = pset.document
+                    else:
+                        for prop in pset.props:                                   
+                            if prop.index == self.prop_index:
+                                self.title = prop.name.split('_')[0]
+                                col =  f"{prop.name.split('_')[1]} {prop.datatype}"                      
+                                if col in self.table:
+                                    self.table[col].append(get_prop_type(prop)) 
+                                else:
+                                    self.table[col] = [get_prop_type(prop)]
+            # cria o dataframe
+            self.df = pd.read_csv(self.csv) if self.prop_index == -1 else pd.DataFrame(self.table)
+
+        else:
+            self.df = pd.read_csv(props.document)
 
         
-        # cria o dataframe
-        self.df = pd.read_csv(self.csv) if self.prop_index == -1 else pd.DataFrame(self.table)
 
         # imprime a opcao de colunas para o eixo x
         for c in self.df.columns.to_list():

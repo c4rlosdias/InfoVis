@@ -147,6 +147,7 @@ def set_properties(props, ifc_obj, is_a, i):
             new_item.has_document = True
             new_item.document = _pset.HasAssociations[0].RelatingDocument.Location.wrappedValue       
 
+
         table = {}    
         new_item = props.prop_metadata.add()            
         new_item.name = pset  
@@ -241,9 +242,19 @@ def refresh_props(context):
     # get active object
     props = context.scene.my_props
     props.prop_metadata.clear() 
+    props.has_document = False
+    props.document = ''
     obj = context.active_object
     ifc_obj = tool.Ifc.get_entity(obj)
+
+    # se o tipo do elemento tem algum documento associado
+    ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
+    if ifc_obj_type.HasAssociations:
+        props.has_document = True
+        props.document = ifc_obj_type.HasAssociations[0].RelatingDocument.Location.wrappedValue  
+
     ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
+
     i = set_properties(props, ifc_obj, "instance", 0)
     set_properties(props, ifc_type_obj, "type", i)
     

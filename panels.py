@@ -524,6 +524,15 @@ class Panel_Properties(bpy.types.Panel):
         obj = context.active_object       
         
         if obj is not None:        
+            row = layout.row()   
+
+            # se o pset tem algum documento externo associado
+            if props.has_document:
+                    row.label(text=f' | {props.document}', icon='DOCUMENTS') 
+                    op3 = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                    op3.pset_index = -1
+                    op3.prop_index = -1   
+
             row = layout.row()            
             row.operator("props.load_properties", text="Load properties")                       
             if len(props.prop_metadata) > 0:
