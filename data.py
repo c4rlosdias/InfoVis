@@ -127,14 +127,26 @@ def get_property(ifc_obj, pset_name, prop_name):
             return prop
     return None
 
+def get_pset(ifc_obj, pset_name):
+    model = tool.Ifc.get()
+    pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
+    return pset
+
+
 def set_properties(props, ifc_obj, is_a, i):     
     id = ifc_obj.id()
     # get psets
     print(ifc_obj)
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
     print(psets)
-    for pset, _props in psets.items():     
-        print(pset)        
+    for pset, _props in psets.items():             
+        _pset = get_pset(ifc_obj, pset)
+        
+        # se o pset tem algum documento associado
+        if _pset.HasAssociations:
+            new_item.has_document = True
+            new_item.document = _pset.HasAssociations[0].RelatingDocument.Location.wrappedValue       
+
         table = {}    
         new_item = props.prop_metadata.add()            
         new_item.name = pset  
@@ -149,7 +161,7 @@ def set_properties(props, ifc_obj, is_a, i):
                     table[f'{prop}||{_prop.Description}']=value
                 else:               
                     if type(value) == list:
-                        # verifica o tipo da propriedade
+                        # obtem a propriedade
                         _prop = get_property(ifc_obj, pset, prop)
 
                         # verifica o tipo da propriedade
@@ -173,7 +185,7 @@ def set_properties(props, ifc_obj, is_a, i):
 
                         # se é uma propriedade enumerada
                         if type_prop == 'IfcPropertyEnumeratedValue':  
-                            new_prop = new_item.props.add() 
+                            new_prop = new_item.props.add()                             
                             new_prop.name = prop  
                             new_prop.description = _prop.Description 
                             new_prop.index = j      
@@ -190,6 +202,9 @@ def set_properties(props, ifc_obj, is_a, i):
                     # se não é uma propriedade de lista nem enumerada
                     else:
                         _prop = get_property(ifc_obj, pset, prop)
+                        # verifica se tem documento associado
+                        
+
                         new_prop = new_item.props.add()  
                         new_prop.name = prop
                         new_prop.description = _prop.Description
@@ -290,6 +305,7 @@ class bSDD:
     data_dic =[]
     data_info_prop =[]
     data_info_class={}
+    data_class_prop = []
     properties = []
     data_prop = {}
     data_class = {}
@@ -343,6 +359,17 @@ class bSDD:
         response = requests.get(f'{cls.endpoint}Class/v1', params=params)        
         if response.status_code == 200:            
             cls.data_info_class = response.json()
+            return True
+        else:
+            cls.response = response.text
+            return False
+    
+    @classmethod
+    def get_class_prop(cls, uri : str) -> bool:        
+        params = {'ClassUri' : uri}
+        response = requests.get(f'{cls.endpoint}Class/Properties/v1', params=params)        
+        if response.status_code == 200:                        
+            cls.data_class_prop = response.json()
             return True
         else:
             cls.response = response.text

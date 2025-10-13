@@ -409,7 +409,39 @@ class Operator_get_class_info(bpy.types.Operator):
         else:
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}  
-    
+
+# ==================================================================================================
+# get class metadata 
+# ==================================================================================================
+class Operator_get_class_prop(bpy.types.Operator): 
+    """Get active class properties"""
+    bl_idname  = "bsdd.get_class_prop"
+    bl_label   = "get class properties"
+    bl_options = {"REGISTER", "UNDO"}
+    uri : bpy.props.StringProperty(name="uri")
+
+    def execute(self, context):                
+        props = context.scene.my_props
+        props.info_class_prop_loaded = False
+        result = bSDD.get_class_prop(self.uri)
+        if result:
+            props.info_class_prop_loaded = True   
+            props.class_prop_info.clear()         
+            properties = bSDD.data_class_prop
+            for pro_info in properties['classProperties']:
+                newitem = props.class_prop_info.add()
+                newitem.name = pro_info['name']
+                newitem.description = pro_info['description']
+                newitem.definition = pro_info['definition']
+                newitem.datatype = pro_info['dataType']
+                newitem.uri = pro_info['uri']
+                newitem.propertyset = pro_info['propertySet']
+
+            return {"FINISHED"} 
+        else:
+            self.report({'ERROR'}, bSDD.response)
+            return {"CANCELLED"}  
+           
 # ==================================================================================================
 # export IDS file 
 # ==================================================================================================
@@ -1120,12 +1152,12 @@ class Operator_props_graph(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"} 
     pset_index : bpy.props.IntProperty(name='')
     prop_index : bpy.props.IntProperty(name='')    
-    x_axis   : bpy.props.EnumProperty(items=get_options, name='property for x axis')
-    
-    min_x      : bpy.props.FloatProperty(name='Min Axis X')
-    max_x      : bpy.props.FloatProperty(name='Max Axis X') 
-    min_y      : bpy.props.FloatProperty(name='Min Axis Y')
-    max_y      : bpy.props.FloatProperty(name='Max Axis Y') 
+    x_axis     : bpy.props.EnumProperty(items=get_options, name='property for x axis')
+    order_x    : bpy.props.BoolProperty(name='Order X Axis', default=False)
+    min_x      : bpy.props.FloatProperty(name='Min X Axis')
+    max_x      : bpy.props.FloatProperty(name='Max X Axis') 
+    min_y      : bpy.props.FloatProperty(name='Min Y Axis')
+    max_y      : bpy.props.FloatProperty(name='Max Y Axis') 
     mult_x     : bpy.props.FloatProperty(name='Grid Interval X')         
     mult_y     : bpy.props.FloatProperty(name='Grid Interval Y')     
     interpoled : bpy.props.BoolProperty(name='Intepoled Curve')
@@ -1140,12 +1172,31 @@ class Operator_props_graph(bpy.types.Operator):
 
     table : dict
     title : str
-    lista : list
-    
+    lista : list 
+    csv   : str 
+    df : None 
     
     def draw(self, context):
         layout = self.layout
-        
+        cols = self.df.columns.to_list()
+        print(cols)
+        if self.prop_index == -1:
+            row = layout.row()
+            row.label(text='Imported Table :', icon='DOCUMENTS')
+            box = layout.box()
+            rowb = box.row() 
+            for c in cols:
+                col = rowb.column(align=True)
+                col.label(text=c)
+
+            for index, row in self.df.iterrows():
+                rowb = box.row() 
+                for c in cols:
+                    col = rowb.column(align=True)
+                    col.label(text=str(row[c]))
+
+                
+
         layout.prop(self, "min_x")
         layout.prop(self, "max_y")
         layout.prop(self, "min_y")
@@ -1153,57 +1204,62 @@ class Operator_props_graph(bpy.types.Operator):
         layout.prop(self, "mult_x")
         layout.prop(self, "mult_y")
         layout.prop(self, "interpoled")
-        layout.prop(self, "intpl_type")   
+        layout.prop(self, "intpl_type")
         layout.prop(self, "x_axis")
+        layout.prop(self, "order_x") 
 
     def invoke(self, context, event):     
         self.table={}
         self.title = ''
         dynamic_items.clear()
 
+        
         # cria um dicionario com as propriedades e valores
         props = context.scene.my_props
         for pset in props.prop_metadata:            
-            if pset.index == self.pset_index:               
-                for prop in pset.props:                                   
-                    if prop.index == self.prop_index:
-                        self.title = prop.name.split('_')[0]
-                        col =  f"{prop.name.split('_')[1]} {prop.datatype}"                      
-                        if col in self.table:
-                            self.table[col].append(get_prop_type(prop)) 
-                        else:
-                            self.table[col] = [get_prop_type(prop)]
+            if pset.index == self.pset_index:    
+                # se não for documento externo
+                if self.prop_index == -1:           
+                    self.csv = pset.document
+                else:
+                    for prop in pset.props:                                   
+                        if prop.index == self.prop_index:
+                            self.title = prop.name.split('_')[0]
+                            col =  f"{prop.name.split('_')[1]} {prop.datatype}"                      
+                            if col in self.table:
+                                self.table[col].append(get_prop_type(prop)) 
+                            else:
+                                self.table[col] = [get_prop_type(prop)]
+
+        
+        # cria o dataframe
+        self.df = pd.read_csv(self.csv) if self.prop_index == -1 else pd.DataFrame(self.table)
 
         # imprime a opcao de colunas para o eixo x
-        l = list(self.table.keys())
-        for c in l:
+        for c in self.df.columns.to_list():
             if (c,c,c) not in dynamic_items:
                 dynamic_items.append((c,c,c)) 
 
         return context.window_manager.invoke_props_dialog(self, width=500)
 
     def execute(self, context):
-        
-        df = pd.DataFrame(self.table)
-        print(df)
 
+        cols = self.df.columns.to_list()
         # Criar gráfico com Matplotlib
-        fig, ax = plt.subplots()
-        cols =list( self.table.keys())
-        #x = cols[0]
+        fig, ax = plt.subplots()              
         x = self.x_axis if self.x_axis != '' else cols[0]
-        print(x)
+        if self.order_x:
+            self.df = self.df.sort_values(by=x)
         lines = []
-
         for col in cols:
             if col != x:
                 if self.interpoled:
-                    cubic_interpoletion_model = interp1d(df[x], df[col], kind=self.intpl_type)
-                    x_ = np.linspace(df[x].min(), df[x].max(), 500)
+                    cubic_interpoletion_model = interp1d(self.df[x], self.df[col], kind=self.intpl_type)
+                    x_ = np.linspace(self.df[x].min(), self.df[x].max(), 500)
                     y_ = cubic_interpoletion_model(x_)
                     lines.append(ax.plot(x_, y_, label=col))
                 else:
-                    lines.append(ax.plot(df[x],df[col], label=col))
+                    lines.append(ax.plot(self.df[x],self.df[col], label=col))
       
         # configura o grafico
         ax.set_title(self.title)

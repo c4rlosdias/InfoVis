@@ -203,6 +203,9 @@ class Panel_Import_Classes(bpy.types.Panel):
             row = layout.row()                                
             op = row.operator("bsdd.get_class_info", text="  Get Class Information  ")
             op.uri = active_class.uri
+                              
+            op2 = row.operator("bsdd.get_class_prop", text="  Get Class Properties  ")
+            op2.uri = active_class.uri
 
             row = layout.row()
             row.label(text=str(active_class.name))
@@ -230,7 +233,23 @@ class Panel_Import_Classes(bpy.types.Panel):
                 if props.class_ifctype != '':
                     row = box.row()
                     row.label(text=f'Ifc class : {props.class_ifctype}', icon='DOT') 
-
+            
+            # Imprime informações da classe ativa 
+            if props.info_class_prop_loaded:
+                row = layout.row()
+                row.label(text="Class Properties Information:", icon='INFO')
+                if len(props.class_prop_info)>0:
+                    self.layout.template_list(
+                        "BIM_UL_class_prop",
+                        "",
+                        props,
+                        "class_prop_info",
+                        props,
+                        "active_class_prop_index",
+                        rows=10
+                    )
+                else:
+                   row.label(text="Class has no properties", icon='WARNING_LARGE') 
                 
             
 # Painel de classes             
@@ -260,6 +279,18 @@ class BIM_UL_classes(bpy.types.UIList):
 
                 row.label(text= f'[{item.code}] {item.name}', icon = icontype )                 
                 row.operator("object.uri", text="", icon="URL").uri = item.uri
+
+# Painel de propriedades da classe             
+class BIM_UL_class_prop(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        if item:
+            row = layout.row(align=True)
+            row.label(text= f'{item.description}', icon = 'DOT' )             
+            row.operator("object.uri", text="", icon="URL").uri = item.uri
+
+            
+       
+                                
 
 
 # ---------------------------------------------------------------------
@@ -519,6 +550,15 @@ class Panel_Properties(bpy.types.Panel):
                         icon = 'TRIA_RIGHT'
                     row.operator("props.expand", icon=icon, text="").index = pset.index
                     row.label(text=pset.name, icon='COPY_ID') 
+
+                    # se o pset tem algum documento externo associado
+                    if pset.has_document:
+                         row.label(text=f' | {pset.document}', icon='DOCUMENTS') 
+                         op = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                         op.pset_index = pset.index
+                         op.prop_index = -1
+                         
+
                     layout.separator()
 
                     # se o pset está expandido                
@@ -596,6 +636,7 @@ class Panel_Properties(bpy.types.Panel):
                                     op.prop_index = item.index  
                                     prop_name =  f' {item.description}' if props.show_description else  f' {item.name}'                          
                                     rowb.label(text=prop_name)
+                                    
 
                                 # se for o tipo enumerado
                                 if item.type_prop == 'IfcPropertyEnumeratedValue':
@@ -606,6 +647,11 @@ class Panel_Properties(bpy.types.Panel):
                                     for enum in item.enumerations:
                                         print('ok')
                                         col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
+                                    # se a propriedade tem documento associado
+                                    if item.has_document:
+                                        op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
+                                        op.pset_index = pset.index
+                                        op.prop_index = item.index 
                                     old_name_prop = item.name   
 
                                 # se for o valor da propriedade simples                               
