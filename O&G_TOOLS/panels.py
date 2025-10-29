@@ -1,19 +1,37 @@
 import bpy
 from .operators import *
+
 import bonsai.tool as tool
 import textwrap
 
 
 def _label_multiline(context, text, parent):
-    chars = int(context.region.width / 6)   # 7 pix on 1 character
+    chars = int(context.region.width / 8)   # 7 pix on 1 character
     wrapper = textwrap.TextWrapper(width=chars)
     text_lines = wrapper.wrap(text=text)
     for text_line in text_lines:
         parent.label(text=text_line)
 
+def get_properties(ifc_obj):
+
+    result = []
+    result.append()
+
+def get_product_description(context, index):
+    props = context.scene.my_props 
+    products = props.products_show
+    for product in products:
+        if product.index == index:
+            return product.description
+    
+
 # ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# O&G Dictionary
+# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+
 # Conecta com o bSDD e apresenta as versões do dicionário
-# ---------------------------------------------------------------------
 
 class Panel_Connect(bpy.types.Panel):
     
@@ -22,7 +40,7 @@ class Panel_Connect(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G Dictionary"
     #bl_options      = {"DEFAULT_CLOSED"}
     
     def draw(self, context):           
@@ -44,7 +62,7 @@ class Panel_Import_Properties(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G Dictionary"
     bl_options      = {"DEFAULT_CLOSED"}
     
     
@@ -120,8 +138,6 @@ class Panel_Import_Properties(bpy.types.Panel):
 class BIM_UL_ifc_properties(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         if item:
-            
-
             row = layout.row(align=True)
             if item.is_selected == True:
                 row.prop(item, "is_selected", text="", icon="RADIOBUT_ON")  
@@ -156,7 +172,7 @@ class Panel_Import_Classes(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G Dictionary"
     bl_options      = {"DEFAULT_CLOSED"}
 
 
@@ -241,8 +257,7 @@ class BIM_UL_classes(bpy.types.UIList):
                 else:
                     row.label(text="", icon="BLANK1") 
 
-                row.label(text= f'[{item.code}] {item.name}', icon = icontype ) 
-                row.operator("object.create", text="", icon="RESTRICT_SELECT_OFF").uri = item.uri
+                row.label(text= f'[{item.code}] {item.name}', icon = icontype )                 
                 row.operator("object.uri", text="", icon="URL").uri = item.uri
 
 
@@ -258,7 +273,7 @@ class Panel_Export_Properties(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G Dictionary"
     bl_options      = {"DEFAULT_CLOSED"}
     
     
@@ -271,8 +286,9 @@ class Panel_Export_Properties(bpy.types.Panel):
 
 
 # ---------------------------------------------------------------------
-# Mostra a arvore de decomposicao dos elementos
-#
+# ---------------------------------------------------------------------
+# O&G Decomposition
+# ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
 
 class Panel_Decompositions(bpy.types.Panel):
@@ -314,13 +330,8 @@ class Panel_Decompositions(bpy.types.Panel):
 class BIM_UL_decomposition(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
         if item:
-            
-                    
-
             row = layout.row(align=True)
-
-            objs = [tool.Ifc.get_entity(x).id()  for x in context.selected_objects]
-            
+            objs = [tool.Ifc.get_entity(x).id()  for x in context.selected_objects]           
 
             if item.type == "IfcProject":
                 icon = 'CURRENT_FILE'
@@ -364,7 +375,9 @@ class BIM_UL_decomposition(bpy.types.UIList):
                 # row.operator("object.uri", text="", icon="URL").uri = item.uri
 
 # ---------------------------------------------------------------------
-# Conecta com o bSDD e apresenta as versões do dicionário
+# ---------------------------------------------------------------------
+# O&G Catalog
+# ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
 
 class Panel_Catalog(bpy.types.Panel):
@@ -377,11 +390,218 @@ class Panel_Catalog(bpy.types.Panel):
     bl_category     = "O&G Catalog"
     #bl_options      = {"DEFAULT_CLOSED"}
     
-    def draw(self, context):           
-        layout = self.layout
-        props = context.scene.my_props
-        row = layout.row()
-        row.label(text="ssss")
-        row = layout.row()
-        row.operator("catag.exp_json", text="export json")
+    def draw(self, context):   
+        props = context.scene.my_props 
+        layout = self.layout       
+        row = layout.row()     
+
+        # botão para conectar com o bSDD e obter as propriedades do dicionario selecionado
+        row.operator("catag.load_products", text="Load type products")   
+
+        # Imprime os produtos 
+        if len(props.products) > 0:
+            row = layout.row()
+            row.label(text="Classes Information:", icon='INFO')
+
+            self.layout.template_list(
+                "BIM_UL_products",
+                "",
+                props,
+                "products_show",
+                props,
+                "active_product_index",
+                rows=10
+            )
+            
+            row = layout.row()
+            row.label(text="Product Information:", icon='INFO')
+            box = layout.box()
+            rowb = box.row()
+            text = get_product_description(context, props.active_product_index)
+            _label_multiline(context = context, parent = box, text = text)
+
+            
+
+
+# Painel de produtos             
+class BIM_UL_products(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        if item:
+            row = layout.row(align=True)
+            icons = {
+                'Pipe Fitting' : 'MOD_SIMPLEDEFORM',
+                'Pipe Segment' : 'IPO_EASE_IN_OUT'
+            }
+            if item.name in icons:
+                icontype = icons[item.name]
+            else:
+                icontype = 'LAYER_ACTIVE'
+
+
+            if not item.is_hidden:
+                for i in range(0, item.level_index - 1):
+                    row.label(text="", icon="BLANK1")
+                if item.has_children:
+                    if item.is_expanded:
+                        row.operator(
+                            "object.contract_products",
+                            text="",
+                            emboss=False,
+                            icon="DISCLOSURE_TRI_DOWN"
+                        ).index = item.index
+                    else:
+                        row.operator(
+                            "object.expand_products",
+                            text="",
+                            emboss=False,
+                            icon="DISCLOSURE_TRI_RIGHT"
+                        ).index = item.index
+                else:
+                    row.label(text="", icon="BLANK1") 
+
+
+                row.label(text= f'{item.name}', icon = icontype )
+
+                if not item.has_children:
+                    row.operator("catag.insert_type", text="", icon="PLUS").uri = item.name
+                if item.uri != '':
+                    row.operator("object.uri", text="", icon="URL").uri = item.uri
+
+# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# O&G Properties
+# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+
+class Panel_Properties(bpy.types.Panel):
+    
+    bl_label        = "Properties"
+    bl_idname       = "VIEW3D_PT_properties"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"
+    bl_category     = "O&G Properties"
+    #bl_options      = {"DEFAULT_CLOSED"}
+    
+    def draw(self, context):   
+        props = context.scene.my_props 
+        layout = self.layout       
+        row = layout.row()   
+        # select objects 
+        obj = context.active_object       
         
+        if obj is not None:        
+            row = layout.row()
+            row.label(text="Properties:", icon='INFO')
+            row = layout.row()
+            row.operator("props.load_properties", text="Load properties")                       
+            if len(props.prop_metadata) > 0:
+                old_is_a = ""
+                for pset in props.prop_metadata:
+                    row = layout.row()
+                    if old_is_a != pset.is_a:
+                        if pset.is_a == 'instance':
+                            row = layout.row()
+                            row.label(text="Occurence Properties:", icon='HOLDOUT_OFF') 
+                            row = layout.row()
+                        else:
+                            row = layout.row()
+                            row.label(text="Inherited Type Properties:", icon='CON_CHILDOF') 
+                            row = layout.row()
+                            
+                    # pset é ou não expandida
+                    row = layout.row()
+                    if pset.is_expanded:
+                        icon = 'TRIA_DOWN'
+                    else:
+                        icon = 'TRIA_RIGHT'
+                    row.operator("props.expand", icon=icon, text="").index = pset.index
+                    row.label(text=pset.name, icon='COPY_ID') 
+                    layout.separator()
+
+                    # se o pset está expandido                
+                    if pset.is_expanded:                        
+                        box = layout.box()
+                        old_title="" 
+                        old_name_prop = ""                        
+                        titulos = '' 
+                        i = 1
+                        # para cada propriedade
+                        for item in pset.props:   
+                                                             
+                            # se for tabela
+                            if 'Table' in  item.name:
+                                names = item.name.split('_')
+                                title = names[0]
+                                name_prop = names[1]
+                                
+                                # imprime o titulo da tabela
+                                if title != old_title:
+                                    rowb = box.row(align=True)
+                                    rowb.scale_y =0.8
+                                    op = rowb.operator("props.edit", icon='CHECKMARK', text="")
+                                    rowb.label(text=f' {title}', icon='VIEW_ORTHO')
+                                    if 'Crushing' in pset.name:                                                                               
+                                       op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="plot") 
+                                       op.pset_index = pset.index
+                                       op.prop_index = item.index
+
+                                    # imprime dados para a plotagem do gráfico
+                                    rowb = box.row() 
+                                    rowb = box.row(align=True)
+                                    col = rowb.column(align=True)
+                                    col.scale_x = 0.7
+                                    
+                                    i = 1
+
+                                # monta a tabela
+                                if i==1:
+                                    col = rowb.column(align=True)                                
+                                
+                                if item.name not in titulos:
+                                    col.label(text=f"{item.name.split('_')[1]} {item.datatype}")                                        
+                                    titulos = titulos + item.name  
+
+                                act_prop = f"value{item.type_value}"                                                                                              
+                                col.prop(item, act_prop, text='')                                
+                                if i%item.n_rows == 0:
+                                    col = rowb.column(align=True)   
+                                    #col.alignment = 'CENTER' 
+
+                                # controla a mudança de propriedades e colunas
+                                old_title =title
+                                old_name_prop = name_prop
+  
+                            #se não for tabela   
+                            else:    
+                                # se for o nome da propriedade                           
+                                if item.name != old_name_prop:
+                                    rowb = box.row(align=True)
+                                    op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
+                                    op.pset_index = pset.index
+                                    op.prop_index = item.index                               
+                                    rowb.label(text=f' {item.name}')
+
+                                # se for o tipo enumerado
+                                if item.type_prop == 'IfcPropertyEnumeratedValue':
+                                    rowb = box.row(align=True)   
+                                    col = rowb.column(align=True)
+                                    col.prop(item, "enumerated", text='')
+                                    col = rowb.column(align=True)
+                                    for enum in item.enumerations:
+                                        print('ok')
+                                        col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
+                                    old_name_prop = item.name   
+
+                                # se for propriedade simples                               
+                                else:
+                                    col = rowb.column()
+                                    col.scale_x =0.6
+                                    act_prop = f"value{item.type_value}"                                
+                                    col.prop(item, act_prop, text=item.datatype)
+                                    old_name_prop = item.name 
+
+                            i += 1
+
+                    old_is_a = pset.is_a # type or instance
+

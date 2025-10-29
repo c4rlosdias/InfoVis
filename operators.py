@@ -3,6 +3,8 @@ import bonsai.core.geometry
 import bonsai.core.material
 import bonsai.core.type
 import webbrowser
+import base64
+from io import BytesIO
 import os
 import bpy
 from ifctester import ids
@@ -16,34 +18,42 @@ import ifcopenshell.api.geometry as geometry
 import ifcopenshell.api.style as style
 import ifcopenshell
 import webbrowser
-from .data import bSDD, PropTempl,Catalog, Import_ifc, refresh, refresh_container, refresh_products, refresh_props
+from .data import bSDD, PropTempl,Catalog, Import_ifc, refresh, refresh_container, refresh_products, refresh_props, get_prop_type
 import bonsai.core as core
 import bonsai
 import bonsai.tool as tool
 from bonsai.bim import import_ifc
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import matplotlib
+import numpy as np
+from scipy.interpolate import interp1d
+
+dynamic_items = []
+
+def get_options(self, context):    
+    return dynamic_items
 
 def set_hide_class(context, index, is_hidden):
-        props = context.scene.my_props
-        level = props.classes[index].level_index
-        for classe in props.classes:
-            if classe.index > index:
-                if classe.level_index > level:
-                    classe.is_hidden = is_hidden                
-                else:
-                    return
+    props = context.scene.my_props
+    level = props.classes[index].level_index
+    for classe in props.classes:
+        if classe.index > index:
+            if classe.level_index > level:
+                classe.is_hidden = is_hidden                
+            else:
+                return
 
 def set_hide_product(context, index, is_hidden):
-        props = context.scene.my_props
-        level = props.products[index].level_index
-        for product in props.products:
-            if product.index > index:
-                if product.level_index > level:
-                    product.is_hidden = is_hidden                
-                else:
-                    return
+    props = context.scene.my_props
+    level = props.products[index].level_index
+    for product in props.products:
+        if product.index > index:
+            if product.level_index > level:
+                product.is_hidden = is_hidden                
+            else:
+                return
                 
 def build_classes(context, classe, c, level, parent, hide):
     c += 1 
@@ -72,7 +82,32 @@ def build_classes(context, classe, c, level, parent, hide):
         new_class.has_children = False
     return c
 
-def build_products(context, classe, c, level, parent, hide):
+def build_products(context, classe, c, level, parent, hide, children):
+    c += 1 
+    props = context.scene.my_props
+    new_product = props.products.add()
+    new_product.code        = classe["code"]                 
+    new_product.name        = classe["name"]                
+    new_product.description = classe['descriptionPart']   
+    new_product.uri         = classe["uri"] 
+    new_product.index       =   c  
+    new_product.level_index = level
+    new_product.parent = parent
+    new_product.is_expanded = False
+    new_product.is_hidden = hide
+    new_product.has_children = children
+    
+    # if 'children' in classe:   
+    #     level = level + 1     
+    #     new_product.has_children = True
+    #     for child in classe['children']:            
+    #        c = build_products(context, child , c, level, classe['name'], True)
+   
+    # else:
+    #     new_product.has_children = False
+    return c
+
+def _build_products(context, classe, c, level, parent, hide):
     c += 1 
     props = context.scene.my_props
     new_product = props.products.add()
@@ -98,87 +133,59 @@ def build_products(context, classe, c, level, parent, hide):
     else:
         new_product.has_children = False
     return c
+   
+# ==================================================================================================
+# ==================================================================================================
+# 
+# O&G Dictionary
+# 
+# ==================================================================================================
+# ==================================================================================================
 
 # ==================================================================================================
-# Cria o elemento IFc a partir dos dados do dicionário
+# clear the list of properties loaded
 # ==================================================================================================
-class Operator_create(bpy.types.Operator):
-    """create IFC element from bSDD data"""
-    bl_idname  = "object.create"
-    bl_label   = "uri property"
+class Operator_clear_properties(bpy.types.Operator):
+    """"""
+    bl_idname  = "object.clear_prop"
+    bl_label   = "Clear properties"
     bl_options = {"REGISTER", "UNDO"}
-    uri : bpy.props.StringProperty(name="uri")
 
-    @classmethod
-    def classify(self, entity, data):
-        objecttype = data['referenceCode']
-        if objecttype[-4:] == 'Type':
-            type = element.get_type(entity)
-            if type is not None:
-                type=type[0]
-                type.ElementType = objecttype
-                type.Description = data['description']
-                type.PredefinedType = 'USERDEFINED'
-                entity.PredefinedType = None
-                entity.ObjectType = None
-                return True
-            else:
-                return False
-
-        else:
-            entity.PredefinedType = 'USERDEFINED'
-            entity.ObjectType = objecttype
-            entity.Description = data['description']
-            return True
-    
     def execute(self, context):                
-        objs = context.selected_objects
-        if len(objs)>0:    
-            result = bSDD.get_class(self.uri)                         
-            if result: 
-                if 'relatedIfcEntityNames' in bSDD.data_info_class:
-                    ifc_type = bSDD.data_info_class['relatedIfcEntityNames'][0]
-                    for obj in objs:
-                        entity = tool.Ifc.get_entity(obj)
-                        if entity.is_a(ifc_type) or entity.is_a(ifc_type[:-4]):
-                            result = self.classify(entity, bSDD.data_info_class)
-                            if result:
-                                print(f'{entity.Name} classified')
-                            else:
-                                print(f'{entity.Name} not classified')
-
-                        else:
-                            self.report({'ERROR'}, 'this class is not compatible')
-                            return {'CANCELLED'}
-                    return {"FINISHED"}
-                else:
-                    self.report({'ERROR'}, 'this class is not compatible')
-                    return {'CANCELLED'} 
-            else:
-                self.report({'ERROR'}, 'error connecting bSDD')
-                return {'CANCELLED'}
-        else:
-            self.report({'ERROR'}, 'No selected objects')
-            return {"CANCELLED"}
+        props = context.scene.my_props
+        props.ifc_prop.clear()              
+        return {"FINISHED"}    
     
 # ==================================================================================================
-# acerra a uri na propriedade no bSDD
+# assign all objects
 # ==================================================================================================
-class Operator_uri(bpy.types.Operator):
-    """acerra a uri na propriedade no bSDD"""
-    bl_idname  = "object.uri"
-    bl_label   = "uri property"
+class Operator_assign_all(bpy.types.Operator):
+    """"""
+    bl_idname  = "object.assign_all"
+    bl_label   = "Assign all objects"
     bl_options = {"REGISTER", "UNDO"}
-    uri : bpy.props.StringProperty(name="uri")
 
-    @classmethod
-    def description(cls, context, properties):
-        return f"Open the URL in your web Browser: '{properties.uri}'"
-    
     def execute(self, context):                
-        webbrowser.open(self.uri)        
-        return {"FINISHED"}
-    
+        props = context.scene.my_props
+        for obj in props.ifc_prop:
+            obj.is_selected = True              
+        return {"FINISHED"}         
+
+# ==================================================================================================
+# unassign all objects
+# ==================================================================================================
+class Operator_unassign_all(bpy.types.Operator):
+    """"""
+    bl_idname  = "object.unassign_all"
+    bl_label   = "Assign all objects"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):                
+        props = context.scene.my_props
+        for obj in props.ifc_prop:
+            obj.is_selected = False              
+        return {"FINISHED"}    
+
 # ==================================================================================================
 # connect to bSDD and get the properties of Oil & Gas Subsea data dictionary
 # ==================================================================================================
@@ -205,6 +212,25 @@ class Operator_get_properties(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}
 
+
+# ==================================================================================================
+# acerra a uri na propriedade no bSDD
+# ==================================================================================================
+class Operator_uri(bpy.types.Operator):
+    """acerra a uri na propriedade no bSDD"""
+    bl_idname  = "object.uri"
+    bl_label   = "uri property"
+    bl_options = {"REGISTER", "UNDO"}
+    uri : bpy.props.StringProperty(name="uri")
+
+    @classmethod
+    def description(cls, context, properties):
+        return f"Open the URL in your web Browser: '{properties.uri}'"
+    
+    def execute(self, context):                
+        webbrowser.open(self.uri)        
+        return {"FINISHED"}
+    
 # ==================================================================================================
 # connect to bSDD and get the classes of Oil & Gas Subsea data dictionary
 # ==================================================================================================
@@ -219,7 +245,7 @@ class Operator_get_classes(bpy.types.Operator):
         props.classes.clear()
         props.classes_loaded = False
         c = -1
-        result = bSDD.load_classes(props.dictionary)
+        result = bSDD.load_classes(props.dictionary, True)
         if result:
             for classe in bSDD.data_class:  
                 new_c = build_classes(context, classe, c, 1, '', False)
@@ -281,50 +307,6 @@ class Operator_contract_classes(bpy.types.Operator):
                     break
         refresh(context)          
         return {"FINISHED"} 
-
-# ==================================================================================================
-# clear the list of properties loaded
-# ==================================================================================================
-class Operator_clear_properties(bpy.types.Operator):
-    """"""
-    bl_idname  = "object.clear_prop"
-    bl_label   = "Clear properties"
-    bl_options = {"REGISTER", "UNDO"}
-
-    def execute(self, context):                
-        props = context.scene.my_props
-        props.ifc_prop.clear()              
-        return {"FINISHED"}    
-    
-# ==================================================================================================
-# assign all objects
-# ==================================================================================================
-class Operator_assign_all(bpy.types.Operator):
-    """"""
-    bl_idname  = "object.assign_all"
-    bl_label   = "Assign all objects"
-    bl_options = {"REGISTER", "UNDO"}
-
-    def execute(self, context):                
-        props = context.scene.my_props
-        for obj in props.ifc_prop:
-            obj.is_selected = True              
-        return {"FINISHED"}         
-
-# ==================================================================================================
-# unassign all objects
-# ==================================================================================================
-class Operator_unassign_all(bpy.types.Operator):
-    """"""
-    bl_idname  = "object.unassign_all"
-    bl_label   = "Assign all objects"
-    bl_options = {"REGISTER", "UNDO"}
-
-    def execute(self, context):                
-        props = context.scene.my_props
-        for obj in props.ifc_prop:
-            obj.is_selected = False              
-        return {"FINISHED"}    
 
 # ==================================================================================================
 # Add selected properties to Pset template
@@ -427,7 +409,39 @@ class Operator_get_class_info(bpy.types.Operator):
         else:
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}  
-    
+
+# ==================================================================================================
+# get class metadata 
+# ==================================================================================================
+class Operator_get_class_prop(bpy.types.Operator): 
+    """Get active class properties"""
+    bl_idname  = "bsdd.get_class_prop"
+    bl_label   = "get class properties"
+    bl_options = {"REGISTER", "UNDO"}
+    uri : bpy.props.StringProperty(name="uri")
+
+    def execute(self, context):                
+        props = context.scene.my_props
+        props.info_class_prop_loaded = False
+        result = bSDD.get_class_prop(self.uri)
+        if result:
+            props.info_class_prop_loaded = True   
+            props.class_prop_info.clear()         
+            properties = bSDD.data_class_prop
+            for pro_info in properties['classProperties']:
+                newitem = props.class_prop_info.add()
+                newitem.name = pro_info['name']
+                newitem.description = pro_info['description']
+                newitem.definition = pro_info['definition']
+                newitem.datatype = pro_info['dataType']
+                newitem.uri = pro_info['uri']
+                newitem.propertyset = pro_info['propertySet']
+
+            return {"FINISHED"} 
+        else:
+            self.report({'ERROR'}, bSDD.response)
+            return {"CANCELLED"}  
+           
 # ==================================================================================================
 # export IDS file 
 # ==================================================================================================
@@ -704,7 +718,7 @@ class Operator_element_selection(bpy.types.Operator):
 # CATALOG
 # ==================================================================================================
 # ==================================================================================================
-
+ 
 # ==================================================================================================
 # Load catalog products
 # ==================================================================================================
@@ -718,9 +732,60 @@ class Operator_load_products(bpy.types.Operator):
         props = context.scene.my_props               
         props.products.clear()
         props.products_loaded = True
+        ifc_reference = {
+            'TopBendStiffenerType'           : 'Pipe Fitting',
+            'IntermediateBendStiffenerType' : 'Pipe Fitting',
+            'StopperCollarType'             : 'Pipe Fitting',
+            'PulInCollarType'               : 'Pipe Fitting',
+            'AnchoringCollarType'           : 'Pipe Fitting',
+            'DeadweightCollarType'          : 'Pipe Fitting',
+            'BuoyancyModuleType'            : 'Pipe Fitting',
+            'HangOffCollarType'             : 'Pipe Fitting',
+            'BendRestrictorType'            : 'Pipe Fitting',
+            'EndFittingType'                : 'Pipe Fitting',
+            'PipePullingHeadType'           : 'Pipe Fitting',
+            'FlexiblePipeStructure'         : 'Pipe Segment'
+
+        }
+        dic = {}
+        classe_title = {
+            'name': '',
+            'uri' : '',
+            'code': '',
+            'descriptionPart' : ''
+        }
+        c = -1
+        result = bSDD.load_classes(props.dictionary, False)
+        if result:
+            for classe in bSDD.data_class:  
+                print(classe['code'])
+                if classe['name'].endswith('Type') or classe['name'].endswith('Structure'): 
+                    print('---' + classe['name'])                   
+                    if classe['name'] in  ifc_reference:
+                        if ifc_reference[classe['name']] not in dic:
+                            dic[ifc_reference[classe['name']]] = []
+                        dic[ifc_reference[classe['name']]].append(classe)
+            
+            for key, values in  dic.items():
+                    classe_title['name'] = key
+                    new_c = build_products(context, classe_title, c, 1, '', False, True)
+                    c += 1
+                    for value in values:
+                        new_c = build_products(context, value, c, 2, '', True, False)
+                        c = new_c
+            refresh_products(context)
+            return {"FINISHED"} 
+        else:
+            self.report({'ERROR'}, bSDD.response)
+            return {"CANCELLED"}
+        
+    def execute_(self, context): 
+        props = context.scene.my_props               
+        props.products.clear()
+        props.products_loaded = True
         
         c = -1
-        result = bSDD.load_classes(props.dictionary)
+        result = bSDD.load_classes(props.dictionary, False)
         if result:
             for classe in bSDD.data_class:  
                 if classe['name'].endswith('Type') or classe['name'].endswith('Structure'):
@@ -960,6 +1025,12 @@ class Operator_catalog_insert_type(bpy.types.Operator):
                 return {"CANCELLED"}
 
 # ==================================================================================================
+# ==================================================================================================
+# PROPERTIES
+# ==================================================================================================
+# ==================================================================================================
+
+# ==================================================================================================
 # Load object properties
 # ==================================================================================================
 class Operator_props_edit(bpy.types.Operator):
@@ -972,7 +1043,7 @@ class Operator_props_edit(bpy.types.Operator):
     type_prop  : bpy.props.StringProperty(name='prop type') 
     
     def change_prop(self, pset, props):        
-        model = tool.Ifc.get()   
+        model = tool.Ifc.get() 
         for name_prop, values in props.items():
             for prop in pset.HasProperties:
                 if prop.Name == name_prop:
@@ -983,9 +1054,17 @@ class Operator_props_edit(bpy.types.Operator):
                             if value is not None:
                                 new_value = model.create_entity(list_values[values.index(value)].is_a(), value) 
                                 new_list_values.append(new_value)
-                        print(prop.ListValues)
-                        print(new_list_values)
+
                         prop.ListValues = new_list_values
+                    elif prop.is_a() == 'IfcPropertyEnumeratedValue':
+                        list_values = prop.EnumerationReference.EnumerationValues
+                        new_list_values = set()                        
+                        for value in values:    
+                            if value is not None:
+                                new_value = model.create_entity(list_values[values.index(value)].is_a(), value)                                 
+                                new_list_values.add(new_value)
+                        print(new_list_values)
+                        prop.EnumerationValues = list(new_list_values)
                     else:                        
                         new_value = model.create_entity(prop.NominalValue.is_a(), values[0])                        
                         prop.NominalValue = new_value
@@ -1014,18 +1093,27 @@ class Operator_props_edit(bpy.types.Operator):
         # cria um dicionario com as propriedades e valores
         for pset in props.prop_metadata:            
             if pset.index == self.pset_index:                              
-                for prop in pset.props:                                      
+                for prop in pset.props:                                   
                     if prop.index == self.prop_index:
                         product = model.by_id(pset.id_obj)
                         new_pset = pset.name
-                        if prop.name in new_props:
-                            new_props[prop.name].append(self.get_prop_type(prop))                        
+
+                        if prop.type_prop == 'IfcPropertyEnumeratedValue':
+                            for enum in prop.enumerations:
+                                if enum.enumerated:
+
+                                    if prop.name in new_props:
+                                        new_props[prop.name].append(get_prop_type(enum))                        
+                                    else:
+                                        new_props[prop.name] = [get_prop_type(enum)]
                         else:
-                            new_props[prop.name] = [self.get_prop_type(prop)]
-                        
-        print(new_pset)
-        print(new_props)        
-        _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=new_pset)   
+                            if prop.name in new_props:
+                                new_props[prop.name].append(get_prop_type(prop))                        
+                            else:
+                                new_props[prop.name] = [get_prop_type(prop)]
+      
+        _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=new_pset) 
+
         self.change_prop(_pset, new_props)
         bpy.context.scene.update_tag()
         return {"FINISHED"} 
@@ -1037,6 +1125,7 @@ class Operator_props_load(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"} 
 
     def execute(self, context):
+        print(100*'-')
         refresh_props(context)
         return {"FINISHED"} 
     
@@ -1056,14 +1145,175 @@ class Operator_props_expand(bpy.types.Operator):
                 pass
         return {"FINISHED"} 
 
-# Ainda não implementado
 class Operator_props_graph(bpy.types.Operator):
-    """"""
+    """Generate a curve based on the information from the table"""
     bl_idname  = "props.graph"
-    bl_label   = "load object properties"
+    bl_label   = "Plot Graph"
     bl_options = {"REGISTER", "UNDO"} 
-    pset_index : bpy.props.IntProperty(name='pset index')
-    prop_index : bpy.props.IntProperty(name='prop index')  
+    pset_index : bpy.props.IntProperty(name='')
+    prop_index : bpy.props.IntProperty(name='')    
+    x_axis     : bpy.props.EnumProperty(items=get_options, name='property for x axis')
+    order_x    : bpy.props.BoolProperty(name='Order X Axis', default=False)
+    min_x      : bpy.props.FloatProperty(name='Min X Axis')
+    max_x      : bpy.props.FloatProperty(name='Max X Axis') 
+    min_y      : bpy.props.FloatProperty(name='Min Y Axis')
+    max_y      : bpy.props.FloatProperty(name='Max Y Axis') 
+    mult_x     : bpy.props.FloatProperty(name='Grid Interval X')         
+    mult_y     : bpy.props.FloatProperty(name='Grid Interval Y')     
+    interpoled : bpy.props.BoolProperty(name='Intepoled Curve')
+    intpl_type : bpy.props.EnumProperty(
+        items=[
+            ('cubic','cubic','cubic'),
+            ('linear', 'linear', 'linear')
+        ],
+        name='interpolation type',
+        description='Get interpoled type'
+    )
+
+    table : dict
+    title : str
+    lista : list 
+    csv   : str 
+    df : None 
+    
+    def draw(self, context):
+        layout = self.layout
+        cols = self.df.columns.to_list()
+        print(cols)
+        # se tem documento anexado
+        if self.prop_index == -1:
+            row = layout.row()
+            row.label(text='Imported Table :', icon='DOCUMENTS')
+            box = layout.box()
+            rowb = box.row() 
+            for c in cols:
+                col = rowb.column(align=True)
+                col.label(text=c)
+
+            for index, row in self.df.iterrows():
+                rowb = box.row() 
+                for c in cols:
+                    col = rowb.column(align=True)
+                    col.label(text=str(row[c]))
+              
+
+        layout.prop(self, "min_x")
+        layout.prop(self, "max_y")
+        layout.prop(self, "min_y")
+        layout.prop(self, "max_y")
+        layout.prop(self, "mult_x")
+        layout.prop(self, "mult_y")
+        layout.prop(self, "interpoled")
+        layout.prop(self, "intpl_type")
+        layout.prop(self, "x_axis")
+        layout.prop(self, "order_x") 
+
+    def invoke(self, context, event):     
+        self.table={}
+        self.title = ''
+        dynamic_items.clear()
+
+        
+        # cria um dicionario com as propriedades e valores
+        props = context.scene.my_props
+        # se o elemento tem documento associado
+        if self.pset_index > -1:
+            for pset in props.prop_metadata:            
+                if pset.index == self.pset_index:    
+                    # se não for documento externo
+                    if self.prop_index == -1:           
+                        self.csv = pset.document
+                    else:
+                        for prop in pset.props:                                   
+                            if prop.index == self.prop_index:
+                                self.title = prop.name.split('_')[0]
+                                col =  f"{prop.name.split('_')[1]} {prop.datatype}"                      
+                                if col in self.table:
+                                    self.table[col].append(get_prop_type(prop)) 
+                                else:
+                                    self.table[col] = [get_prop_type(prop)]
+            # cria o dataframe
+            self.df = pd.read_csv(self.csv) if self.prop_index == -1 else pd.DataFrame(self.table)
+
+        else:
+            self.df = pd.read_csv(props.document)
+
+        
+
+        # imprime a opcao de colunas para o eixo x
+        for c in self.df.columns.to_list():
+            if (c,c,c) not in dynamic_items:
+                dynamic_items.append((c,c,c)) 
+
+        return context.window_manager.invoke_props_dialog(self, width=500)
 
     def execute(self, context):
+
+        cols = self.df.columns.to_list()
+        # Criar gráfico com Matplotlib
+        fig, ax = plt.subplots()              
+        x = self.x_axis if self.x_axis != '' else cols[0]
+        if self.order_x:
+            self.df = self.df.sort_values(by=x)
+        lines = []
+        for col in cols:
+            if col != x:
+                if self.interpoled:
+                    cubic_interpoletion_model = interp1d(self.df[x], self.df[col], kind=self.intpl_type)
+                    x_ = np.linspace(self.df[x].min(), self.df[x].max(), 500)
+                    y_ = cubic_interpoletion_model(x_)
+                    lines.append(ax.plot(x_, y_, label=col))
+                else:
+                    lines.append(ax.plot(self.df[x],self.df[col], label=col))
+      
+        # configura o grafico
+        ax.set_title(self.title)
+        ax.set_xlabel(x)      
+        ax.grid(True) 
+        ax.xaxis.set
+        ax.set_box_aspect(0.5)
+
+        if self.mult_x > 0:
+            ax.xaxis.set_major_locator(MultipleLocator(self.mult_x))
+        if self.mult_y > 0:
+            ax.yaxis.set_major_locator(MultipleLocator(self.mult_y))
+        if self.max_x > 0:
+            ax.set_xlim(self.min_x, self.max_x)
+        if self.max_y > 0:
+            ax.set_ylim(self.min_y, self.max_y)  
+
+        fig.legend()
+
+        # Salvar imagem em memória
+        buffer = BytesIO()        
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+
+        # Criar HTML com a imagem embutida
+        html = f"""
+        <html>
+        <head><title>BIM Report</title></head>
+        <body>
+        <h2>{self.title}</h2>
+        <img src="data:image/png;base64,{img_base64}" />
+        </body>
+        </html>
+        """
+
+        # Salvar HTML e abrir no navegador
+        with open("graphic.html", "w") as f:
+            f.write(html)
+        webbrowser.open("graphic.html")
         return {"FINISHED"} 
+    
+class Operator_props_invert(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.invert"
+    bl_label   = "invert x y"
+    bl_options = {"REGISTER", "UNDO"} 
+
+    def execute(self, context):
+        props = context.scene.my_props
+        props.invert_xy = not(props.invert_xy)
+        return {"FINISHED"}

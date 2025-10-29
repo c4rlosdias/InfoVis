@@ -1,11 +1,16 @@
 import requests
+import logging
+import pandas as pd
 import os
+import json
+import bpy
+import numpy as np
 import ifcopenshell
 import ifcopenshell.util.selector as selector
 import bonsai.tool as tool
 from bonsai.bim.ifc import IfcStore
-import json
-
+from bonsai.bim import import_ifc
+from bonsai.bim.ifc import IfcStore
 
 def refresh(context):
     props = context.scene.my_props
@@ -13,6 +18,23 @@ def refresh(context):
     for classe in props.classes:
         if not classe.is_hidden:
             new_item = props.classes_shown.add()
+            new_item.code = classe.code
+            new_item.name = classe.name
+            new_item.description = classe.description
+            new_item.level_index = classe.level_index
+            new_item.uri = classe.uri
+            new_item.index = classe.index
+            new_item.has_children = classe.has_children
+            new_item.is_expanded = classe.is_expanded
+            new_item.is_hidden = classe.is_hidden
+            new_item.type = classe.type
+
+def refresh_products(context):
+    props = context.scene.my_props
+    props.products_show.clear()
+    for classe in props.products:
+        if not classe.is_hidden:
+            new_item = props.products_show.add()
             new_item.code = classe.code
             new_item.name = classe.name
             new_item.description = classe.description
@@ -40,6 +62,208 @@ def refresh_container(context):
             new_item.type = classe.type  
             new_item.is_selected = classe.is_selected  
 
+
+def set_prop_type( prop, value_prop):
+    res = ""
+    if type(value_prop) == str:
+        prop.valuestr = value_prop
+        prop.type_value = "str"
+    elif type(value_prop) == int:
+        prop.valueint = value_prop
+        prop.type_value = "int"
+    elif type(value_prop) == float or type(value_prop) == np.float64:
+        prop.valuefloat = value_prop
+        prop.type_value = "float"
+    elif type(value_prop) == bool:
+        prop.valuebool = value_prop
+        prop.type_value = "bool"
+    else:
+        prop.valuestr = str(value_prop)
+        prop.type_value = "str"
+
+def get_prop_type(prop):
+        res = None
+        if prop.type_value == "str":
+            res = prop.valuestr
+        elif prop.type_value == "int":
+            res = prop.valueint
+        elif prop.type_value == "bool":
+            res = prop.valuebool
+        elif prop.type_value == "float":
+            res = prop.valuefloat
+        return res        
+
+def get_unit(ifc_obj, pset_name, prop_name):
+    model = tool.Ifc.get()
+    psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
+    pset = model.by_id(psets[pset_name]['id'])
+    symbol = ''
+    for prop in pset.HasProperties:        
+        if prop.Name == prop_name:
+            unit = ifcopenshell.util.unit.get_property_unit(ifc_file=model, prop=prop)
+            if unit is not None:
+                symbol =f'[{ifcopenshell.util.unit.get_unit_symbol(unit)}]'
+            else:
+                symbol=''
+            return symbol
+    return symbol
+
+def get_property(ifc_obj, pset_name, prop_name):
+    model = tool.Ifc.get()
+    pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
+    for prop in pset.HasProperties:
+        if prop.Name == prop_name:
+            return prop
+    return None
+
+
+def set_properties(props, ifc_obj, is_a, i):     
+    id = ifc_obj.id()
+    # get psets
+    psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
+    for pset, _props in psets.items():             
+        table = {}    
+        new_item = props.prop_metadata.add()            
+        new_item.name = pset  
+        new_item.is_a = is_a 
+        new_item.id_obj = id          
+        new_item.index = i          
+        j = 0      
+        for prop, value in _props.items():           
+            if prop != 'id':  
+                if 'Table' in prop:
+                    table[prop]=value
+                else:               
+                    if type(value) == list:
+                        # verifica o tipo da propriedade
+                        _prop = get_property(ifc_obj, pset, prop)
+
+                        # verifica o tipo da propriedade
+                        if _prop is not None: 
+                            type_prop = _prop.is_a()
+                        else:
+                            type_prop = ''
+
+                        if type_prop == 'IfcPropertyListValue':
+                            #c = 0
+                            for item_prop in value:    
+                                new_prop = new_item.props.add() 
+                                new_prop.name = prop
+                                new_prop.datatype = get_unit(ifc_obj, pset, prop)
+                                new_prop.index = j      
+                                new_prop.type_prop = type_prop     
+                                set_prop_type(new_prop, item_prop)
+                                #c += 1
+
+                        if type_prop == 'IfcPropertyEnumeratedValue':  
+                            new_prop = new_item.props.add() 
+                            new_prop.name = prop   
+                            new_prop.index = j      
+                            new_prop.type_prop = type_prop   
+                            new_prop.datatype = get_unit(ifc_obj, pset, prop)                                                        
+                            values = [x.wrappedValue for x in _prop.EnumerationValues ]
+                            for enumval in  _prop.EnumerationReference.EnumerationValues:
+                                new_value = new_prop.enumerations.add()
+                                if enumval.wrappedValue in values:
+                                    new_value.enumerated = True
+                                else:
+                                    new_value.enumerated = False
+                                set_prop_type(new_value, enumval.wrappedValue) 
+                    else:
+                        new_prop = new_item.props.add()  
+                        new_prop.name = prop
+                        new_prop.datatype = get_unit(ifc_obj, pset, prop)
+                        new_prop.index = j                                                
+                        set_prop_type(new_prop, value)        
+            j += 1
+
+        # trata a tabela
+        if len(table) > 0:
+            df = pd.DataFrame(table)
+            dft = df.transpose()
+            columns = df.columns.tolist()    
+            nc = len(columns)  
+            nr = len(df)
+            for index, row in dft.iterrows():   
+                for col, val in row.items():
+                    new_prop = new_item.props.add()
+                    new_prop.name = index
+                    new_prop.n_columns = nc 
+                    new_prop.n_rows = nr                         
+                    new_prop.index = j    
+                    new_prop.type_prop = 'table'  
+                    new_prop.datatype = get_unit(ifc_obj, pset, index)         
+                    set_prop_type(new_prop, val)
+
+        i += 1
+    return i
+
+
+
+def refresh_props(context):
+    # get active object
+    props = context.scene.my_props
+    props.prop_metadata.clear() 
+    obj = context.active_object
+    ifc_obj = tool.Ifc.get_entity(obj)
+    ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
+    i = set_properties(props, ifc_obj, "instance", 0)
+    set_properties(props, ifc_type_obj, "type", i)
+    
+
+
+class Import_ifc():
+
+    file : ifcopenshell.file
+
+    @classmethod
+    def import_type_from_ifc(self, element: ifcopenshell.entity_instance, context: bpy.types.Context) -> None:
+        self.file = tool.Ifc.get()
+        logger = logging.getLogger("ImportIFC")
+        ifc_import_settings = import_ifc.IfcImportSettings.factory(context, IfcStore.path, logger)
+
+        ifc_importer = import_ifc.IfcImporter(ifc_import_settings)
+        ifc_importer.file = self.file
+        ifc_importer.process_context_filter()
+        ifc_importer.material_creator.load_existing_materials()
+        self.import_materials(element, ifc_importer)
+        self.import_styles(element, ifc_importer)
+        ifc_importer.create_element_type(element)
+        ifc_importer.place_objects_in_collections()
+
+    @classmethod
+    def import_materials(self, element: ifcopenshell.entity_instance, ifc_importer: import_ifc.IfcImporter) -> None:
+        for material in ifcopenshell.util.element.get_materials(element):
+            if tool.Ifc.get_object_by_identifier(material.id()):
+                continue
+            self.import_material_styles(material, ifc_importer)
+
+    @classmethod
+    def import_styles(self, element: ifcopenshell.entity_instance, ifc_importer: import_ifc.IfcImporter) -> None:
+        if element.is_a("IfcTypeProduct"):
+            representations = element.RepresentationMaps or []
+        elif element.is_a("IfcProduct"):
+            representations = [element.Representation] if element.Representation else []
+        for representation in representations or []:
+            for element in self.file.traverse(representation):
+                if not element.is_a("IfcRepresentationItem") or not element.StyledByItem:
+                    continue
+                for element2 in self.file.traverse(element.StyledByItem[0]):
+                    if element2.is_a("IfcSurfaceStyle") and not tool.Ifc.get_object_by_identifier(element2.id()):
+                        ifc_importer.create_style(element2)
+
+    @classmethod
+    def import_material_styles(
+        self,
+        material: ifcopenshell.entity_instance,
+        ifc_importer: import_ifc.IfcImporter,
+    ) -> None:
+        if not material.HasRepresentation:
+            return
+        for element in self.file.traverse(material.HasRepresentation[0]):
+            if element.is_a("IfcSurfaceStyle") and not tool.Ifc.get_object_by_identifier(element.id()):
+                ifc_importer.create_style(element)
+
 class bSDD:
     data_dic =[]
     data_info_prop =[]
@@ -66,10 +290,10 @@ class bSDD:
             cls.data_dic = [('0', 'ERROR connecting to bSDD', '')]
 
     @classmethod
-    def load_classes(cls, version : str) -> bool:        
+    def load_classes(cls, version : str, use_nested : bool) -> bool:        
         params = {
             'uri' : f'{cls.uri}/{version}',
-            'UseNestedClasses' : True
+            'UseNestedClasses' : use_nested
         }
         response = requests.get(f'{cls.endpoint}Dictionary/v1/Classes', params=params)        
         if response.status_code == 200:            
@@ -78,7 +302,8 @@ class bSDD:
         else:
             cls.response = response.text
             return False
-        
+
+           
     @classmethod
     def load_properties(cls, version : str) -> bool:        
         params = {'uri' : f'{cls.uri}/{version}'}
@@ -260,72 +485,18 @@ class PropTempl:
             return False
 
 class Catalog:
-    types = []
+
     @classmethod
-    def get_types(cls):
-        
-        ent = {
-            'ifc_class': 'IfcPipeSegmentType',
-            'Name': 'IAAAAAAAAA',
-            'ElementType': 'IntermediateSheath',
-            'PredefinedType': 'USERDEFINED'
-        }
+    def get_type_(cls, product):
+        with open(f'./resources/{product}.ttl', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        return data
 
-        material = {
-            'ifc_class' : 'IfcMaterialProfileSetUsage',
-            'ForProfileSet' : {
-                'ifc_class': 'IfcMaterialProfileSet',
-                'name' : 'Inner Sheath',
-                'MaterialProfiles' : [
-                    {
-                        'ifc_class' : 'IfcMaterialProfile',
-                        'Material' : {
-                            'ifc_class' : 'IfcMaterial',
-                            'Name' : 'Galvanic Steel 2',
-                            'Category' : 'Umbilical'
-                        },
-                        'Profile' : {
-                            'ifc_class' : 'IfcArbitrary',
-                            'type' : 'ProfileDefWithVoids',
-                            'ProfileType' : 'Area',
-                            'ProfileName' : 'BubdleSteelTube',
-                            'OuterCurve' : {
-                                'ifc_class' : 'IfcCircle',
-                                'Position' : {
-                                    'ifc_class' : 'IfcAxis2Placement',
-                                    'Location' : {
-                                        'ifc_class' : 'IfcCartesianPoint',
-                                        'Coordinates' : [0.0, 0.0]
-                                    },
-                                    'RefDirection' : None
-                                },
-                                'Radius' : 9.4
-                            },
-                            'InnerCurve' : [
-                                {
-                                    'ifc_class' : 'IfcCircle',
-                                    'Position' : {
-                                        'ifc_class' : 'IfcAxis2Placement',
-                                        'Location' : {
-                                            'ifc_class' : 'IfcCartesianPoint',
-                                            'Coordinates' : [0.0, 0.0]
-                                        },
-                                        'RefDirection' : None
-
-                                    },
-                                    'Radius' : 6.34
-                                }
-                            ]
-                        }
-                    }
-                ]
-            },
-            'CardinalPoint' : 5,
-        }
-        
-        cls.types = {'entity' : ent, 'material' : material}
-
-        return True
+    @classmethod
+    def get_type(cls, product):
+        with open(f'./resources/{product}.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        return data
 
 
 
