@@ -64,6 +64,7 @@ classes = [
     Operator_props_load,
     Operator_props_expand,
     Operator_props_edit,
+    Columns,
     Operator_props_graph,
     Operator_props_invert,
     Operator_document_edit,

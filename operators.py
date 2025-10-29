@@ -1101,6 +1101,10 @@ class Operator_props_expand(bpy.types.Operator):
                 pass
         return {"FINISHED"} 
 
+class Columns(bpy.types.PropertyGroup):
+    name     : bpy.props.StringProperty(name='column name')
+    selected : bpy.props.BoolProperty(name='selected', default=True)
+
 class Operator_props_graph(bpy.types.Operator):
     """Generate a curve based on the information from the table"""
     bl_idname  = "props.graph"
@@ -1117,12 +1121,13 @@ class Operator_props_graph(bpy.types.Operator):
     mult_x     : bpy.props.FloatProperty(name='Grid Interval X')         
     mult_y     : bpy.props.FloatProperty(name='Grid Interval Y')     
     interpoled : bpy.props.BoolProperty(name='Intepoled Curve')
+    columns    : bpy.props.CollectionProperty(name='columns', type=Columns)
     intpl_type : bpy.props.EnumProperty(
         items=[
             ('cubic','cubic','cubic'),
             ('linear', 'linear', 'linear')
         ],
-        name='interpolation type',
+        name='type',
         description='Get interpoled type'
     )
 
@@ -1153,29 +1158,44 @@ class Operator_props_graph(bpy.types.Operator):
                 for c in cols:
                     col = rowb.column(align=True)
                     col.label(text=c)
+                    
 
                 for index, row in self.df.iterrows():
                     rowb = box.row() 
                     for c in cols:
                         col = rowb.column(align=True)
                         col.label(text=str(row[c]))
-              
+                        
+     
+        box = layout.box()
+        box.prop(self, "min_x")
+        box.prop(self, "max_x")
+        box.prop(self, "min_y")
+        box.prop(self, "max_y")
+        box.prop(self, "mult_x")
+        box.prop(self, "mult_y")
 
-        layout.prop(self, "min_x")
-        layout.prop(self, "max_x")
-        layout.prop(self, "min_y")
-        layout.prop(self, "max_y")
-        layout.prop(self, "mult_x")
-        layout.prop(self, "mult_y")
-        layout.prop(self, "interpoled")
-        layout.prop(self, "intpl_type")
+        row = layout.row(align=True)
+        row.prop(self, "interpoled")
+        row.prop(self, "intpl_type")
         layout.prop(self, "x_axis")
+
+        layout.label(text='select Columns to plot')
+        box = layout.box()
+        for col in self.columns:
+            if col.name != self.x_axis:
+                row = box.row()
+                row.prop(col, 'selected', text=col.name)
+            else:
+                col.selected = True
+
         layout.prop(self, "order_x") 
 
     def invoke(self, context, event):     
         self.table={}
         self.title = ''
         dynamic_items.clear()
+        self.columns.clear()
 
         # cria um dicionario com as propriedades e valores
         props = context.scene.my_props
@@ -1205,11 +1225,17 @@ class Operator_props_graph(bpy.types.Operator):
         # imprime a opcao de colunas para o eixo x
         for c in self.df.columns.to_list():
             if (c,c,c) not in dynamic_items:
-                dynamic_items.append((c,c,c)) 
+                dynamic_items.append((c,c,c))
+            newcolumn = self.columns.add()
+            newcolumn.name = c
+                
 
         return context.window_manager.invoke_props_dialog(self, width=500)
 
     def execute(self, context):
+        for item in self.columns:
+            if not item.selected:
+                self.df = self.df.drop(columns=item.name) 
 
         cols = self.df.columns.to_list()
         # Criar gráfico com Matplotlib
