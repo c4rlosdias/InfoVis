@@ -190,8 +190,10 @@ class MyProperties(PropertyGroup):
     XAxis                    : StringProperty(name='property of the X axis')
     show_description         : BoolProperty(name='Show property description', default=True ) 
 
-    has_document : BoolProperty(name='Has documentation', default=False)
-    document     : StringProperty(name='document')
+    has_document             : BoolProperty(name='Has documentation', default=False)
+    document                 : StringProperty(name='document')
+
+    show_table               : BoolProperty(name='Show table', default=False)
 
 
 

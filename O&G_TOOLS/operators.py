@@ -30,25 +30,30 @@ import matplotlib
 import numpy as np
 from scipy.interpolate import interp1d
 
+dynamic_items = []
+
+def get_options(self, context):    
+    return dynamic_items
+
 def set_hide_class(context, index, is_hidden):
-        props = context.scene.my_props
-        level = props.classes[index].level_index
-        for classe in props.classes:
-            if classe.index > index:
-                if classe.level_index > level:
-                    classe.is_hidden = is_hidden                
-                else:
-                    return
+    props = context.scene.my_props
+    level = props.classes[index].level_index
+    for classe in props.classes:
+        if classe.index > index:
+            if classe.level_index > level:
+                classe.is_hidden = is_hidden                
+            else:
+                return
 
 def set_hide_product(context, index, is_hidden):
-        props = context.scene.my_props
-        level = props.products[index].level_index
-        for product in props.products:
-            if product.index > index:
-                if product.level_index > level:
-                    product.is_hidden = is_hidden                
-                else:
-                    return
+    props = context.scene.my_props
+    level = props.products[index].level_index
+    for product in props.products:
+        if product.index > index:
+            if product.level_index > level:
+                product.is_hidden = is_hidden                
+            else:
+                return
                 
 def build_classes(context, classe, c, level, parent, hide):
     c += 1 
@@ -137,9 +142,7 @@ def _build_products(context, classe, c, level, parent, hide):
 # ==================================================================================================
 # ==================================================================================================
 
-# ==================================================================================================
 # clear the list of properties loaded
-# ==================================================================================================
 class Operator_clear_properties(bpy.types.Operator):
     """"""
     bl_idname  = "object.clear_prop"
@@ -150,10 +153,8 @@ class Operator_clear_properties(bpy.types.Operator):
         props = context.scene.my_props
         props.ifc_prop.clear()              
         return {"FINISHED"}    
-    
-# ==================================================================================================
+
 # assign all objects
-# ==================================================================================================
 class Operator_assign_all(bpy.types.Operator):
     """"""
     bl_idname  = "object.assign_all"
@@ -166,9 +167,7 @@ class Operator_assign_all(bpy.types.Operator):
             obj.is_selected = True              
         return {"FINISHED"}         
 
-# ==================================================================================================
 # unassign all objects
-# ==================================================================================================
 class Operator_unassign_all(bpy.types.Operator):
     """"""
     bl_idname  = "object.unassign_all"
@@ -181,9 +180,7 @@ class Operator_unassign_all(bpy.types.Operator):
             obj.is_selected = False              
         return {"FINISHED"}    
 
-# ==================================================================================================
 # connect to bSDD and get the properties of Oil & Gas Subsea data dictionary
-# ==================================================================================================
 class Operator_get_properties(bpy.types.Operator):
     """connect to bSDD and get the properties of Oil & Gas Subsea data dictionary"""
     bl_idname  = "bsdd.get_prop"
@@ -207,10 +204,7 @@ class Operator_get_properties(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}
 
-
-# ==================================================================================================
 # acerra a uri na propriedade no bSDD
-# ==================================================================================================
 class Operator_uri(bpy.types.Operator):
     """acerra a uri na propriedade no bSDD"""
     bl_idname  = "object.uri"
@@ -226,9 +220,7 @@ class Operator_uri(bpy.types.Operator):
         webbrowser.open(self.uri)        
         return {"FINISHED"}
     
-# ==================================================================================================
 # connect to bSDD and get the classes of Oil & Gas Subsea data dictionary
-# ==================================================================================================
 class Operator_get_classes(bpy.types.Operator):
     """ connect to bSDD and get the classes of Oil & Gas Subsea data dictionary"""
     bl_idname  = "bsdd.get_class"
@@ -251,9 +243,7 @@ class Operator_get_classes(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}
 
-# ==================================================================================================
 # expand container
-# ==================================================================================================
 class Operator_expand_classes(bpy.types.Operator):
     """"""
     bl_idname  = "object.expand_classes"
@@ -279,9 +269,7 @@ class Operator_expand_classes(bpy.types.Operator):
         refresh(context)  
         return {"FINISHED"} 
 
-# ==================================================================================================
 # contract container
-# ==================================================================================================
 class Operator_contract_classes(bpy.types.Operator):
     """"""
     bl_idname  = "object.contract_classes"
@@ -303,9 +291,7 @@ class Operator_contract_classes(bpy.types.Operator):
         refresh(context)          
         return {"FINISHED"} 
 
-# ==================================================================================================
 # Add selected properties to Pset template
-# ==================================================================================================
 class Operator_add_properties(bpy.types.Operator):
     """"""
     bl_idname  = "object.add_prop"
@@ -334,9 +320,7 @@ class Operator_add_properties(bpy.types.Operator):
             self.report({'ERROR'}, str(ex))
             return {"CANCELLED"}
 
-# ==================================================================================================
 # get property metadata 
-# ==================================================================================================
 class Operator_get_prop_info(bpy.types.Operator):
     """"""
     bl_idname  = "property.get_prop_info"
@@ -369,9 +353,7 @@ class Operator_get_prop_info(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}
 
-# ==================================================================================================
 # get class metadata 
-# ==================================================================================================
 class Operator_get_class_info(bpy.types.Operator):
     """Get active class information"""
     bl_idname  = "bsdd.get_class_info"
@@ -404,10 +386,39 @@ class Operator_get_class_info(bpy.types.Operator):
         else:
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}  
-    
-# ==================================================================================================
+
+
+# get class metadata 
+class Operator_get_class_prop(bpy.types.Operator): 
+    """Get active class properties"""
+    bl_idname  = "bsdd.get_class_prop"
+    bl_label   = "get class properties"
+    bl_options = {"REGISTER", "UNDO"}
+    uri : bpy.props.StringProperty(name="uri")
+
+    def execute(self, context):                
+        props = context.scene.my_props
+        props.info_class_prop_loaded = False
+        result = bSDD.get_class_prop(self.uri)
+        if result:
+            props.info_class_prop_loaded = True   
+            props.class_prop_info.clear()         
+            properties = bSDD.data_class_prop
+            for pro_info in properties['classProperties']:
+                newitem = props.class_prop_info.add()
+                newitem.name = pro_info['name']
+                newitem.description = pro_info['description']
+                newitem.definition = pro_info['definition']
+                newitem.datatype = pro_info['dataType']
+                newitem.uri = pro_info['uri']
+                newitem.propertyset = pro_info['propertySet']
+
+            return {"FINISHED"} 
+        else:
+            self.report({'ERROR'}, bSDD.response)
+            return {"CANCELLED"}  
+           
 # export IDS file 
-# ==================================================================================================
 class Operator_export_ids(bpy.types.Operator):
     """"""
     bl_idname  = "ids.export"
@@ -493,9 +504,7 @@ class Operator_export_ids(bpy.types.Operator):
 # ==================================================================================================
 # ==================================================================================================
    
-# ==================================================================================================
 # load decomposition
-# ==================================================================================================
 class Operator_load_decomposition(bpy.types.Operator):
     """Get active class information"""
     bl_idname  = "elements.decomposition"
@@ -590,9 +599,7 @@ class Operator_load_decomposition(bpy.types.Operator):
             refresh_container(context)
         return {"FINISHED"} 
 
-# ==================================================================================================
 # expand decomposition container
-# ==================================================================================================
 class Operator_expand_decomposition(bpy.types.Operator):
     """"""
     bl_idname  = "element.expand_decomposition"
@@ -621,9 +628,7 @@ class Operator_expand_decomposition(bpy.types.Operator):
         refresh_container(context)  
         return {"FINISHED"} 
 
-# ==================================================================================================
 # contract decomposition container
-# ==================================================================================================
 class Operator_contract_decomposition(bpy.types.Operator):
     """"""
     bl_idname  = "element.contract_decomposition"
@@ -646,9 +651,7 @@ class Operator_contract_decomposition(bpy.types.Operator):
         refresh_container(context)          
         return {"FINISHED"} 
 
-# ==================================================================================================
 # element decomposition selection
-# ==================================================================================================
 class Operator_element_selection(bpy.types.Operator):
     """"""
     bl_idname  = "element.selection"
@@ -682,9 +685,7 @@ class Operator_element_selection(bpy.types.Operator):
 # ==================================================================================================
 # ==================================================================================================
  
-# ==================================================================================================
 # Load catalog products
-# ==================================================================================================
 class Operator_load_products(bpy.types.Operator):
     """"""
     bl_idname  = "catag.load_products"
@@ -760,9 +761,7 @@ class Operator_load_products(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}
 
-# ==================================================================================================
 # contract products
-# ==================================================================================================
 class Operator_contract_products(bpy.types.Operator):
     """"""
     bl_idname  = "object.contract_products"
@@ -784,9 +783,7 @@ class Operator_contract_products(bpy.types.Operator):
         refresh_products(context)          
         return {"FINISHED"} 
     
-# ==================================================================================================
 # expand products
-# ==================================================================================================
 class Operator_expand_products(bpy.types.Operator):
     """"""
     bl_idname  = "object.expand_products"
@@ -812,9 +809,7 @@ class Operator_expand_products(bpy.types.Operator):
         refresh_products(context)  
         return {"FINISHED"} 
 
-# ==================================================================================================
 # Create a ifc entity from Json
-# ==================================================================================================
 class Operator_catalog_insert_type(bpy.types.Operator):
     """"""
     bl_idname  = "catag.insert_type"
@@ -993,9 +988,7 @@ class Operator_catalog_insert_type(bpy.types.Operator):
 # ==================================================================================================
 # ==================================================================================================
 
-# ==================================================================================================
 # Load object properties
-# ==================================================================================================
 class Operator_props_edit(bpy.types.Operator):
     """"""
     bl_idname  = "props.edit"
@@ -1114,13 +1107,15 @@ class Operator_props_graph(bpy.types.Operator):
     bl_label   = "Plot Graph"
     bl_options = {"REGISTER", "UNDO"} 
     pset_index : bpy.props.IntProperty(name='')
-    prop_index : bpy.props.IntProperty(name='')
-    min_x      : bpy.props.FloatProperty(name='Min Axis X')
-    max_x      : bpy.props.FloatProperty(name='Max Axis X') 
-    min_y      : bpy.props.FloatProperty(name='Min Axis Y')
-    max_y      : bpy.props.FloatProperty(name='Max Axis Y') 
+    prop_index : bpy.props.IntProperty(name='')    
+    x_axis     : bpy.props.EnumProperty(items=get_options, name='property for x axis')
+    order_x    : bpy.props.BoolProperty(name='Order X Axis', default=False)
+    min_x      : bpy.props.FloatProperty(name='Min X Axis')
+    max_x      : bpy.props.FloatProperty(name='Max X Axis') 
+    min_y      : bpy.props.FloatProperty(name='Min Y Axis')
+    max_y      : bpy.props.FloatProperty(name='Max Y Axis') 
     mult_x     : bpy.props.FloatProperty(name='Grid Interval X')         
-    mult_y     : bpy.props.FloatProperty(name='Grid Interval Y') 
+    mult_y     : bpy.props.FloatProperty(name='Grid Interval Y')     
     interpoled : bpy.props.BoolProperty(name='Intepoled Curve')
     intpl_type : bpy.props.EnumProperty(
         items=[
@@ -1129,50 +1124,112 @@ class Operator_props_graph(bpy.types.Operator):
         ],
         name='interpolation type',
         description='Get interpoled type'
-    )  
+    )
 
-    def invoke(self, context, event):        
-        return context.window_manager.invoke_props_dialog(self)
-
-    def execute(self, context):
+    table : dict
+    title : str
+    lista : list 
+    csv   : str 
+    df : None 
+    
+    def draw(self, context):
         props = context.scene.my_props
-        table = {}
-        print(100*'=')
+        layout = self.layout
+        cols = self.df.columns.to_list()
+        
+        # se tem documento anexado
+        if self.prop_index == -1:
+            if props.show_table:
+                icon = 'TRIA_DOWN_BAR'
+            else:
+                icon = 'TRIA_RIGHT_BAR'
+
+            row = layout.row()
+            row.operator("props.show_table", icon=icon, text="")
+            row.label(text='Imported Table :', icon='VIEW_ORTHO')
+            if props.show_table:
+                box = layout.box()
+                rowb = box.row() 
+                for c in cols:
+                    col = rowb.column(align=True)
+                    col.label(text=c)
+
+                for index, row in self.df.iterrows():
+                    rowb = box.row() 
+                    for c in cols:
+                        col = rowb.column(align=True)
+                        col.label(text=str(row[c]))
+              
+
+        layout.prop(self, "min_x")
+        layout.prop(self, "max_x")
+        layout.prop(self, "min_y")
+        layout.prop(self, "max_y")
+        layout.prop(self, "mult_x")
+        layout.prop(self, "mult_y")
+        layout.prop(self, "interpoled")
+        layout.prop(self, "intpl_type")
+        layout.prop(self, "x_axis")
+        layout.prop(self, "order_x") 
+
+    def invoke(self, context, event):     
+        self.table={}
+        self.title = ''
+        dynamic_items.clear()
 
         # cria um dicionario com as propriedades e valores
-        for pset in props.prop_metadata:            
-            if pset.index == self.pset_index:               
-                for prop in pset.props:                                   
-                    if prop.index == self.prop_index:
-                        title = prop.name.split('_')[0]
-                        col =  f"{prop.name.split('_')[1]} {prop.datatype}"                      
-                        if col in table:
-                            table[col].append(get_prop_type(prop)) 
-                        else:
-                            table[col] = [get_prop_type(prop)]
-        df = pd.DataFrame(table)
-       
-        # Criar gráfico com Matplotlib
-        fig, ax = plt.subplots()
-        cols =list( table.keys())
-        x = cols[0]
-        lines = []
+        props = context.scene.my_props
+        # se o elemento tem documento associado
+        if self.pset_index > -1:
+            for pset in props.prop_metadata:            
+                if pset.index == self.pset_index:    
+                    # se não for documento externo
+                    if self.prop_index == -1:           
+                        self.csv = pset.document
+                    else:
+                        for prop in pset.props:                                   
+                            if prop.index == self.prop_index:
+                                self.title = prop.name.split('_')[0]
+                                col =  f"{prop.name.split('_')[1]} {prop.datatype}"                      
+                                if col in self.table:
+                                    self.table[col].append(get_prop_type(prop)) 
+                                else:
+                                    self.table[col] = [get_prop_type(prop)]
+            # cria o dataframe
+            self.df = pd.read_csv(self.csv) if self.prop_index == -1 else pd.DataFrame(self.table)
 
+        else:
+            self.df = pd.read_csv(props.document)
+
+
+        # imprime a opcao de colunas para o eixo x
+        for c in self.df.columns.to_list():
+            if (c,c,c) not in dynamic_items:
+                dynamic_items.append((c,c,c)) 
+
+        return context.window_manager.invoke_props_dialog(self, width=500)
+
+    def execute(self, context):
+
+        cols = self.df.columns.to_list()
+        # Criar gráfico com Matplotlib
+        fig, ax = plt.subplots()              
+        x = self.x_axis if self.x_axis != '' else cols[0]
+        if self.order_x:
+            self.df = self.df.sort_values(by=x)
+        lines = []
         for col in cols:
             if col != x:
                 if self.interpoled:
-
-                    cubic_interpoletion_model = interp1d(df[x], df[col], kind=self.intpl_type)
-                    x_ = np.linspace(df[x].min(), df[x].max(), 500)
+                    cubic_interpoletion_model = interp1d(self.df[x], self.df[col], kind=self.intpl_type)
+                    x_ = np.linspace(self.df[x].min(), self.df[x].max(), 600)
                     y_ = cubic_interpoletion_model(x_)
                     lines.append(ax.plot(x_, y_, label=col))
-
-
                 else:
-                    lines.append(ax.plot(df[x],df[col], label=col))
+                    lines.append(ax.plot(self.df[x],self.df[col], label=col))
       
         # configura o grafico
-        ax.set_title(title)
+        ax.set_title(self.title)
         ax.set_xlabel(x)      
         ax.grid(True) 
         ax.xaxis.set
@@ -1200,7 +1257,7 @@ class Operator_props_graph(bpy.types.Operator):
         <html>
         <head><title>BIM Report</title></head>
         <body>
-        <h2>{title}</h2>
+        <h2>{self.title}</h2>
         <img src="data:image/png;base64,{img_base64}" />
         </body>
         </html>
@@ -1221,4 +1278,58 @@ class Operator_props_invert(bpy.types.Operator):
     def execute(self, context):
         props = context.scene.my_props
         props.invert_xy = not(props.invert_xy)
+        return {"FINISHED"}
+    
+class Operator_document_edit(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.doc_edit"
+    bl_label   = "edit reference document"
+    bl_options = {"REGISTER", "UNDO"} 
+    ifc_id   : bpy.props.IntProperty(name='ifc id')
+    document : bpy.props.StringProperty(name='document')
+
+    def execute(self, context):
+        model = tool.Ifc.get()
+        ifc_obj = model.by_id(self.ifc_id)
+        ifc_type = ifcopenshell.util.element.get_type(ifc_obj)
+        if ifc_type:
+            rel = ifc_type.HasAssociations
+        else:
+            rel = ifc_obj.HasAssociations
+        if rel:
+            doc = rel[0].RelatingDocument
+            doc.Location.wrappedValue = self.document
+            print(doc)
+        return {"FINISHED"}
+    
+class Operator_document_load(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.load_doc"
+    bl_label   = "load reference document"
+    bl_options = {"REGISTER", "UNDO"} 
+    filepath   : bpy.props.StringProperty(subtype='FILE_PATH')
+    index      : bpy.props.IntProperty(name='índex')
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+    
+    def execute(self, context):
+        props = context.scene.my_props
+        if self.index == -1:
+            props.document = self.filepath
+        else:
+            props.prop_metadata[self.index].document = self.filepath
+        return {"FINISHED"}
+    
+class Operator_show_table(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.show_table"
+    bl_label   = "show data table"
+    bl_options = {"REGISTER", "UNDO"} 
+
+   
+    def execute(self, context):
+        props = context.scene.my_props
+        props.show_table = not props.show_table
         return {"FINISHED"}

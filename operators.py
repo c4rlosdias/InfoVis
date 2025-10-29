@@ -142,9 +142,7 @@ def _build_products(context, classe, c, level, parent, hide):
 # ==================================================================================================
 # ==================================================================================================
 
-# ==================================================================================================
 # clear the list of properties loaded
-# ==================================================================================================
 class Operator_clear_properties(bpy.types.Operator):
     """"""
     bl_idname  = "object.clear_prop"
@@ -155,10 +153,8 @@ class Operator_clear_properties(bpy.types.Operator):
         props = context.scene.my_props
         props.ifc_prop.clear()              
         return {"FINISHED"}    
-    
-# ==================================================================================================
+
 # assign all objects
-# ==================================================================================================
 class Operator_assign_all(bpy.types.Operator):
     """"""
     bl_idname  = "object.assign_all"
@@ -171,9 +167,7 @@ class Operator_assign_all(bpy.types.Operator):
             obj.is_selected = True              
         return {"FINISHED"}         
 
-# ==================================================================================================
 # unassign all objects
-# ==================================================================================================
 class Operator_unassign_all(bpy.types.Operator):
     """"""
     bl_idname  = "object.unassign_all"
@@ -186,9 +180,7 @@ class Operator_unassign_all(bpy.types.Operator):
             obj.is_selected = False              
         return {"FINISHED"}    
 
-# ==================================================================================================
 # connect to bSDD and get the properties of Oil & Gas Subsea data dictionary
-# ==================================================================================================
 class Operator_get_properties(bpy.types.Operator):
     """connect to bSDD and get the properties of Oil & Gas Subsea data dictionary"""
     bl_idname  = "bsdd.get_prop"
@@ -212,10 +204,7 @@ class Operator_get_properties(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}
 
-
-# ==================================================================================================
 # acerra a uri na propriedade no bSDD
-# ==================================================================================================
 class Operator_uri(bpy.types.Operator):
     """acerra a uri na propriedade no bSDD"""
     bl_idname  = "object.uri"
@@ -231,9 +220,7 @@ class Operator_uri(bpy.types.Operator):
         webbrowser.open(self.uri)        
         return {"FINISHED"}
     
-# ==================================================================================================
 # connect to bSDD and get the classes of Oil & Gas Subsea data dictionary
-# ==================================================================================================
 class Operator_get_classes(bpy.types.Operator):
     """ connect to bSDD and get the classes of Oil & Gas Subsea data dictionary"""
     bl_idname  = "bsdd.get_class"
@@ -256,9 +243,7 @@ class Operator_get_classes(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}
 
-# ==================================================================================================
 # expand container
-# ==================================================================================================
 class Operator_expand_classes(bpy.types.Operator):
     """"""
     bl_idname  = "object.expand_classes"
@@ -284,9 +269,7 @@ class Operator_expand_classes(bpy.types.Operator):
         refresh(context)  
         return {"FINISHED"} 
 
-# ==================================================================================================
 # contract container
-# ==================================================================================================
 class Operator_contract_classes(bpy.types.Operator):
     """"""
     bl_idname  = "object.contract_classes"
@@ -308,9 +291,7 @@ class Operator_contract_classes(bpy.types.Operator):
         refresh(context)          
         return {"FINISHED"} 
 
-# ==================================================================================================
 # Add selected properties to Pset template
-# ==================================================================================================
 class Operator_add_properties(bpy.types.Operator):
     """"""
     bl_idname  = "object.add_prop"
@@ -339,9 +320,7 @@ class Operator_add_properties(bpy.types.Operator):
             self.report({'ERROR'}, str(ex))
             return {"CANCELLED"}
 
-# ==================================================================================================
 # get property metadata 
-# ==================================================================================================
 class Operator_get_prop_info(bpy.types.Operator):
     """"""
     bl_idname  = "property.get_prop_info"
@@ -374,9 +353,7 @@ class Operator_get_prop_info(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}
 
-# ==================================================================================================
 # get class metadata 
-# ==================================================================================================
 class Operator_get_class_info(bpy.types.Operator):
     """Get active class information"""
     bl_idname  = "bsdd.get_class_info"
@@ -410,9 +387,8 @@ class Operator_get_class_info(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}  
 
-# ==================================================================================================
+
 # get class metadata 
-# ==================================================================================================
 class Operator_get_class_prop(bpy.types.Operator): 
     """Get active class properties"""
     bl_idname  = "bsdd.get_class_prop"
@@ -442,9 +418,7 @@ class Operator_get_class_prop(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}  
            
-# ==================================================================================================
 # export IDS file 
-# ==================================================================================================
 class Operator_export_ids(bpy.types.Operator):
     """"""
     bl_idname  = "ids.export"
@@ -530,9 +504,7 @@ class Operator_export_ids(bpy.types.Operator):
 # ==================================================================================================
 # ==================================================================================================
    
-# ==================================================================================================
 # load decomposition
-# ==================================================================================================
 class Operator_load_decomposition(bpy.types.Operator):
     """Get active class information"""
     bl_idname  = "elements.decomposition"
@@ -627,9 +599,7 @@ class Operator_load_decomposition(bpy.types.Operator):
             refresh_container(context)
         return {"FINISHED"} 
 
-# ==================================================================================================
 # expand decomposition container
-# ==================================================================================================
 class Operator_expand_decomposition(bpy.types.Operator):
     """"""
     bl_idname  = "element.expand_decomposition"
@@ -658,9 +628,7 @@ class Operator_expand_decomposition(bpy.types.Operator):
         refresh_container(context)  
         return {"FINISHED"} 
 
-# ==================================================================================================
 # contract decomposition container
-# ==================================================================================================
 class Operator_contract_decomposition(bpy.types.Operator):
     """"""
     bl_idname  = "element.contract_decomposition"
@@ -683,9 +651,7 @@ class Operator_contract_decomposition(bpy.types.Operator):
         refresh_container(context)          
         return {"FINISHED"} 
 
-# ==================================================================================================
 # element decomposition selection
-# ==================================================================================================
 class Operator_element_selection(bpy.types.Operator):
     """"""
     bl_idname  = "element.selection"
@@ -719,9 +685,7 @@ class Operator_element_selection(bpy.types.Operator):
 # ==================================================================================================
 # ==================================================================================================
  
-# ==================================================================================================
 # Load catalog products
-# ==================================================================================================
 class Operator_load_products(bpy.types.Operator):
     """"""
     bl_idname  = "catag.load_products"
@@ -797,9 +761,7 @@ class Operator_load_products(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}
 
-# ==================================================================================================
 # contract products
-# ==================================================================================================
 class Operator_contract_products(bpy.types.Operator):
     """"""
     bl_idname  = "object.contract_products"
@@ -821,9 +783,7 @@ class Operator_contract_products(bpy.types.Operator):
         refresh_products(context)          
         return {"FINISHED"} 
     
-# ==================================================================================================
 # expand products
-# ==================================================================================================
 class Operator_expand_products(bpy.types.Operator):
     """"""
     bl_idname  = "object.expand_products"
@@ -849,9 +809,7 @@ class Operator_expand_products(bpy.types.Operator):
         refresh_products(context)  
         return {"FINISHED"} 
 
-# ==================================================================================================
 # Create a ifc entity from Json
-# ==================================================================================================
 class Operator_catalog_insert_type(bpy.types.Operator):
     """"""
     bl_idname  = "catag.insert_type"
@@ -1030,9 +988,7 @@ class Operator_catalog_insert_type(bpy.types.Operator):
 # ==================================================================================================
 # ==================================================================================================
 
-# ==================================================================================================
 # Load object properties
-# ==================================================================================================
 class Operator_props_edit(bpy.types.Operator):
     """"""
     bl_idname  = "props.edit"
@@ -1177,28 +1133,36 @@ class Operator_props_graph(bpy.types.Operator):
     df : None 
     
     def draw(self, context):
+        props = context.scene.my_props
         layout = self.layout
         cols = self.df.columns.to_list()
-        print(cols)
+        
         # se tem documento anexado
         if self.prop_index == -1:
-            row = layout.row()
-            row.label(text='Imported Table :', icon='DOCUMENTS')
-            box = layout.box()
-            rowb = box.row() 
-            for c in cols:
-                col = rowb.column(align=True)
-                col.label(text=c)
+            if props.show_table:
+                icon = 'TRIA_DOWN_BAR'
+            else:
+                icon = 'TRIA_RIGHT_BAR'
 
-            for index, row in self.df.iterrows():
+            row = layout.row()
+            row.operator("props.show_table", icon=icon, text="")
+            row.label(text='Imported Table :', icon='VIEW_ORTHO')
+            if props.show_table:
+                box = layout.box()
                 rowb = box.row() 
                 for c in cols:
                     col = rowb.column(align=True)
-                    col.label(text=str(row[c]))
+                    col.label(text=c)
+
+                for index, row in self.df.iterrows():
+                    rowb = box.row() 
+                    for c in cols:
+                        col = rowb.column(align=True)
+                        col.label(text=str(row[c]))
               
 
         layout.prop(self, "min_x")
-        layout.prop(self, "max_y")
+        layout.prop(self, "max_x")
         layout.prop(self, "min_y")
         layout.prop(self, "max_y")
         layout.prop(self, "mult_x")
@@ -1213,7 +1177,6 @@ class Operator_props_graph(bpy.types.Operator):
         self.title = ''
         dynamic_items.clear()
 
-        
         # cria um dicionario com as propriedades e valores
         props = context.scene.my_props
         # se o elemento tem documento associado
@@ -1238,7 +1201,6 @@ class Operator_props_graph(bpy.types.Operator):
         else:
             self.df = pd.read_csv(props.document)
 
-        
 
         # imprime a opcao de colunas para o eixo x
         for c in self.df.columns.to_list():
@@ -1260,7 +1222,7 @@ class Operator_props_graph(bpy.types.Operator):
             if col != x:
                 if self.interpoled:
                     cubic_interpoletion_model = interp1d(self.df[x], self.df[col], kind=self.intpl_type)
-                    x_ = np.linspace(self.df[x].min(), self.df[x].max(), 500)
+                    x_ = np.linspace(self.df[x].min(), self.df[x].max(), 600)
                     y_ = cubic_interpoletion_model(x_)
                     lines.append(ax.plot(x_, y_, label=col))
                 else:
@@ -1316,4 +1278,58 @@ class Operator_props_invert(bpy.types.Operator):
     def execute(self, context):
         props = context.scene.my_props
         props.invert_xy = not(props.invert_xy)
+        return {"FINISHED"}
+    
+class Operator_document_edit(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.doc_edit"
+    bl_label   = "edit reference document"
+    bl_options = {"REGISTER", "UNDO"} 
+    ifc_id   : bpy.props.IntProperty(name='ifc id')
+    document : bpy.props.StringProperty(name='document')
+
+    def execute(self, context):
+        model = tool.Ifc.get()
+        ifc_obj = model.by_id(self.ifc_id)
+        ifc_type = ifcopenshell.util.element.get_type(ifc_obj)
+        if ifc_type:
+            rel = ifc_type.HasAssociations
+        else:
+            rel = ifc_obj.HasAssociations
+        if rel:
+            doc = rel[0].RelatingDocument
+            doc.Location.wrappedValue = self.document
+            print(doc)
+        return {"FINISHED"}
+    
+class Operator_document_load(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.load_doc"
+    bl_label   = "load reference document"
+    bl_options = {"REGISTER", "UNDO"} 
+    filepath   : bpy.props.StringProperty(subtype='FILE_PATH')
+    index      : bpy.props.IntProperty(name='índex')
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+    
+    def execute(self, context):
+        props = context.scene.my_props
+        if self.index == -1:
+            props.document = self.filepath
+        else:
+            props.prop_metadata[self.index].document = self.filepath
+        return {"FINISHED"}
+    
+class Operator_show_table(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.show_table"
+    bl_label   = "show data table"
+    bl_options = {"REGISTER", "UNDO"} 
+
+   
+    def execute(self, context):
+        props = context.scene.my_props
+        props.show_table = not props.show_table
         return {"FINISHED"}

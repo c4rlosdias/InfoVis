@@ -523,15 +523,27 @@ class Panel_Properties(bpy.types.Panel):
         # select objects 
         obj = context.active_object       
         
-        if obj is not None:        
+        if obj is not None:   
+            model = tool.Ifc.get()     
             row = layout.row()   
 
             # se o pset tem algum documento externo associado
             if props.has_document:
-                    row.label(text=f' | {props.document}', icon='DOCUMENTS') 
+                    #row.label(text=f' | {props.document}', icon='DOCUMENTS') 
+                    op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                    op4.ifc_id = tool.Ifc.get_entity(obj).id()
+                    op4.document = props.document                    
+
+                    # operador de carregamento de arquivo externo
+                    op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                    op0.index = -1
+                    row.prop(props, 'document', icon='DOCUMENTS', text='Associated Document')
+                    
+                    # operador de plotagem
                     op3 = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
                     op3.pset_index = -1
                     op3.prop_index = -1   
+                    
 
             row = layout.row()            
             row.operator("props.load_properties", text="Load properties")                       
@@ -558,25 +570,37 @@ class Panel_Properties(bpy.types.Panel):
                     else:
                         icon = 'TRIA_RIGHT'
                     row.operator("props.expand", icon=icon, text="").index = pset.index
-                    row.label(text=pset.name, icon='COPY_ID') 
-
-                    # se o pset tem algum documento externo associado
-                    if pset.has_document:
-                         row.label(text=f' | {pset.document}', icon='DOCUMENTS') 
-                         op = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
-                         op.pset_index = pset.index
-                         op.prop_index = -1
+                    row.label(text=pset.name, icon='COPY_ID')                   
                          
 
                     layout.separator()
 
                     # se o pset está expandido                
                     if pset.is_expanded:                        
+                        # se o pset tem algum documento externo associado
+                        if pset.has_document:                             
+                            ifc_pset = ifcopenshell.api.pset.add_pset(model, product=model.by_id(pset.id_obj), name=pset.name)  
+                            row = layout.row()                      
+                            op5 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                            op5.ifc_id = ifc_pset.id()
+                            op5.document = pset.document
+                            
+                            # operador de carregamento de arquivo externo
+                            op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                            op.index = pset.index                            
+                            row.prop(pset, 'document', text='Associated Document', icon='DOCUMENTS')
+
+                            # operador para plotagem do grafico
+                            op = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                            op.pset_index = pset.index
+                            op.prop_index = -1
+                            
                         box = layout.box()
                         old_title="" 
                         old_name_prop = ""                        
                         titulos = '' 
                         i = 1
+
                         # para cada propriedade
                         for item in pset.props:   
                                                              
@@ -593,8 +617,7 @@ class Panel_Properties(bpy.types.Panel):
                                 # imprime o titulo da tabela
                                 if title != old_title:
                                     rowb = box.row(align=True)
-                                    rowb.scale_y =0.8
-                                    op = rowb.operator("props.edit", icon='CHECKMARK', text="")
+                                    rowb.scale_y =0.8                                    
                                     rowb.label(text=f' {title}', icon='VIEW_ORTHO')
 
                                     # se a tabela representa dados para uma curva de crushing

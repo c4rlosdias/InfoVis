@@ -5,6 +5,7 @@ import bonsai.tool as tool
 import textwrap
 
 
+
 def _label_multiline(context, text, parent):
     chars = int(context.region.width / 8)   # 7 pix on 1 character
     wrapper = textwrap.TextWrapper(width=chars)
@@ -202,6 +203,9 @@ class Panel_Import_Classes(bpy.types.Panel):
             row = layout.row()                                
             op = row.operator("bsdd.get_class_info", text="  Get Class Information  ")
             op.uri = active_class.uri
+                              
+            op2 = row.operator("bsdd.get_class_prop", text="  Get Class Properties  ")
+            op2.uri = active_class.uri
 
             row = layout.row()
             row.label(text=str(active_class.name))
@@ -229,7 +233,23 @@ class Panel_Import_Classes(bpy.types.Panel):
                 if props.class_ifctype != '':
                     row = box.row()
                     row.label(text=f'Ifc class : {props.class_ifctype}', icon='DOT') 
-
+            
+            # Imprime informações da classe ativa 
+            if props.info_class_prop_loaded:
+                row = layout.row()
+                row.label(text="Class Properties Information:", icon='INFO')
+                if len(props.class_prop_info)>0:
+                    self.layout.template_list(
+                        "BIM_UL_class_prop",
+                        "",
+                        props,
+                        "class_prop_info",
+                        props,
+                        "active_class_prop_index",
+                        rows=10
+                    )
+                else:
+                   row.label(text="Class has no properties", icon='WARNING_LARGE') 
                 
             
 # Painel de classes             
@@ -259,6 +279,18 @@ class BIM_UL_classes(bpy.types.UIList):
 
                 row.label(text= f'[{item.code}] {item.name}', icon = icontype )                 
                 row.operator("object.uri", text="", icon="URL").uri = item.uri
+
+# Painel de propriedades da classe             
+class BIM_UL_class_prop(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        if item:
+            row = layout.row(align=True)
+            row.label(text= f'{item.description}', icon = 'DOT' )             
+            row.operator("object.uri", text="", icon="URL").uri = item.uri
+
+            
+       
+                                
 
 
 # ---------------------------------------------------------------------
@@ -473,6 +505,7 @@ class BIM_UL_products(bpy.types.UIList):
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
 
+
 class Panel_Properties(bpy.types.Panel):
     
     bl_label        = "Properties"
@@ -490,13 +523,34 @@ class Panel_Properties(bpy.types.Panel):
         # select objects 
         obj = context.active_object       
         
-        if obj is not None:        
-            row = layout.row()
-            row.label(text="Properties:", icon='INFO')
-            row = layout.row()
+        if obj is not None:   
+            model = tool.Ifc.get()     
+            row = layout.row()   
+
+            # se o pset tem algum documento externo associado
+            if props.has_document:
+                    #row.label(text=f' | {props.document}', icon='DOCUMENTS') 
+                    op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                    op4.ifc_id = tool.Ifc.get_entity(obj).id()
+                    op4.document = props.document                    
+
+                    # operador de carregamento de arquivo externo
+                    op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                    op0.index = -1
+                    row.prop(props, 'document', icon='DOCUMENTS', text='Associated Document')
+                    
+                    # operador de plotagem
+                    op3 = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                    op3.pset_index = -1
+                    op3.prop_index = -1   
+                    
+
+            row = layout.row()            
             row.operator("props.load_properties", text="Load properties")                       
             if len(props.prop_metadata) > 0:
                 old_is_a = ""
+                row = layout.row()
+                row.prop(props, "show_description")
                 for pset in props.prop_metadata:
                     row = layout.row()
                     if old_is_a != pset.is_a:
@@ -516,35 +570,62 @@ class Panel_Properties(bpy.types.Panel):
                     else:
                         icon = 'TRIA_RIGHT'
                     row.operator("props.expand", icon=icon, text="").index = pset.index
-                    row.label(text=pset.name, icon='COPY_ID') 
+                    row.label(text=pset.name, icon='COPY_ID')                   
+                         
+
                     layout.separator()
 
                     # se o pset está expandido                
                     if pset.is_expanded:                        
+                        # se o pset tem algum documento externo associado
+                        if pset.has_document:                             
+                            ifc_pset = ifcopenshell.api.pset.add_pset(model, product=model.by_id(pset.id_obj), name=pset.name)  
+                            row = layout.row()                      
+                            op5 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                            op5.ifc_id = ifc_pset.id()
+                            op5.document = pset.document
+                            
+                            # operador de carregamento de arquivo externo
+                            op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                            op.index = pset.index                            
+                            row.prop(pset, 'document', text='Associated Document', icon='DOCUMENTS')
+
+                            # operador para plotagem do grafico
+                            op = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                            op.pset_index = pset.index
+                            op.prop_index = -1
+                            
                         box = layout.box()
                         old_title="" 
                         old_name_prop = ""                        
                         titulos = '' 
                         i = 1
+
                         # para cada propriedade
                         for item in pset.props:   
                                                              
-                            # se for tabela
+                            # se existe a palavra Table no nome da propriedade
                             if 'Table' in  item.name:
                                 names = item.name.split('_')
+                                description = item.description
                                 title = names[0]
-                                name_prop = names[1]
+                                if props.show_description:
+                                    name_prop = item.description
+                                else:
+                                    name_prop = names[1]
                                 
                                 # imprime o titulo da tabela
                                 if title != old_title:
                                     rowb = box.row(align=True)
-                                    rowb.scale_y =0.8
-                                    op = rowb.operator("props.edit", icon='CHECKMARK', text="")
+                                    rowb.scale_y =0.8                                    
                                     rowb.label(text=f' {title}', icon='VIEW_ORTHO')
+
+                                    # se a tabela representa dados para uma curva de crushing
                                     if 'Crushing' in pset.name:                                                                               
                                        op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="plot") 
                                        op.pset_index = pset.index
                                        op.prop_index = item.index
+                                       
 
                                     # imprime dados para a plotagem do gráfico
                                     rowb = box.row() 
@@ -559,7 +640,12 @@ class Panel_Properties(bpy.types.Panel):
                                     col = rowb.column(align=True)                                
                                 
                                 if item.name not in titulos:
-                                    col.label(text=f"{item.name.split('_')[1]} {item.datatype}")                                        
+                                    if props.show_description:
+                                        name_prop = f"{item.description} {item.datatype}"
+                                    else:
+                                        name_prop = f"{item.name.split('_')[1]} {item.datatype}"
+                                    
+                                    col.label(text=name_prop)                                        
                                     titulos = titulos + item.name  
 
                                 act_prop = f"value{item.type_value}"                                                                                              
@@ -579,8 +665,10 @@ class Panel_Properties(bpy.types.Panel):
                                     rowb = box.row(align=True)
                                     op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
                                     op.pset_index = pset.index
-                                    op.prop_index = item.index                               
-                                    rowb.label(text=f' {item.name}')
+                                    op.prop_index = item.index  
+                                    prop_name =  f' {item.description}' if props.show_description else  f' {item.name}'                          
+                                    rowb.label(text=prop_name)
+                                    
 
                                 # se for o tipo enumerado
                                 if item.type_prop == 'IfcPropertyEnumeratedValue':
@@ -591,9 +679,14 @@ class Panel_Properties(bpy.types.Panel):
                                     for enum in item.enumerations:
                                         print('ok')
                                         col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
+                                    # se a propriedade tem documento associado
+                                    if item.has_document:
+                                        op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
+                                        op.pset_index = pset.index
+                                        op.prop_index = item.index 
                                     old_name_prop = item.name   
 
-                                # se for propriedade simples                               
+                                # se for o valor da propriedade simples                               
                                 else:
                                     col = rowb.column()
                                     col.scale_x =0.6
@@ -604,4 +697,3 @@ class Panel_Properties(bpy.types.Panel):
                             i += 1
 
                     old_is_a = pset.is_a # type or instance
-

@@ -12,6 +12,8 @@ from bonsai.bim.ifc import IfcStore
 from bonsai.bim import import_ifc
 from bonsai.bim.ifc import IfcStore
 
+# funções
+
 def refresh(context):
     props = context.scene.my_props
     props.classes_shown.clear()
@@ -132,7 +134,6 @@ def get_pset(ifc_obj, pset_name):
     pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
     return pset
 
-
 def set_properties(props, ifc_obj, is_a, i):     
     id = ifc_obj.id()
     # get psets
@@ -140,21 +141,22 @@ def set_properties(props, ifc_obj, is_a, i):
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
     print(psets)
     for pset, _props in psets.items():             
-        _pset = get_pset(ifc_obj, pset)
-        
-        # se o pset tem algum documento associado
-        if _pset.HasAssociations:
-            new_item.has_document = True
-            new_item.document = _pset.HasAssociations[0].RelatingDocument.Location.wrappedValue       
-
-
+        _pset = get_pset(ifc_obj, pset)        
         table = {}    
+
+        # cria um novo item
         new_item = props.prop_metadata.add()            
         new_item.name = pset  
         new_item.is_a = is_a 
         new_item.id_obj = id          
-        new_item.index = i          
-        j = 0      
+        new_item.index = i     
+
+        # se o pset tem algum documento associado
+        if _pset.HasAssociations:
+            new_item.has_document = True
+            new_item.document = _pset.HasAssociations[0].RelatingDocument.Location.wrappedValue        
+        j = 0   
+           
         for prop, value in _props.items():           
             if prop != 'id':  
                 if 'Table' in prop:
@@ -257,8 +259,8 @@ def refresh_props(context):
 
     i = set_properties(props, ifc_obj, "instance", 0)
     set_properties(props, ifc_type_obj, "type", i)
-    
 
+# classes
 
 class Import_ifc():
 
