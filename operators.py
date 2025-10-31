@@ -1180,7 +1180,7 @@ class Operator_props_graph(bpy.types.Operator):
         row.prop(self, "intpl_type")
         layout.prop(self, "x_axis")
 
-        layout.label(text='select Columns to plot')
+        layout.label(text='Select Columns to plot')
         box = layout.box()
         for col in self.columns:
             if col.name != self.x_axis:
@@ -1346,6 +1346,22 @@ class Operator_document_load(bpy.types.Operator):
             props.document = self.filepath
         else:
             props.prop_metadata[self.index].document = self.filepath
+        return {"FINISHED"}
+    
+class Operator_document_open(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.open_doc"
+    bl_label   = "open reference document"
+    bl_options = {"REGISTER", "UNDO"} 
+    index      : bpy.props.IntProperty(name='índex')
+
+    
+    def execute(self, context):
+        props = context.scene.my_props
+        if self.index == -1:            
+            webbrowser.open(props.document)
+        else:
+            webbrowser.open(props.prop_metadata[self.index].document)
         return {"FINISHED"}
     
 class Operator_show_table(bpy.types.Operator):

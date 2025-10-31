@@ -534,11 +534,14 @@ class Panel_Properties(bpy.types.Panel):
                     op4.ifc_id = tool.Ifc.get_entity(obj).id()
                     op4.document = props.document                    
 
+                    # operador para visualizar o documento
+                    op = row.operator("props.open_doc", icon='BORDERMOVE', text="") 
+                    op.index = -1
                     # operador de carregamento de arquivo externo
                     op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
                     op0.index = -1
                     row.prop(props, 'document', icon='DOCUMENTS', text='Associated Document')
-                    
+
                     # operador de plotagem
                     op3 = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
                     op3.pset_index = -1
@@ -580,10 +583,15 @@ class Panel_Properties(bpy.types.Panel):
                         # se o pset tem algum documento externo associado
                         if pset.has_document:                             
                             ifc_pset = ifcopenshell.api.pset.add_pset(model, product=model.by_id(pset.id_obj), name=pset.name)  
-                            row = layout.row()                      
+                            row = layout.row()  
+                            # operador para editar a referencia                    
                             op5 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
                             op5.ifc_id = ifc_pset.id()
                             op5.document = pset.document
+                            
+                            # operador para visualizar o documento
+                            op = row.operator("props.open_doc", icon='BORDERMOVE', text="") 
+                            op.index = pset.index
                             
                             # operador de carregamento de arquivo externo
                             op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 

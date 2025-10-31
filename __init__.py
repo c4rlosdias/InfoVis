@@ -69,6 +69,7 @@ classes = [
     Operator_props_invert,
     Operator_document_edit,
     Operator_document_load,
+    Operator_document_open,
     Operator_show_table,
     Panel_Connect,
     Panel_Import_Properties,
