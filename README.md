@@ -1,14 +1,14 @@
-# README #
+# O&G Tools
 
-This README would normally document whatever steps are necessary to get your application up and running.
+Set of tools for accessing information on Oil and Gas projects that meet PetroBRAS specifications. As ferramentas são divididas nos seguintes módulos:
 
-### What is this repository for? ###
+## Catalog
 
 * Quick summary
 * Version
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
-### How do I get set up? ###
+## Properties
 
 * Summary of set up
 * Configuration
@@ -17,14 +17,13 @@ This README would normally document whatever steps are necessary to get your app
 * How to run tests
 * Deployment instructions
 
-### Contribution guidelines ###
+## Decompositions
 
 * Writing tests
 * Code review
 * Other guidelines
 
-### Who do I talk to? ###
+## Dictionary
 
 * Repo owner or admin
-
 * Other community or team contact

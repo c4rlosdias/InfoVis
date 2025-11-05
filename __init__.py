@@ -63,6 +63,7 @@ classes = [
     Operator_load_products,
     Operator_props_load,
     Operator_props_expand,
+    Operator_docs_expand,
     Operator_props_edit,
     Columns,
     Operator_props_graph,
@@ -86,11 +87,12 @@ classes = [
     BIM_UL_decomposition,
     Ifc_properties,
     Enumeration_values,
+    Documents,  
     Class_info,
     Class_prop_info,
     Property_info,
     Pset_info,
-    Container,    
+    Container,      
     MyProperties,
 ]
 
