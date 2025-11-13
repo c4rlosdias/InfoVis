@@ -689,6 +689,9 @@ class Panel_Properties(bpy.types.Panel):
                                        op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="plot") 
                                        op.pset_index = pset.index
                                        op.prop_index = item.index
+
+                                       print(pset.index)
+                                       print(item.index)
                                        
 
                                     # imprime dados para a plotagem do gráfico

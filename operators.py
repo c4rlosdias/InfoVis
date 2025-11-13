@@ -1238,11 +1238,15 @@ class Operator_props_graph(bpy.types.Operator):
                                 else:
                                     self.table[col] = [get_prop_type(prop)]
             # cria o dataframe
-            if os.path.exists(self.csv): 
-                self.df = pd.read_csv(self.csv) if self.prop_index == -1 else pd.DataFrame(self.table)
+            if self.prop_index == -1:
+                if os.path.exists(self.csv): 
+                    self.df = pd.read_csv(self.csv) 
+                else:
+                    self.report({'ERROR'}, 'FILE NOT FOUND!')
+                    return {"CANCELLED"}
             else:
-                self.report({'ERROR'}, 'FILE NOT FOUND!')
-                return {"CANCELLED"}
+                self.df = pd.DataFrame(self.table)
+
         # se o documento está aasociado ao elemento
         else:
             if os.path.exists(self.document): 
@@ -1258,8 +1262,7 @@ class Operator_props_graph(bpy.types.Operator):
                 dynamic_items.append((c,c,c))
             newcolumn = self.columns.add()
             newcolumn.name = c
-                
-
+            
         return context.window_manager.invoke_props_dialog(self, width=500)
 
     def execute(self, context):
