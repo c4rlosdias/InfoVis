@@ -448,8 +448,6 @@ class Panel_Catalog(bpy.types.Panel):
             text = get_product_description(context, props.active_product_index)
             _label_multiline(context = context, parent = box, text = text)
 
-            
-
 
 # Painel de produtos             
 class BIM_UL_products(bpy.types.UIList):
