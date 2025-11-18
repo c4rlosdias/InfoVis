@@ -1088,18 +1088,43 @@ class Operator_props_load(bpy.types.Operator):
 class Operator_props_expand(bpy.types.Operator):
     """"""
     bl_idname  = "props.expand"
-    bl_label   = "expand properties"
+    bl_label   = "expand properties / documents"
     bl_options = {"REGISTER", "UNDO"}   
 
     index : bpy.props.IntProperty(name="index")  
-
+   
     def execute(self, context):
         props = context.scene.my_props 
         for pset in props.prop_metadata:
-            if pset.index == self.index:
-                pset.is_expanded = not(pset.is_expanded)
-                pass
+            if pset.index == self.index:                    
+                    pset.is_expanded = not(pset.is_expanded)
+                    pass
         return {"FINISHED"} 
+
+class Operator_docs_expand(bpy.types.Operator):
+    """"""
+    bl_idname  = "docs.expand"
+    bl_label   = "expand properties / documents"
+    bl_options = {"REGISTER", "UNDO"}   
+
+    index : bpy.props.IntProperty(name="index")  
+    type  : bpy.props.StringProperty(name='type')
+
+    def execute(self, context):
+        props = context.scene.my_props         
+        if self.type == 'property':
+            for pset in props.prop_metadata:
+                if pset.index == self.index:                    
+                        pset.docs_expanded = not(pset.docs_expanded)
+                        pass
+        else:
+            props.docs_expanded = not(props.docs_expanded)
+
+        return {"FINISHED"} 
+
+class Columns(bpy.types.PropertyGroup):
+    name     : bpy.props.StringProperty(name='column name')
+    selected : bpy.props.BoolProperty(name='selected', default=True)
 
 class Operator_props_graph(bpy.types.Operator):
     """Generate a curve based on the information from the table"""
@@ -1107,7 +1132,8 @@ class Operator_props_graph(bpy.types.Operator):
     bl_label   = "Plot Graph"
     bl_options = {"REGISTER", "UNDO"} 
     pset_index : bpy.props.IntProperty(name='')
-    prop_index : bpy.props.IntProperty(name='')    
+    prop_index : bpy.props.IntProperty(name='')   
+    document   : bpy.props.StringProperty(name='document') 
     x_axis     : bpy.props.EnumProperty(items=get_options, name='property for x axis')
     order_x    : bpy.props.BoolProperty(name='Order X Axis', default=False)
     min_x      : bpy.props.FloatProperty(name='Min X Axis')
@@ -1117,12 +1143,13 @@ class Operator_props_graph(bpy.types.Operator):
     mult_x     : bpy.props.FloatProperty(name='Grid Interval X')         
     mult_y     : bpy.props.FloatProperty(name='Grid Interval Y')     
     interpoled : bpy.props.BoolProperty(name='Intepoled Curve')
+    columns    : bpy.props.CollectionProperty(name='columns', type=Columns)
     intpl_type : bpy.props.EnumProperty(
         items=[
             ('cubic','cubic','cubic'),
             ('linear', 'linear', 'linear')
         ],
-        name='interpolation type',
+        name='type',
         description='Get interpoled type'
     )
 
@@ -1153,33 +1180,48 @@ class Operator_props_graph(bpy.types.Operator):
                 for c in cols:
                     col = rowb.column(align=True)
                     col.label(text=c)
+                    
 
                 for index, row in self.df.iterrows():
                     rowb = box.row() 
                     for c in cols:
                         col = rowb.column(align=True)
                         col.label(text=str(row[c]))
-              
+                        
+     
+        box = layout.box()
+        box.prop(self, "min_x")
+        box.prop(self, "max_x")
+        box.prop(self, "min_y")
+        box.prop(self, "max_y")
+        box.prop(self, "mult_x")
+        box.prop(self, "mult_y")
 
-        layout.prop(self, "min_x")
-        layout.prop(self, "max_x")
-        layout.prop(self, "min_y")
-        layout.prop(self, "max_y")
-        layout.prop(self, "mult_x")
-        layout.prop(self, "mult_y")
-        layout.prop(self, "interpoled")
-        layout.prop(self, "intpl_type")
+        row = layout.row(align=True)
+        row.prop(self, "interpoled")
+        row.prop(self, "intpl_type")
         layout.prop(self, "x_axis")
+
+        layout.label(text='Select Columns to plot')
+        box = layout.box()
+        for col in self.columns:
+            if col.name != self.x_axis:
+                row = box.row()
+                row.prop(col, 'selected', text=col.name)
+            else:
+                col.selected = True
+
         layout.prop(self, "order_x") 
 
     def invoke(self, context, event):     
         self.table={}
         self.title = ''
         dynamic_items.clear()
+        self.columns.clear()
 
         # cria um dicionario com as propriedades e valores
         props = context.scene.my_props
-        # se o elemento tem documento associado
+        # se o documento esta associado a propriedade
         if self.pset_index > -1:
             for pset in props.prop_metadata:            
                 if pset.index == self.pset_index:    
@@ -1196,20 +1238,37 @@ class Operator_props_graph(bpy.types.Operator):
                                 else:
                                     self.table[col] = [get_prop_type(prop)]
             # cria o dataframe
-            self.df = pd.read_csv(self.csv) if self.prop_index == -1 else pd.DataFrame(self.table)
+            if self.prop_index == -1:
+                if os.path.exists(self.csv): 
+                    self.df = pd.read_csv(self.csv) 
+                else:
+                    self.report({'ERROR'}, 'FILE NOT FOUND!')
+                    return {"CANCELLED"}
+            else:
+                self.df = pd.DataFrame(self.table)
 
+        # se o documento está aasociado ao elemento
         else:
-            self.df = pd.read_csv(props.document)
+            if os.path.exists(self.document): 
+                self.df = pd.read_csv(self.document)
+            else:
+                self.report({'ERROR'}, 'FILE NOT FOUND!')
+                return {"CANCELLED"}
 
 
         # imprime a opcao de colunas para o eixo x
         for c in self.df.columns.to_list():
             if (c,c,c) not in dynamic_items:
-                dynamic_items.append((c,c,c)) 
-
+                dynamic_items.append((c,c,c))
+            newcolumn = self.columns.add()
+            newcolumn.name = c
+            
         return context.window_manager.invoke_props_dialog(self, width=500)
 
     def execute(self, context):
+        for item in self.columns:
+            if not item.selected:
+                self.df = self.df.drop(columns=item.name) 
 
         cols = self.df.columns.to_list()
         # Criar gráfico com Matplotlib
@@ -1286,7 +1345,9 @@ class Operator_document_edit(bpy.types.Operator):
     bl_label   = "edit reference document"
     bl_options = {"REGISTER", "UNDO"} 
     ifc_id   : bpy.props.IntProperty(name='ifc id')
-    document : bpy.props.StringProperty(name='document')
+    id : bpy.props.StringProperty(name='id')
+    name : bpy.props.StringProperty(name='name')
+    location : bpy.props.StringProperty(name='location')
 
     def execute(self, context):
         model = tool.Ifc.get()
@@ -1298,8 +1359,10 @@ class Operator_document_edit(bpy.types.Operator):
             rel = ifc_obj.HasAssociations
         if rel:
             doc = rel[0].RelatingDocument
-            doc.Location.wrappedValue = self.document
-            print(doc)
+            doc.Identification = self.id
+            doc.Name = self.name
+            doc.Location.wrappedValue = self.location
+
         return {"FINISHED"}
     
 class Operator_document_load(bpy.types.Operator):
@@ -1309,6 +1372,7 @@ class Operator_document_load(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"} 
     filepath   : bpy.props.StringProperty(subtype='FILE_PATH')
     index      : bpy.props.IntProperty(name='índex')
+    doc_index : bpy.props.IntProperty(name="doc index")
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
@@ -1317,10 +1381,26 @@ class Operator_document_load(bpy.types.Operator):
     def execute(self, context):
         props = context.scene.my_props
         if self.index == -1:
-            props.document = self.filepath
+            props.documents[self.doc_index].location = self.filepath
         else:
-            props.prop_metadata[self.index].document = self.filepath
+            props.prop_metadata[self.index].documents[self.doc_index].location = self.filepath
         return {"FINISHED"}
+    
+class Operator_document_open(bpy.types.Operator):
+    """"""
+    bl_idname  = "props.open_doc"
+    bl_label   = "open reference document"
+    bl_options = {"REGISTER", "UNDO"} 
+    location      : bpy.props.StringProperty(name='location')
+
+    
+    def execute(self, context):   
+        if os.path.exists(self.location):     
+            webbrowser.open(self.location)
+            return {"FINISHED"}
+        else:
+            self.report({'ERROR'}, 'FILE NOT FOUND!')
+            return {"CANCELLED"}
     
 class Operator_show_table(bpy.types.Operator):
     """"""

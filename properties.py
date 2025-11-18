@@ -119,7 +119,7 @@ class Pset_info(PropertyGroup):
     max_y         : FloatProperty(name='max Y', default=0)
     mult_x        : IntProperty(name='interval X', default=0)
     mult_y        : IntProperty(name='interval Y', default=0)
-    interpoled    : BoolProperty(name="Is Interpoled", default=False)
+    interpoled    : BoolProperty(name="Is Interpolated", default=False)
     has_document  : BoolProperty(name='Has documentation', default=False)
     docs_expanded : BoolProperty(name='is expanded', default=True)
     document      : StringProperty(name='document')

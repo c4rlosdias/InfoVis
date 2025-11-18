@@ -154,7 +154,17 @@ def set_properties(props, ifc_obj, is_a, i):
         # se o pset tem algum documento associado
         if _pset.HasAssociations:
             new_item.has_document = True
-            new_item.document = _pset.HasAssociations[0].RelatingDocument.Location.wrappedValue        
+            c = 0
+            for association in _pset.HasAssociations:
+                document = association.RelatingDocument
+                print(document)
+                newdocument = new_item.documents.add()
+                newdocument.name = document.Name
+                newdocument.identification = document.Identification
+                newdocument.location = document.Location.wrappedValue 
+                newdocument.index = c
+                c += 1
+                   
         j = 0   
            
         for prop, value in _props.items():           
@@ -240,10 +250,31 @@ def set_properties(props, ifc_obj, is_a, i):
         i += 1
     return i
 
+# def refresh_props(context):
+#     # get active object
+#     props = context.scene.my_props
+#     props.prop_metadata.clear() 
+#     props.has_document = False
+#     props.document = ''
+#     obj = context.active_object
+#     ifc_obj = tool.Ifc.get_entity(obj)
+
+#     # se o tipo do elemento tem algum documento associado
+#     ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
+#     if ifc_obj_type.HasAssociations:
+#         props.has_document = True
+#         props.document = ifc_obj_type.HasAssociations[0].RelatingDocument.Location.wrappedValue  
+
+#     ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
+
+#     i = set_properties(props, ifc_obj, "instance", 0)
+#     set_properties(props, ifc_type_obj, "type", i)
+
 def refresh_props(context):
     # get active object
     props = context.scene.my_props
     props.prop_metadata.clear() 
+    props.documents.clear()
     props.has_document = False
     props.document = ''
     obj = context.active_object
@@ -253,7 +284,12 @@ def refresh_props(context):
     ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
     if ifc_obj_type.HasAssociations:
         props.has_document = True
-        props.document = ifc_obj_type.HasAssociations[0].RelatingDocument.Location.wrappedValue  
+        for association in ifc_obj_type.HasAssociations:
+            document = association.RelatingDocument
+            newdocument = props.documents.add()
+            newdocument.name = document.Name
+            newdocument.identification = document.Identification
+            newdocument.location = document.Location.wrappedValue  
 
     ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
 

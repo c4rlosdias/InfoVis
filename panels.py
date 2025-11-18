@@ -288,10 +288,6 @@ class BIM_UL_class_prop(bpy.types.UIList):
             row.label(text= f'{item.description}', icon = 'DOT' )             
             row.operator("object.uri", text="", icon="URL").uri = item.uri
 
-            
-       
-                                
-
 
 # ---------------------------------------------------------------------
 # Exporta as definições das propriedades no template do usuário para 

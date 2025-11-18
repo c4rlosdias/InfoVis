@@ -525,32 +525,65 @@ class Panel_Properties(bpy.types.Panel):
         
         if obj is not None:   
             model = tool.Ifc.get()     
-            row = layout.row()   
+            row = layout.row()                      
+            row.operator("props.load_properties", text="Load properties")    
 
-            # se o pset tem algum documento externo associado
+            # se o tipo do elemento tem algum documento externo associado
             if props.has_document:
-                    #row.label(text=f' | {props.document}', icon='DOCUMENTS') 
-                    op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
-                    op4.ifc_id = tool.Ifc.get_entity(obj).id()
-                    op4.document = props.document                    
-
-                    # operador de carregamento de arquivo externo
-                    op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
-                    op0.index = -1
-                    row.prop(props, 'document', icon='DOCUMENTS', text='Associated Document')
+                    row = layout.row() 
+                    row.label(text='Referenced documents:', icon = 'DOCUMENTS') 
+                    if props.docs_expanded:
+                        icon='TRIA_DOWN'
+                    else:
+                        icon='TRIA_RIGHT'
+                    op = row.operator("docs.expand", icon=icon, text="")
+                    op.index = -1
+                    op.type = 'element'
                     
-                    # operador de plotagem
-                    op3 = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
-                    op3.pset_index = -1
-                    op3.prop_index = -1   
-                    
+                    if props.docs_expanded:
+                        box = layout.box()
+                        for document in props.documents:
+                            row = box.row() 
+                            # operador para gravar a edicao do documento
+                            op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                            op4.ifc_id = tool.Ifc.get_entity(obj).id()
+                            op4.id = document.identification
+                            op4.name = document.name
+                            op4.location = document.location
 
-            row = layout.row()            
-            row.operator("props.load_properties", text="Load properties")                       
+                            row = box.row()
+                            row.prop(document, 'identification')
+                            row = box.row()
+                            row.prop(document, 'name')
+                            row = box.row()
+                            row.prop(document, 'location')
+
+                            # operador de carregamento de arquivo externo
+                            op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                            op0.index = -1
+                            op0.doc_index = document.index
+
+                            # operador para visualizar o documento
+                            op = row.operator("props.open_doc", icon='BORDERMOVE', text="")  
+                            op.location = document.location
+
+                            # operador de plotagem
+                            if document.location[-3:].upper() == 'CSV':
+                                op3 = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                                op3.pset_index = -1
+                                op3.prop_index = -1 
+                                op3.document = document.location
+
+
+            layout.separator()                      
+            
             if len(props.prop_metadata) > 0:
                 old_is_a = ""
                 row = layout.row()
                 row.prop(props, "show_description")
+                layout.separator()
+
+                # imprime cada pset associado ao elemento
                 for pset in props.prop_metadata:
                     row = layout.row()
                     if old_is_a != pset.is_a:
@@ -578,28 +611,59 @@ class Panel_Properties(bpy.types.Panel):
                     # se o pset está expandido                
                     if pset.is_expanded:                        
                         # se o pset tem algum documento externo associado
-                        if pset.has_document:                             
+                        if pset.has_document:                               
                             ifc_pset = ifcopenshell.api.pset.add_pset(model, product=model.by_id(pset.id_obj), name=pset.name)  
-                            row = layout.row()                      
-                            op5 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
-                            op5.ifc_id = ifc_pset.id()
-                            op5.document = pset.document
-                            
-                            # operador de carregamento de arquivo externo
-                            op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
-                            op.index = pset.index                            
-                            row.prop(pset, 'document', text='Associated Document', icon='DOCUMENTS')
+                            row = layout.row()
+                            row.label(text='Referenced documents:', icon='DOCUMENTS')
 
-                            # operador para plotagem do grafico
-                            op = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
-                            op.pset_index = pset.index
-                            op.prop_index = -1
+                            if pset.docs_expanded:
+                                icon2='TRIA_DOWN'
+                            else:
+                                icon2='TRIA_RIGHT'
+                            op = row.operator("docs.expand", icon=icon2, text="")
+                            op.index = pset.index
+                            op.type = 'property'    
+
+                            if pset.docs_expanded:
+                                box = layout.box()  
+                                for document in pset.documents:                                
+                                    row = box.row()
+                                    # operador para editar a referencia                    
+                                    op = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                                    op.ifc_id = ifc_pset.id()
+                                    op.id = document.identification   
+                                    op.name = document.name 
+                                    op.location = document.location                                  
+
+                                    row = box.row()
+                                    row.prop(document, 'identification')
+                                    row = box.row()
+                                    row.prop(document, 'name')
+                                    row = box.row()
+                                    row.prop(document, 'location')
+                                    # operador de carregamento de arquivo externo
+                                    op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                                    op.index = pset.index 
+
+                                    # operador para visualizar o documento
+                                    op = row.operator("props.open_doc", icon='BORDERMOVE', text="") 
+                                    op.location = document.location                           
+                                    
+                                    # operador para plotagem do grafico
+                                    if document.location[-3:].upper() == 'CSV':
+                                        op = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                                        op.pset_index = -1
+                                        op.prop_index = -1
+                                        op.document = document.location
                             
+                        row = layout.row()
+                        row.label(text="Properties:")
                         box = layout.box()
                         old_title="" 
                         old_name_prop = ""                        
                         titulos = '' 
                         i = 1
+                        
 
                         # para cada propriedade
                         for item in pset.props:   
@@ -625,6 +689,9 @@ class Panel_Properties(bpy.types.Panel):
                                        op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="plot") 
                                        op.pset_index = pset.index
                                        op.prop_index = item.index
+
+                                       print(pset.index)
+                                       print(item.index)
                                        
 
                                     # imprime dados para a plotagem do gráfico
