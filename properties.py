@@ -99,36 +99,46 @@ class Class_prop_info(PropertyGroup):
     description   : StringProperty(name='class property description')
     definition    : StringProperty(name='class property definition')
 
+class Documents(PropertyGroup):    
+    index          : IntProperty(name="index")
+    identification : StringProperty(name="ID")
+    location       : StringProperty(name="Location")   
+    name           : StringProperty(name="Name") 
+    
 
 class Pset_info(PropertyGroup):    
-    name        : StringProperty(name='pset name')
-    is_a        : StringProperty(name= "is a")
-    id_obj      : IntProperty(name="id object")       
-    index       : IntProperty(name='index')
-    props       : CollectionProperty(name="properties", type=Property_info)
-    is_expanded : BoolProperty(name="Is Expanded", default=False)
-    min_x       : FloatProperty(name='min X', default=0)
-    max_x       : FloatProperty(name='max X', default=0)
-    min_y       : FloatProperty(name='min Y', default=0)
-    max_y       : FloatProperty(name='max Y', default=0)
-    mult_x      : IntProperty(name='interval X', default=0)
-    mult_y      : IntProperty(name='interval Y', default=0)
-    interpoled  : BoolProperty(name="Is Interpoled", default=False)
-    has_document : BoolProperty(name='Has documentation', default=False)
-    document     : StringProperty(name='document')
+    name          : StringProperty(name='pset name')
+    is_a          : StringProperty(name= "is a")
+    id_obj        : IntProperty(name="id object")       
+    index         : IntProperty(name='index')
+    props         : CollectionProperty(name="properties", type=Property_info)
+    is_expanded   : BoolProperty(name="Is Expanded", default=False)
+    min_x         : FloatProperty(name='min X', default=0)
+    max_x         : FloatProperty(name='max X', default=0)
+    min_y         : FloatProperty(name='min Y', default=0)
+    max_y         : FloatProperty(name='max Y', default=0)
+    mult_x        : IntProperty(name='interval X', default=0)
+    mult_y        : IntProperty(name='interval Y', default=0)
+    interpoled    : BoolProperty(name="Is Interpolated", default=False)
+    has_document  : BoolProperty(name='Has documentation', default=False)
+    docs_expanded : BoolProperty(name='is expanded', default=True)
+    document      : StringProperty(name='document')
+    documents     : CollectionProperty(name='documents', type=Documents)
     
 
 class Container(PropertyGroup):
-    has_children: BoolProperty(name="has children")    
-    is_hidden   : BoolProperty(name="is Hidded", default=True)
-    is_expanded : BoolProperty(name="Is Expanded", default=True)
-    is_selected : BoolProperty(name="Is Selected")
-    index       : IntProperty(name="index")
-    id          : IntProperty(name="id")
-    parent      : StringProperty(name="parent")
-    level       : IntProperty(name="level")
-    type        : StringProperty(name="element type")   
-    name        : StringProperty(name="name") 
+    has_children  : BoolProperty(name="has children")    
+    is_hidden     : BoolProperty(name="is Hidded", default=True)
+    is_expanded   : BoolProperty(name="Is Expanded", default=True)
+    is_selected   : BoolProperty(name="Is Selected")
+    index         : IntProperty(name="index")
+    id            : IntProperty(name="id")
+    parent        : StringProperty(name="parent")
+    level         : IntProperty(name="level")
+    type          : StringProperty(name="element type")   
+    name          : StringProperty(name="name") 
+
+
 
 
 class MyProperties(PropertyGroup): 
@@ -190,8 +200,12 @@ class MyProperties(PropertyGroup):
     XAxis                    : StringProperty(name='property of the X axis')
     show_description         : BoolProperty(name='Show property description', default=True ) 
 
-    has_document : BoolProperty(name='Has documentation', default=False)
-    document     : StringProperty(name='document')
+    has_document             : BoolProperty(name='Has documentation', default=False)
+    docs_expanded            : BoolProperty(name='is expanded', default=True)
+    document                 : StringProperty(name='document')
+    documents                : CollectionProperty(name='documents', type=Documents)
+
+    show_table               : BoolProperty(name='Show table', default=False)
 
 
 

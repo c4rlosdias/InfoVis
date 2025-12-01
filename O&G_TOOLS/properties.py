@@ -12,13 +12,18 @@ def get_dictionaries(self, context):
     return bSDD.data_dic
         
 def active_prop_changed(self, context):
-    self.info_prop_loaded = False
+    self.info_class_prop_loaded = False
     self.class_info.clear()
 
 
 def active_class_changed(self, context):
-    #self.classes_shown.clear()
+    self.class_prop_info.clear()
     self.classes_loaded = False
+    self.class_prop_info_loaded = False
+
+def active_class_prop_changed(self, context):
+    #self.classes_shown.clear()
+    self.info_class_prop_loaded = False
 
 def active_product_changed(self, context):
     #self.classes_shown.clear()
@@ -69,51 +74,71 @@ class Enumeration_values(PropertyGroup):
     type_value  : StringProperty(name="type value")
 
 class Property_info(PropertyGroup):    
-    name        : StringProperty(name='property name')
-    index       : IntProperty(name='prop index')
-    valuestr    : StringProperty(name='value str')
-    valueint    : IntProperty(name='value int')
-    valuefloat  : FloatProperty(name='value float')
-    valuebool   : BoolProperty(name="value bool")
-    type_value  : StringProperty(name="type value")
-    type_prop   : StringProperty(name='typr prop')
-    n_columns   : IntProperty(name='n columns', default=1)
+    
+    index        : IntProperty(name='prop index')
+    name         : StringProperty(name='property name')
+    description  : StringProperty(name='property description')
+    valuestr     : StringProperty(name='value str')
+    valueint     : IntProperty(name='value int')
+    valuefloat   : FloatProperty(name='value float')
+    valuebool    : BoolProperty(name="value bool")
+    type_value   : StringProperty(name="type value")
+    type_prop    : StringProperty(name='typr prop')
+    n_columns    : IntProperty(name='n columns', default=1)
+    n_rows       : IntProperty(name='n columns', default=1)
+    datatype     : StringProperty(name='data type', default='')
+    enumerations : CollectionProperty(name="enumerated", type=Enumeration_values)
+    
 
-    n_rows      : IntProperty(name='n columns', default=1)
-    datatype    : StringProperty(name='data type', default='')
-    enumerations: CollectionProperty(name="enumerated", type=Enumeration_values)
+class Class_prop_info(PropertyGroup):
+    name          : StringProperty(name='class property name')
+    uri           : StringProperty(name='class property uri')
+    datatype      : StringProperty(name='class property data type')
+    units         : StringProperty(name='class property units')
+    propertyset   : StringProperty(name='class property set')
+    description   : StringProperty(name='class property description')
+    definition    : StringProperty(name='class property definition')
 
-
-
+class Documents(PropertyGroup):    
+    index          : IntProperty(name="index")
+    identification : StringProperty(name="ID")
+    location       : StringProperty(name="Location")   
+    name           : StringProperty(name="Name") 
+    
 
 class Pset_info(PropertyGroup):    
-    name        : StringProperty(name='pset name')
-    is_a        : StringProperty(name= "is a")
-    id_obj      : IntProperty(name="id object")       
-    index       : IntProperty(name='index')
-    props       : CollectionProperty(name="properties", type=Property_info)
-    is_expanded : BoolProperty(name="Is Expanded", default=False)
-
-    min_x       : FloatProperty(name='min X', default=0)
-    max_x       : FloatProperty(name='max X', default=0)
-    min_y       : FloatProperty(name='min Y', default=0)
-    max_y       : FloatProperty(name='max Y', default=0)
-    mult_x      : IntProperty(name='interval X', default=0)
-    mult_y      : IntProperty(name='interval Y', default=0)
-    interpoled  : BoolProperty(name="Is Interpoled", default=False)
+    name          : StringProperty(name='pset name')
+    is_a          : StringProperty(name= "is a")
+    id_obj        : IntProperty(name="id object")       
+    index         : IntProperty(name='index')
+    props         : CollectionProperty(name="properties", type=Property_info)
+    is_expanded   : BoolProperty(name="Is Expanded", default=False)
+    min_x         : FloatProperty(name='min X', default=0)
+    max_x         : FloatProperty(name='max X', default=0)
+    min_y         : FloatProperty(name='min Y', default=0)
+    max_y         : FloatProperty(name='max Y', default=0)
+    mult_x        : IntProperty(name='interval X', default=0)
+    mult_y        : IntProperty(name='interval Y', default=0)
+    interpoled    : BoolProperty(name="Is Interpoled", default=False)
+    has_document  : BoolProperty(name='Has documentation', default=False)
+    docs_expanded : BoolProperty(name='is expanded', default=True)
+    document      : StringProperty(name='document')
+    documents     : CollectionProperty(name='documents', type=Documents)
     
 
 class Container(PropertyGroup):
-    has_children: BoolProperty(name="has children")    
-    is_hidden   : BoolProperty(name="is Hidded", default=True)
-    is_expanded : BoolProperty(name="Is Expanded", default=True)
-    is_selected : BoolProperty(name="Is Selected")
-    index       : IntProperty(name="index")
-    id          : IntProperty(name="id")
-    parent      : StringProperty(name="parent")
-    level       : IntProperty(name="level")
-    type        : StringProperty(name="element type")   
-    name        : StringProperty(name="name") 
+    has_children  : BoolProperty(name="has children")    
+    is_hidden     : BoolProperty(name="is Hidded", default=True)
+    is_expanded   : BoolProperty(name="Is Expanded", default=True)
+    is_selected   : BoolProperty(name="Is Selected")
+    index         : IntProperty(name="index")
+    id            : IntProperty(name="id")
+    parent        : StringProperty(name="parent")
+    level         : IntProperty(name="level")
+    type          : StringProperty(name="element type")   
+    name          : StringProperty(name="name") 
+
+
 
 
 class MyProperties(PropertyGroup): 
@@ -126,6 +151,7 @@ class MyProperties(PropertyGroup):
     active_info_prop_index   : IntProperty(name='object index', default=0)
     class_info               : CollectionProperty(name='info class', type=Class_info)    
     active_class_index       : IntProperty(name='class index', default=0, update=active_class_changed)
+    active_class_prop_index  : IntProperty(name='class prop index', default=0, update=active_class_prop_changed)
     classes                  : CollectionProperty(name='classes', type=Class_info) 
     classes_shown            : CollectionProperty(name='classes show', type=Class_info) 
     active_element_index     : IntProperty(name='element index', default=0)
@@ -147,9 +173,12 @@ class MyProperties(PropertyGroup):
     prop_type                : StringProperty(name='property type')
     prop_description         : StringProperty(name='property description')
     prop_definition          : StringProperty(name='property definition')
+
+    class_prop_info          : CollectionProperty(name="class prop info", type=Class_prop_info)
     
     info_prop_loaded         : BoolProperty(name='info prop loaded', default=False)
     info_class_loaded        : BoolProperty(name='info class loaded', default=False)
+    info_class_prop_loaded   : BoolProperty(name='info class prop loaded', default=False)
     ids_file                 : StringProperty(name='IDS file')
     
     
@@ -168,5 +197,15 @@ class MyProperties(PropertyGroup):
     invert_xy                : BoolProperty(name="invert xy", default=False)
     pset_index               : IntProperty(name='pset index', default=0)
     prop_index               : IntProperty(name='prop index', default=0)
+    XAxis                    : StringProperty(name='property of the X axis')
+    show_description         : BoolProperty(name='Show property description', default=True ) 
+
+    has_document             : BoolProperty(name='Has documentation', default=False)
+    docs_expanded            : BoolProperty(name='is expanded', default=True)
+    document                 : StringProperty(name='document')
+    documents                : CollectionProperty(name='documents', type=Documents)
+
+    show_table               : BoolProperty(name='Show table', default=False)
+
 
 

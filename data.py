@@ -12,6 +12,8 @@ from bonsai.bim.ifc import IfcStore
 from bonsai.bim import import_ifc
 from bonsai.bim.ifc import IfcStore
 
+# funções
+
 def refresh(context):
     props = context.scene.my_props
     props.classes_shown.clear()
@@ -132,7 +134,6 @@ def get_pset(ifc_obj, pset_name):
     pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
     return pset
 
-
 def set_properties(props, ifc_obj, is_a, i):     
     id = ifc_obj.id()
     # get psets
@@ -140,21 +141,32 @@ def set_properties(props, ifc_obj, is_a, i):
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
     print(psets)
     for pset, _props in psets.items():             
-        _pset = get_pset(ifc_obj, pset)
-        
-        # se o pset tem algum documento associado
-        if _pset.HasAssociations:
-            new_item.has_document = True
-            new_item.document = _pset.HasAssociations[0].RelatingDocument.Location.wrappedValue       
-
-
+        _pset = get_pset(ifc_obj, pset)        
         table = {}    
+
+        # cria um novo item
         new_item = props.prop_metadata.add()            
         new_item.name = pset  
         new_item.is_a = is_a 
         new_item.id_obj = id          
-        new_item.index = i          
-        j = 0      
+        new_item.index = i     
+
+        # se o pset tem algum documento associado
+        if _pset.HasAssociations:
+            new_item.has_document = True
+            c = 0
+            for association in _pset.HasAssociations:
+                document = association.RelatingDocument
+                print(document)
+                newdocument = new_item.documents.add()
+                newdocument.name = document.Name
+                newdocument.identification = document.Identification
+                newdocument.location = document.Location.wrappedValue 
+                newdocument.index = c
+                c += 1
+                   
+        j = 0   
+           
         for prop, value in _props.items():           
             if prop != 'id':  
                 if 'Table' in prop:
@@ -238,10 +250,31 @@ def set_properties(props, ifc_obj, is_a, i):
         i += 1
     return i
 
+# def refresh_props(context):
+#     # get active object
+#     props = context.scene.my_props
+#     props.prop_metadata.clear() 
+#     props.has_document = False
+#     props.document = ''
+#     obj = context.active_object
+#     ifc_obj = tool.Ifc.get_entity(obj)
+
+#     # se o tipo do elemento tem algum documento associado
+#     ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
+#     if ifc_obj_type.HasAssociations:
+#         props.has_document = True
+#         props.document = ifc_obj_type.HasAssociations[0].RelatingDocument.Location.wrappedValue  
+
+#     ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
+
+#     i = set_properties(props, ifc_obj, "instance", 0)
+#     set_properties(props, ifc_type_obj, "type", i)
+
 def refresh_props(context):
     # get active object
     props = context.scene.my_props
     props.prop_metadata.clear() 
+    props.documents.clear()
     props.has_document = False
     props.document = ''
     obj = context.active_object
@@ -251,14 +284,19 @@ def refresh_props(context):
     ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
     if ifc_obj_type.HasAssociations:
         props.has_document = True
-        props.document = ifc_obj_type.HasAssociations[0].RelatingDocument.Location.wrappedValue  
+        for association in ifc_obj_type.HasAssociations:
+            document = association.RelatingDocument
+            newdocument = props.documents.add()
+            newdocument.name = document.Name
+            newdocument.identification = document.Identification
+            newdocument.location = document.Location.wrappedValue  
 
     ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
 
     i = set_properties(props, ifc_obj, "instance", 0)
     set_properties(props, ifc_type_obj, "type", i)
-    
 
+# classes
 
 class Import_ifc():
 
