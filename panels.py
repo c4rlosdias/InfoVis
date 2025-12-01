@@ -393,7 +393,8 @@ class BIM_UL_decomposition(bpy.types.UIList):
                         ).index = item.index
                 else:
                     row.label(text="", icon="BLANK1") 
-                row.label(text= item.name, icon = icon )
+                row.label(text= f'#{str(item.id)}-{item.name}', icon=icon)
+                #row.label(text= item.name, icon = icon )
 
                 icon2 = "CANCEL" if item.is_selected == True else "RESTRICT_SELECT_OFF"                                
                 row.operator("element.selection", text="", icon=icon2).index = item.index
