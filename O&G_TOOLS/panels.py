@@ -288,10 +288,6 @@ class BIM_UL_class_prop(bpy.types.UIList):
             row.label(text= f'{item.description}', icon = 'DOT' )             
             row.operator("object.uri", text="", icon="URL").uri = item.uri
 
-            
-       
-                                
-
 
 # ---------------------------------------------------------------------
 # Exporta as definições das propriedades no template do usuário para 
@@ -370,13 +366,15 @@ class BIM_UL_decomposition(bpy.types.UIList):
             elif item.type == "IfcSite":
                 icon = 'WORLD'
             elif item.type == "IfcBuilding":
-                icon = 'RENDER_STILL'
+                icon = 'STICKY_UVS_LOC'
             elif item.type == "IfcElementAssembly":
                 icon = 'PROP_ON'
             elif item.type == "IfcPipeSegment":
                 icon = 'IPO_EASE_OUT'            
             elif item.type == "IfcCableSegment":
-                icon = 'OUTLINER_DATA_LIGHT'            
+                icon = 'OUTLINER_DATA_LIGHT'  
+            elif item.type == "IfcValve":
+                icon = 'MODIFIER_ON'           
             else:
                 icon = 'OUTLINER'
 
@@ -397,7 +395,8 @@ class BIM_UL_decomposition(bpy.types.UIList):
                         ).index = item.index
                 else:
                     row.label(text="", icon="BLANK1") 
-                row.label(text= item.name, icon = icon )
+                row.label(text= f'#{str(item.id)}-{item.name}', icon=icon)
+                #row.label(text= item.name, icon = icon )
 
                 icon2 = "CANCEL" if item.is_selected == True else "RESTRICT_SELECT_OFF"                                
                 row.operator("element.selection", text="", icon=icon2).index = item.index
@@ -451,8 +450,6 @@ class Panel_Catalog(bpy.types.Panel):
             rowb = box.row()
             text = get_product_description(context, props.active_product_index)
             _label_multiline(context = context, parent = box, text = text)
-
-            
 
 
 # Painel de produtos             

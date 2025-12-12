@@ -366,13 +366,15 @@ class BIM_UL_decomposition(bpy.types.UIList):
             elif item.type == "IfcSite":
                 icon = 'WORLD'
             elif item.type == "IfcBuilding":
-                icon = 'RENDER_STILL'
+                icon = 'STICKY_UVS_LOC'
             elif item.type == "IfcElementAssembly":
                 icon = 'PROP_ON'
             elif item.type == "IfcPipeSegment":
                 icon = 'IPO_EASE_OUT'            
             elif item.type == "IfcCableSegment":
-                icon = 'OUTLINER_DATA_LIGHT'            
+                icon = 'OUTLINER_DATA_LIGHT'  
+            elif item.type == "IfcValve":
+                icon = 'MODIFIER_ON'           
             else:
                 icon = 'OUTLINER'
 
