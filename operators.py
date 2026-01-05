@@ -548,11 +548,11 @@ class Operator_load_decomposition(bpy.types.Operator):
                 #     continue
                 # ifc_definition_id = element.id()
                 new = props.elements_containers.add()
-                new.name = f"[{element.is_a()}] {element.Name or 'Unnamed'}"
+                new.name = element.Name or 'Unnamed'
                 new.type = element.is_a()
                 new.level = level 
-                new.id = element.id()
-                new.id=element.id()
+                new.id = element.id()                
+                new.object_type = element.ObjectType or 'Unnamed'                            
                 children = [
                     e
                     for e in get_decomposition(element, is_recursive=False)
@@ -594,7 +594,7 @@ class Operator_load_decomposition(bpy.types.Operator):
             for element in props.elements_containers:
                 element.index = i
                 element.is_hidden = False if element.level==1 else True
-                element.is_expanded = False if element.level==1 else True
+                element.is_expanded = False if element.level==1 else True                
                 i += 1   
             refresh_container(context)
         return {"FINISHED"} 
@@ -651,30 +651,70 @@ class Operator_contract_decomposition(bpy.types.Operator):
         refresh_container(context)          
         return {"FINISHED"} 
 
-# element decomposition selection
-class Operator_element_selection(bpy.types.Operator):
+# element decomposition select element
+class Operator_decomposition_select_element(bpy.types.Operator):
     """"""
-    bl_idname  = "element.selection"
+    bl_idname  = "decomposition.select_element"
+    bl_label   = "Select object"
+    bl_options = {"REGISTER", "UNDO"}    
+    index : bpy.props.IntProperty(name="index")
+
+    def execute(self, context):   
+        props = context.scene.my_props       
+        item =  props.elements_containers[self.index]                                   
+        model = tool.Ifc.get()        
+        ifc_element = model.by_id(item.id) 
+        obj = tool.Ifc.get_object(ifc_element)
+        if obj:
+            obj.select_set(item.is_selected)            
+            bpy.context.view_layer.objects.active =  obj
+       
+        refresh_container(context) 
+        return {"FINISHED"} 
+
+# element decomposition selection
+class Operator_decomposition_select_components(bpy.types.Operator):
+    """"""
+    bl_idname  = "decomposition.select_components"
     bl_label   = "Select objects"
     bl_options = {"REGISTER", "UNDO"}    
     index : bpy.props.IntProperty(name="index")
 
+    def sel_objects(self, ifc_element):         
+        objs = [] 
+        objs.append(tool.Ifc.get_object(ifc_element))
+        if len(ifc_element.IsNestedBy) > 0:
+            for element in ifc_element.IsNestedBy[0].RelatedObjects:
+                    if len(element.IsNestedBy)>0 or len(element.IsDecomposedBy)>0: 
+                        objs += self.sel_objects(element)
+                    else:
+                        objs.append(tool.Ifc.get_object(element))
+                    
+        if len(ifc_element.IsDecomposedBy) > 0:
+            for element in ifc_element.IsDecomposedBy[0].RelatedObjects:
+                if len(element.IsNestedBy)>0 or len(element.IsDecomposedBy)>0: 
+                        objs += self.sel_objects(element)
+                else:
+                    objs.append(tool.Ifc.get_object(element))
+        print(objs)
+        return objs
 
     def execute(self, context):   
         props = context.scene.my_props       
         item =  props.elements_containers[self.index] 
-        item.is_selected = not item.is_selected  
-                     
-        model = tool.Ifc.get()
-        ifc_element = model.by_id(item.id)
-        obj=tool.Ifc.get_object(ifc_element)
-        if obj:
-            obj.select_set(item.is_selected)            
-            if item.is_selected:
-                bpy.context.view_layer.objects.active =  obj
-            else:
-                obj_i = context.selected_objects            
-                bpy.context.view_layer.objects.active =  obj_i[0] if len(obj_i) > 0 else None
+        item.is_selected = not item.is_selected                           
+        model = tool.Ifc.get()        
+        ifc_element = model.by_id(item.id) 
+        objs = self.sel_objects(ifc_element) 
+        for obj in objs:
+            if obj:
+                obj.select_set(item.is_selected)            
+                if item.is_selected:
+                    bpy.context.view_layer.objects.active =  obj
+                else:
+                    obj_i = context.selected_objects            
+                    bpy.context.view_layer.objects.active =  obj_i[0] if len(obj_i) > 0 else None 
+        
 
         refresh_container(context) 
         return {"FINISHED"} 
