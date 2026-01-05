@@ -62,6 +62,7 @@ def refresh_container(context):
             new_item.is_expanded = classe.is_expanded
             new_item.is_hidden = classe.is_hidden
             new_item.type = classe.type  
+            new_item.object_type = classe.object_type  
             new_item.is_selected = classe.is_selected  
 
 def set_prop_type( prop, value_prop):

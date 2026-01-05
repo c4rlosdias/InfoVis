@@ -335,7 +335,8 @@ class Panel_Decompositions(bpy.types.Panel):
         props = context.scene.my_props
         row = layout.row()
         row.operator("elements.decomposition", text="load")
-
+        row = layout.row()
+        row.prop(props, "show_ports")
         # Imprime a arvore de decomposicao de elementos 
         if len(props.elements_containers) > 0:
             row = layout.row()
@@ -350,8 +351,7 @@ class Panel_Decompositions(bpy.types.Panel):
                 "active_element_index",
                 rows=5
             )
-        row = layout.row()
-        row.label(text=f"{props.active_element_index}")
+        
 
 
 # Painel de classes             
@@ -364,26 +364,25 @@ class BIM_UL_decomposition(bpy.types.UIList):
             if item.type == "IfcProject":
                 icon = 'CURRENT_FILE'
             elif item.type == "IfcSite":
-                icon = 'WORLD'
+                icon = 'OBJECT_HIDDEN'
             elif item.type == "IfcBuilding":
                 icon = 'STICKY_UVS_LOC'
             elif item.type == "IfcElementAssembly":
-                icon = 'PROP_ON'
+                icon = 'OBJECT_HIDDEN'
             elif item.type == "IfcPipeSegment":
                 icon = 'IPO_EASE_OUT'            
             elif item.type == "IfcCableSegment":
-                icon = 'OUTLINER_DATA_LIGHT'  
+                icon = 'DOT'  
             elif item.type == "IfcValve":
-                icon = 'MODIFIER_ON'           
+                icon = 'DOT'           
             else:
-                icon = 'OUTLINER'
+                icon = 'DOT'
 
             #props = context.scene.my_props
 
             if not item.is_hidden:
                 for i in range(0, item.level - 1):
                     row.label(text="", icon="BLANK1")
-
                 if item.has_children:
                     if item.is_expanded:
                         row.operator(
@@ -395,16 +394,11 @@ class BIM_UL_decomposition(bpy.types.UIList):
                         ).index = item.index
                 else:
                     row.label(text="", icon="BLANK1") 
-                row.label(text= f'#{str(item.id)}-{item.name}', icon=icon)
-                #row.label(text= item.name, icon = icon )
-
+                row.label(text= f'[{item.object_type}] {item.name}', icon=icon)
                 icon2 = "CANCEL" if item.is_selected == True else "RESTRICT_SELECT_OFF"      
                 row.operator("decomposition.select_element", text="", icon='OBJECT_DATAMODE').index = item.index                          
                 row.operator("decomposition.select_components", text="", icon=icon2).index = item.index
-                
-                
-
-                # row.operator("object.uri", text="", icon="URL").uri = item.uri
+             
 
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------

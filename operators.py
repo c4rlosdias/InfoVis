@@ -548,11 +548,11 @@ class Operator_load_decomposition(bpy.types.Operator):
                 #     continue
                 # ifc_definition_id = element.id()
                 new = props.elements_containers.add()
-                new.name = f"[{element.is_a()}] {element.Name or 'Unnamed'}"
+                new.name = element.Name or 'Unnamed'
                 new.type = element.is_a()
                 new.level = level 
-                new.id = element.id()
-                new.id=element.id()
+                new.id = element.id()                
+                new.object_type = element.ObjectType or 'Unnamed'                            
                 children = [
                     e
                     for e in get_decomposition(element, is_recursive=False)
@@ -594,7 +594,7 @@ class Operator_load_decomposition(bpy.types.Operator):
             for element in props.elements_containers:
                 element.index = i
                 element.is_hidden = False if element.level==1 else True
-                element.is_expanded = False if element.level==1 else True
+                element.is_expanded = False if element.level==1 else True                
                 i += 1   
             refresh_container(context)
         return {"FINISHED"} 
