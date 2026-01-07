@@ -12,10 +12,17 @@ from bonsai.bim.ifc import IfcStore
 from bonsai.bim import import_ifc
 from bonsai.bim.ifc import IfcStore
 
-# funções
+last_active = None
+# Functions
+def on_active_object_change(scene):
+    global last_active
+    obj = bpy.context.view_layer.objects.active
+    if obj != last_active:
+        last_active = obj
+        bpy.ops.props.load_properties()
 
 def refresh(context):
-    props = context.scene.my_props
+    props = context.scene.og_props
     props.classes_shown.clear()
     for classe in props.classes:
         if not classe.is_hidden:
@@ -32,7 +39,7 @@ def refresh(context):
             new_item.type = classe.type
 
 def refresh_products(context):
-    props = context.scene.my_props
+    props = context.scene.og_props
     props.products_show.clear()
     for classe in props.products:
         if not classe.is_hidden:
@@ -49,7 +56,7 @@ def refresh_products(context):
             new_item.type = classe.type
 
 def refresh_container(context):
-    props = context.scene.my_props
+    props = context.scene.og_props
     props.containers_show.clear()
     for classe in props.elements_containers:
         if not classe.is_hidden:
@@ -137,10 +144,8 @@ def get_pset(ifc_obj, pset_name):
 
 def set_properties(props, ifc_obj, is_a, i):     
     id = ifc_obj.id()
-    # get psets
-    print(ifc_obj)
-    psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
-    print(psets)
+    # get psets    
+    psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)    
     for pset, _props in psets.items():             
         _pset = get_pset(ifc_obj, pset)        
         table = {}    
@@ -158,7 +163,6 @@ def set_properties(props, ifc_obj, is_a, i):
             c = 0
             for association in _pset.HasAssociations:
                 document = association.RelatingDocument
-                print(document)
                 newdocument = new_item.documents.add()
                 newdocument.name = document.Name
                 newdocument.identification = document.Identification
@@ -251,29 +255,9 @@ def set_properties(props, ifc_obj, is_a, i):
         i += 1
     return i
 
-# def refresh_props(context):
-#     # get active object
-#     props = context.scene.my_props
-#     props.prop_metadata.clear() 
-#     props.has_document = False
-#     props.document = ''
-#     obj = context.active_object
-#     ifc_obj = tool.Ifc.get_entity(obj)
-
-#     # se o tipo do elemento tem algum documento associado
-#     ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
-#     if ifc_obj_type.HasAssociations:
-#         props.has_document = True
-#         props.document = ifc_obj_type.HasAssociations[0].RelatingDocument.Location.wrappedValue  
-
-#     ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
-
-#     i = set_properties(props, ifc_obj, "instance", 0)
-#     set_properties(props, ifc_type_obj, "type", i)
-
 def refresh_props(context):
     # get active object
-    props = context.scene.my_props
+    props = context.scene.og_props
     props.prop_metadata.clear() 
     props.documents.clear()
     props.has_document = False
@@ -297,7 +281,7 @@ def refresh_props(context):
     i = set_properties(props, ifc_obj, "instance", 0)
     set_properties(props, ifc_type_obj, "type", i)
 
-# classes
+# Classes
 
 class Import_ifc():
 

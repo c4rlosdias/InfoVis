@@ -36,7 +36,7 @@ def get_options(self, context):
     return dynamic_items
 
 def set_hide_class(context, index, is_hidden):
-    props = context.scene.my_props
+    props = context.scene.og_props
     level = props.classes[index].level_index
     for classe in props.classes:
         if classe.index > index:
@@ -46,7 +46,7 @@ def set_hide_class(context, index, is_hidden):
                 return
 
 def set_hide_product(context, index, is_hidden):
-    props = context.scene.my_props
+    props = context.scene.og_props
     level = props.products[index].level_index
     for product in props.products:
         if product.index > index:
@@ -57,7 +57,7 @@ def set_hide_product(context, index, is_hidden):
                 
 def build_classes(context, classe, c, level, parent, hide):
     c += 1 
-    props = context.scene.my_props
+    props = context.scene.og_props
     new_class = props.classes.add()
     new_class.code        = classe["code"]                 
     new_class.name        = classe["name"]                
@@ -84,7 +84,7 @@ def build_classes(context, classe, c, level, parent, hide):
 
 def build_products(context, classe, c, level, parent, hide, children):
     c += 1 
-    props = context.scene.my_props
+    props = context.scene.og_props
     new_product = props.products.add()
     new_product.code        = classe["code"]                 
     new_product.name        = classe["name"]                
@@ -109,7 +109,7 @@ def build_products(context, classe, c, level, parent, hide, children):
 
 def _build_products(context, classe, c, level, parent, hide):
     c += 1 
-    props = context.scene.my_props
+    props = context.scene.og_props
     new_product = props.products.add()
     new_product.code        = classe["code"]                 
     new_product.name        = classe["name"]                
@@ -150,7 +150,7 @@ class Operator_clear_properties(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.ifc_prop.clear()              
         return {"FINISHED"}    
 
@@ -162,7 +162,7 @@ class Operator_assign_all(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         for obj in props.ifc_prop:
             obj.is_selected = True              
         return {"FINISHED"}         
@@ -175,7 +175,7 @@ class Operator_unassign_all(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         for obj in props.ifc_prop:
             obj.is_selected = False              
         return {"FINISHED"}    
@@ -188,7 +188,7 @@ class Operator_get_properties(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.add_prop_clicked = False        
         props.ifc_prop.clear()
         result = bSDD.load_properties(props.dictionary)
@@ -228,7 +228,7 @@ class Operator_get_classes(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                
-        props = context.scene.my_props               
+        props = context.scene.og_props               
         props.classes.clear()
         props.classes_loaded = False
         c = -1
@@ -252,7 +252,7 @@ class Operator_expand_classes(bpy.types.Operator):
     index : bpy.props.IntProperty(name="index")
 
     def execute(self, context):                
-        props = context.scene.my_props  
+        props = context.scene.og_props  
         props.classes[self.index].is_expanded = True
         imin = False
         #set_hide(context, self.index, False)
@@ -278,7 +278,7 @@ class Operator_contract_classes(bpy.types.Operator):
     index : bpy.props.IntProperty(name="index")
 
     def execute(self, context):                
-        props = context.scene.my_props  
+        props = context.scene.og_props  
         props.classes[self.index].is_expanded = False 
         #set_hide(context, self.index, True)  
         level = props.classes[self.index].level_index
@@ -299,7 +299,7 @@ class Operator_add_properties(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                        
-        props = context.scene.my_props
+        props = context.scene.og_props
         try:
             for prop in tqdm(props.ifc_prop, total= len(props.ifc_prop), desc='Processing properties'):
                 if prop.is_selected == True:
@@ -329,7 +329,7 @@ class Operator_get_prop_info(bpy.types.Operator):
     uri : bpy.props.StringProperty(name="uri")
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.info_prop_loaded = False
         result = bSDD.get_property(self.uri)
         if result:
@@ -362,7 +362,7 @@ class Operator_get_class_info(bpy.types.Operator):
     uri : bpy.props.StringProperty(name="uri")
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.info_prop_loaded = False
         result = bSDD.get_class(self.uri)
         if result:
@@ -397,7 +397,7 @@ class Operator_get_class_prop(bpy.types.Operator):
     uri : bpy.props.StringProperty(name="uri")
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.info_class_prop_loaded = False
         result = bSDD.get_class_prop(self.uri)
         if result:
@@ -428,7 +428,7 @@ class Operator_export_ids(bpy.types.Operator):
     filte_glob : bpy.props.StringProperty(default='*.ids', options={'HIDDEN'})
 
     def execute(self, context):
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.ids_file = self.filepath
         # obtem o template
         PropTempl.get_template()
@@ -514,7 +514,7 @@ class Operator_load_decomposition(bpy.types.Operator):
     
     @classmethod
     def load_contained_elements_by_decomposition(cls, container: ifcopenshell.entity_instance, context) -> None:
-        props = context.scene.my_props
+        props = context.scene.og_props
         
         def get_decomposition(element: ifcopenshell.entity_instance, is_recursive : bool) -> set[ifcopenshell.entity_instance]:
             queue = [element]
@@ -570,7 +570,7 @@ class Operator_load_decomposition(bpy.types.Operator):
            
 
     def execute(self, context):                       
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.elements_containers.clear()
         model = tool.Ifc.get()
         #elements = selector.filter_elements(model, "IfcElement, IsNestedBy != (), Nests = ()")   
@@ -608,7 +608,7 @@ class Operator_expand_decomposition(bpy.types.Operator):
     index : bpy.props.IntProperty(name="index")
 
     def execute(self, context):                
-        props = context.scene.my_props  
+        props = context.scene.og_props  
         item = props.elements_containers[self.index]
         item.is_expanded = True
         imin = False
@@ -637,7 +637,7 @@ class Operator_contract_decomposition(bpy.types.Operator):
     index : bpy.props.IntProperty(name="index")
 
     def execute(self, context):                
-        props = context.scene.my_props       
+        props = context.scene.og_props       
         item =  props.elements_containers[self.index]                  
         level = item.level
         item.is_expanded = False
@@ -660,7 +660,7 @@ class Operator_decomposition_select_element(bpy.types.Operator):
     index : bpy.props.IntProperty(name="index")
 
     def execute(self, context):   
-        props = context.scene.my_props       
+        props = context.scene.og_props       
         item =  props.elements_containers[self.index]                                   
         model = tool.Ifc.get()        
         ifc_element = model.by_id(item.id) 
@@ -700,7 +700,7 @@ class Operator_decomposition_select_components(bpy.types.Operator):
         return objs
 
     def execute(self, context):   
-        props = context.scene.my_props       
+        props = context.scene.og_props       
         item =  props.elements_containers[self.index] 
         item.is_selected = not item.is_selected                           
         model = tool.Ifc.get()        
@@ -733,7 +733,7 @@ class Operator_load_products(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}    
 
     def execute(self, context): 
-        props = context.scene.my_props               
+        props = context.scene.og_props               
         props.products.clear()
         props.products_loaded = True
         ifc_reference = {
@@ -784,7 +784,7 @@ class Operator_load_products(bpy.types.Operator):
             return {"CANCELLED"}
         
     def execute_(self, context): 
-        props = context.scene.my_props               
+        props = context.scene.og_props               
         props.products.clear()
         props.products_loaded = True
         
@@ -810,7 +810,7 @@ class Operator_contract_products(bpy.types.Operator):
     index : bpy.props.IntProperty(name="index")
 
     def execute(self, context):                
-        props = context.scene.my_props  
+        props = context.scene.og_props  
         props.products[self.index].is_expanded = False 
         #set_hide(context, self.index, True)  
         level = props.products[self.index].level_index
@@ -832,7 +832,7 @@ class Operator_expand_products(bpy.types.Operator):
     index : bpy.props.IntProperty(name="index")
 
     def execute(self, context):                
-        props = context.scene.my_props  
+        props = context.scene.og_props  
         props.products[self.index].is_expanded = True
         imin = False
         #set_hide(context, self.index, False)
@@ -946,7 +946,7 @@ class Operator_catalog_insert_type(bpy.types.Operator):
             return uri
         
     def execute(self, context): 
-            props = context.scene.my_props                     
+            props = context.scene.og_props                     
             model = bonsai.tool.Ifc.get()        
             type = Catalog.get_type(self.uri)       
             if type is not None:
@@ -1079,7 +1079,7 @@ class Operator_props_edit(bpy.types.Operator):
     
     
     def execute(self, context):
-        props = context.scene.my_props 
+        props = context.scene.og_props 
         props.icon_edit_prop = 'CHECKMARK'
         model = tool.Ifc.get()
         new_pset = ''
@@ -1121,9 +1121,19 @@ class Operator_props_load(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"} 
 
     def execute(self, context):
-        print(100*'-')
-        refresh_props(context)
-        return {"FINISHED"} 
+        try:
+            if tool.Ifc.get() is None:
+                bpy.ops.og.error_message('INVOKE_DEFAULT', message='No Ifc file loaded')
+                return {"CANCELLED"}
+            else:
+                print(100*'-')
+                refresh_props(context)
+                return {"FINISHED"} 
+        except Exception as e:
+            bpy.ops.og.error_message('INVOKE_DEFAULT', message=str(e))
+            return {"CANCELLED"}
+
+        
     
 class Operator_props_expand(bpy.types.Operator):
     """"""
@@ -1134,7 +1144,7 @@ class Operator_props_expand(bpy.types.Operator):
     index : bpy.props.IntProperty(name="index")  
    
     def execute(self, context):
-        props = context.scene.my_props 
+        props = context.scene.og_props 
         for pset in props.prop_metadata:
             if pset.index == self.index:                    
                     pset.is_expanded = not(pset.is_expanded)
@@ -1151,7 +1161,7 @@ class Operator_docs_expand(bpy.types.Operator):
     type  : bpy.props.StringProperty(name='type')
 
     def execute(self, context):
-        props = context.scene.my_props         
+        props = context.scene.og_props         
         if self.type == 'property':
             for pset in props.prop_metadata:
                 if pset.index == self.index:                    
@@ -1200,7 +1210,7 @@ class Operator_props_graph(bpy.types.Operator):
     df : None 
     
     def draw(self, context):
-        props = context.scene.my_props
+        props = context.scene.og_props
         layout = self.layout
         cols = self.df.columns.to_list()
         
@@ -1260,7 +1270,7 @@ class Operator_props_graph(bpy.types.Operator):
         self.columns.clear()
 
         # cria um dicionario com as propriedades e valores
-        props = context.scene.my_props
+        props = context.scene.og_props
         # se o documento esta associado a propriedade
         if self.pset_index > -1:
             for pset in props.prop_metadata:            
@@ -1375,7 +1385,7 @@ class Operator_props_invert(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"} 
 
     def execute(self, context):
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.invert_xy = not(props.invert_xy)
         return {"FINISHED"}
     
@@ -1419,7 +1429,7 @@ class Operator_document_load(bpy.types.Operator):
         return {'RUNNING_MODAL'}
     
     def execute(self, context):
-        props = context.scene.my_props
+        props = context.scene.og_props
         if self.index == -1:
             props.documents[self.doc_index].location = self.filepath
         else:
@@ -1450,6 +1460,30 @@ class Operator_show_table(bpy.types.Operator):
 
    
     def execute(self, context):
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.show_table = not props.show_table
         return {"FINISHED"}
+
+#============================================================================================
+# Geral
+#============================================================================================
+
+class ErrorMessage(bpy.types.Operator):
+    bl_idname = "og.error_message"
+    bl_label = "Erro!"
+
+    message: bpy.props.StringProperty()
+    
+    def execute(self, context):
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_popup(self, width=400)
+    
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.label(text='ERROR:')
+
+        row = layout.row()
+        row.label(text=self.message, icon='ERROR')

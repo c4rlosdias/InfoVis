@@ -30,14 +30,13 @@ from bpy.props import PointerProperty
 from bpy.types import Scene
 from bpy.utils import register_class, unregister_class
 
-
-
-#if sys.modules.get("bpy", None):
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs", "site", "packages"))
 
 from .operators import *
 from .panels import *
 from .properties import *
+from . import data
+
 
 classes = [     
     Operator_get_properties,
@@ -73,13 +72,13 @@ classes = [
     Operator_document_load,
     Operator_document_open,
     Operator_show_table,
-    Panel_Connect,
-    Panel_Import_Properties,
-    Panel_Import_Classes,
-    Panel_Export_Properties, 
+    ErrorMessage,
+    Panel_Connect, 
     Panel_Decompositions,  
     Panel_Catalog, 
     Panel_Properties,
+    Panel_Settings,
+    Panel_Info,
     BIM_UL_ifc_properties,
     BIM_UL_classes,
     BIM_UL_class_prop,
@@ -94,17 +93,19 @@ classes = [
     Property_info,
     Pset_info,
     Container,      
-    MyProperties,
+    OG_Properties,
 ]
 
 def register():
     for c in classes:
         register_class(c)
-    Scene.my_props = PointerProperty(type=MyProperties)
+    Scene.og_props = PointerProperty(type=OG_Properties)
+    bpy.app.handlers.depsgraph_update_post.append(data.on_active_object_change)
 
 
 def unregister():
-    del Scene.my_props
+    bpy.app.handlers.depsgraph_update_post.remove(data.on_active_object_change)
+    del Scene.og_props
     for c in classes:
         unregister_class(c)
 

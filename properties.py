@@ -139,7 +139,7 @@ class Container(PropertyGroup):
     name          : StringProperty(name="name") 
     object_type   : StringProperty(name="object_type")
 
-class MyProperties(PropertyGroup): 
+class OG_Properties(PropertyGroup): 
     
     # O&G Dictionary
 
@@ -153,7 +153,8 @@ class MyProperties(PropertyGroup):
     classes                  : CollectionProperty(name='classes', type=Class_info) 
     classes_shown            : CollectionProperty(name='classes show', type=Class_info) 
     active_element_index     : IntProperty(name='element index', default=0)
-    # decomposition
+    
+    # Decomposition
     elements_containers      : CollectionProperty(name='elements containers', type=Container) 
     containers_show          : CollectionProperty(name='containers show', type=Container) 
     show_ports               : BoolProperty(name="show ports", default=False)
