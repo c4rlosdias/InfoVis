@@ -756,5 +756,5 @@ class Panel_Info(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-        row.label(text="O&G Tools V 0.1.2", icon='MOD_LINEART')
+        row.label(text="O&G Tools V 0.1.1", icon='MOD_LINEART')
 
