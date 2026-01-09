@@ -467,7 +467,7 @@ class Panel_Properties(bpy.types.Panel):
         if obj is not None and len(context.selected_objects) > 0:   
             model = tool.Ifc.get()     
             row = layout.row()                      
-            #row.operator("props.load_properties", text="Load properties")    
+            row.operator("props.load_properties", text="Load properties")    
 
             # if the element type have some external document associated
             if props.has_document:

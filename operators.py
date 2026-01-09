@@ -664,6 +664,7 @@ class Operator_decomposition_select_element(bpy.types.Operator):
         item =  props.elements_containers[self.index]                                   
         model = tool.Ifc.get()        
         ifc_element = model.by_id(item.id) 
+        print(ifc_element)
         obj = tool.Ifc.get_object(ifc_element)
         if obj:
             obj.select_set(item.is_selected)            
@@ -705,6 +706,7 @@ class Operator_decomposition_select_components(bpy.types.Operator):
         item.is_selected = not item.is_selected                           
         model = tool.Ifc.get()        
         ifc_element = model.by_id(item.id) 
+        print(ifc_element)
         objs = self.sel_objects(ifc_element) 
         for obj in objs:
             if obj:

@@ -18,7 +18,7 @@ def on_active_object_change(scene):
     global last_active
     obj = bpy.context.view_layer.objects.active
     if obj != last_active:
-        last_active = obj
+        last_active = obj        
         bpy.ops.props.load_properties()
 
 def refresh(context):
