@@ -3,6 +3,7 @@ import bonsai.core.geometry
 import bonsai.core.material
 import bonsai.core.type
 import webbrowser
+import json
 import base64
 from io import BytesIO
 import os
@@ -18,7 +19,7 @@ import ifcopenshell.api.geometry as geometry
 import ifcopenshell.api.style as style
 import ifcopenshell
 import webbrowser
-from .data import bSDD, PropTempl,Catalog, Import_ifc, refresh, refresh_container, refresh_products, refresh_props, get_prop_type
+from .data import *
 import bonsai.core as core
 import bonsai
 import bonsai.tool as tool
@@ -31,6 +32,11 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 dynamic_items = []
+
+def save_json(dados):
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "dados.json")
+    with open(path, 'w', encoding='utf-8') as file:
+        json.dump(dados, file, ensure_ascii=False, indent=4)
 
 def get_options(self, context):    
     return dynamic_items
@@ -85,11 +91,27 @@ def build_classes(context, classe, c, level, parent, hide):
 def build_products(context, classe, c, level, parent, hide, children):
     c += 1 
     props = context.scene.og_props
-    new_product = props.products.add()
+    new_product = props.types.add()
+    new_product.id        = classe["id"]                 
+    new_product.name        = classe["name"]
+    new_product.description = classe['description']   
+    new_product.element_type         = classe["element_type"] 
+    new_product.index       =   c  
+    new_product.level_index = level
+    new_product.parent = parent
+    new_product.is_expanded = False
+    new_product.is_hidden = hide
+    new_product.has_children = children
+    return c
+
+def _build_products(context, classe, c, level, parent, hide, children):
+    c += 1 
+    props = context.scene.og_props
+    new_product = props.types.add()
     new_product.code        = classe["code"]                 
     new_product.name        = classe["name"]                
-    new_product.description = classe['descriptionPart']   
-    new_product.uri         = classe["uri"] 
+    new_product.description = classe['description']   
+    new_product.element_type = classe["ElementType"] 
     new_product.index       =   c  
     new_product.level_index = level
     new_product.parent = parent
@@ -107,32 +129,7 @@ def build_products(context, classe, c, level, parent, hide, children):
     #     new_product.has_children = False
     return c
 
-def _build_products(context, classe, c, level, parent, hide):
-    c += 1 
-    props = context.scene.og_props
-    new_product = props.products.add()
-    new_product.code        = classe["code"]                 
-    new_product.name        = classe["name"]                
-    new_product.description = classe['descriptionPart']   
-    new_product.uri         = classe["uri"]  
-    new_product.type        = classe["classType"]  
-    new_product.index       =   c  
-    new_product.level_index = level
-    new_product.parent = parent
-    new_product.is_expanded = False
-    #new_class.is_hidden = False if level == 1 else True
-    new_product.is_hidden = hide
-    
-    if 'children' in classe:   
-        level = level + 1     
-        new_product.has_children = True
-    # new_class.is_expanded = True
-        for child in classe['children']:            
-            c = build_products(context, child , c, level, classe['name'], True)
-            #set_hide_product(context, c, True)
-    else:
-        new_product.has_children = False
-    return c
+
    
 # ==================================================================================================
 # ==================================================================================================
@@ -736,72 +733,102 @@ class Operator_load_products(bpy.types.Operator):
 
     def execute(self, context): 
         props = context.scene.og_props               
-        props.products.clear()
-        props.products_loaded = True
-        ifc_reference = {
-            'TopBendStiffenerType'           : 'Pipe Fitting',
-            'IntermediateBendStiffenerType' : 'Pipe Fitting',
-            'StopperCollarType'             : 'Pipe Fitting',
-            'PulInCollarType'               : 'Pipe Fitting',
-            'AnchoringCollarType'           : 'Pipe Fitting',
-            'DeadweightCollarType'          : 'Pipe Fitting',
-            'BuoyancyModuleType'            : 'Pipe Fitting',
-            'HangOffCollarType'             : 'Pipe Fitting',
-            'BendRestrictorType'            : 'Pipe Fitting',
-            'EndFittingType'                : 'Pipe Fitting',
-            'PipePullingHeadType'           : 'Pipe Fitting',
-            'FlexiblePipeStructure'         : 'Pipe Segment'
-
-        }
-        dic = {}
+        props.types.clear()
+        props.types_loaded = True
+        model = tool.Ifc.get()
+        types = model.by_type('IfcTypeProduct')
+        c = -1
+        result = {}
         classe_title = {
             'name': '',
-            'uri' : '',
-            'code': '',
-            'descriptionPart' : ''
+            'description' : '',
+            'element_type': '',
+            'id' : 0
         }
-        c = -1
-        result = bSDD.load_classes(props.dictionary, False)
-        if result:
-            for classe in bSDD.data_class:  
-                print(classe['code'])
-                if classe['name'].endswith('Type') or classe['name'].endswith('Structure'): 
-                    print('---' + classe['name'])                   
-                    if classe['name'] in  ifc_reference:
-                        if ifc_reference[classe['name']] not in dic:
-                            dic[ifc_reference[classe['name']]] = []
-                        dic[ifc_reference[classe['name']]].append(classe)
-            
-            for key, values in  dic.items():
-                    classe_title['name'] = key
-                    new_c = build_products(context, classe_title, c, 1, '', False, True)
-                    c += 1
-                    for value in values:
-                        new_c = build_products(context, value, c, 2, '', True, False)
-                        c = new_c
-            refresh_products(context)
-            return {"FINISHED"} 
-        else:
-            self.report({'ERROR'}, bSDD.response)
-            return {"CANCELLED"}
-        
-    def execute_(self, context): 
-        props = context.scene.og_props               
-        props.products.clear()
-        props.products_loaded = True
-        
-        c = -1
-        result = bSDD.load_classes(props.dictionary, False)
-        if result:
-            for classe in bSDD.data_class:  
-                if classe['name'].endswith('Type') or classe['name'].endswith('Structure'):
-                    new_c = build_products(context, classe, c, 1, '', False)
+
+        for type in types:
+            dic = {}   
+            dic['id'] = type.id()         
+            dic['name'] = type.Name or  ''
+            dic['description'] = type.Description or ''
+            dic['element_type'] = type.ElementType or ''
+
+            if type.is_a() not in result:
+                result[type.is_a()] = []
+            else:
+                result[type.is_a()].append(dic)
+        save_json(result)
+
+        for key, values in  result.items():
+                classe_title['name'] = key
+                new_c = build_products(context, classe_title, c, 1, '', False, True)
+                c += 1
+                print(values)
+                for value in values:
+                    new_c = build_products(context, value, c, 2, '', True, False)
                     c = new_c
-            refresh_products(context)
-            return {"FINISHED"} 
-        else:
-            self.report({'ERROR'}, bSDD.response)
-            return {"CANCELLED"}
+        refresh_types(context)
+        return {"FINISHED"} 
+        
+
+        
+# # Load catalog products
+# class Operator_load_products(bpy.types.Operator):
+#     """"""
+#     bl_idname  = "catag.load_products"
+#     bl_label   = "load products from catalog"
+#     bl_options = {"REGISTER", "UNDO"}    
+
+#     def execute(self, context): 
+#         props = context.scene.og_props               
+#         props.products.clear()
+#         props.products_loaded = True
+#         ifc_reference = {
+#             'TopBendStiffenerType'           : 'Pipe Fitting',
+#             'IntermediateBendStiffenerType' : 'Pipe Fitting',
+#             'StopperCollarType'             : 'Pipe Fitting',
+#             'PulInCollarType'               : 'Pipe Fitting',
+#             'AnchoringCollarType'           : 'Pipe Fitting',
+#             'DeadweightCollarType'          : 'Pipe Fitting',
+#             'BuoyancyModuleType'            : 'Pipe Fitting',
+#             'HangOffCollarType'             : 'Pipe Fitting',
+#             'BendRestrictorType'            : 'Pipe Fitting',
+#             'EndFittingType'                : 'Pipe Fitting',
+#             'PipePullingHeadType'           : 'Pipe Fitting',
+#             'FlexiblePipeStructure'         : 'Pipe Segment'
+
+#         }
+#         dic = {}
+#         classe_title = {
+#             'name': '',
+#             'uri' : '',
+#             'code': '',
+#             'descriptionPart' : ''
+#         }
+#         c = -1
+#         result = bSDD.load_classes(props.dictionary, False)
+#         if result:
+#             for classe in bSDD.data_class:  
+#                 print(classe['code'])
+#                 if classe['name'].endswith('Type') or classe['name'].endswith('Structure'): 
+#                     print('---' + classe['name'])                   
+#                     if classe['name'] in  ifc_reference:
+#                         if ifc_reference[classe['name']] not in dic:
+#                             dic[ifc_reference[classe['name']]] = []
+#                         dic[ifc_reference[classe['name']]].append(classe)
+            
+#             for key, values in  dic.items():
+#                     classe_title['name'] = key
+#                     new_c = build_products(context, classe_title, c, 1, '', False, True)
+#                     c += 1
+#                     for value in values:
+#                         new_c = build_products(context, value, c, 2, '', True, False)
+#                         c = new_c
+#             refresh_products(context)
+#             return {"FINISHED"} 
+#         else:
+#             self.report({'ERROR'}, bSDD.response)
+#             return {"CANCELLED"}
 
 # contract products
 class Operator_contract_products(bpy.types.Operator):
@@ -813,16 +840,16 @@ class Operator_contract_products(bpy.types.Operator):
 
     def execute(self, context):                
         props = context.scene.og_props  
-        props.products[self.index].is_expanded = False 
+        props.types[self.index].is_expanded = False 
         #set_hide(context, self.index, True)  
-        level = props.products[self.index].level_index
-        for classe in props.products:
+        level = props.types[self.index].level_index
+        for classe in props.types:
             if classe.index > self.index:
                 if classe.level_index > level:
                     classe.is_hidden = True                
                 else:
                     break
-        refresh_products(context)          
+        refresh_types(context)          
         return {"FINISHED"} 
     
 # expand products
@@ -835,11 +862,11 @@ class Operator_expand_products(bpy.types.Operator):
 
     def execute(self, context):                
         props = context.scene.og_props  
-        props.products[self.index].is_expanded = True
+        props.types[self.index].is_expanded = True
         imin = False
         #set_hide(context, self.index, False)
-        level = props.products[self.index].level_index
-        for product in props.products:                 
+        level = props.types[self.index].level_index
+        for product in props.types:                 
             if product.index > self.index:                 
                 if product.level_index == level+1:
                     product.is_hidden = False 
@@ -848,181 +875,30 @@ class Operator_expand_products(bpy.types.Operator):
                 if product.level_index <= level and imin:
                     break
 
-        refresh_products(context)  
+        refresh_types(context)  
         return {"FINISHED"} 
 
 # Create a ifc entity from Json
-class Operator_catalog_insert_type(bpy.types.Operator):
+class Operator_catalog_select_type(bpy.types.Operator):
     """"""
-    bl_idname  = "catag.insert_type"
+    bl_idname  = "catag.select_type"
     bl_label   = "export element in json"
     bl_options = {"REGISTER", "UNDO"}  
 
-    uri : bpy.props.StringProperty(name="uri")
+    id : bpy.props.IntProperty(name="uri")
 
-    def v_type(self, uri):
-        result = uri.split('#')
-        return result[1]
-    
-    # Create a IFC entity 
-    def make_entity_(self, model, json):
-        context = representation.get_context(model, "Model", "Body", "MODEL_VIEW")
-        #verify if entity exists in file
-        if 'Name' in json:
-            exist_ents = [e for e in model.by_type(json['ifc_class']) if e.Name == json['Name']]
-        else:
-            exist_ents = []
-
-        # if not exists create entity, if exists return found entity
-        if not len(exist_ents) > 0:
-            ent = model.create_entity(json['ifc_class'])
-            if hasattr(ent, 'GlobalId'):
-                ent.GlobalId = ifcopenshell.guid.new()
-
-            for key, value in json.items():
-                if key != 'ifc_class':   
-
-                    if isinstance(value, list) and isinstance(value[0], dict):
-                        l = []
-                        for item in value:
-                            ent2 = self.make_entity(model, item)
-                            l.append(ent2)
-                            setattr(ent, key, l)
-
-                    elif isinstance(value, dict) :
-                        ent2 = self.make_entity(model, value)
-                        setattr(ent, key, ent2)
-                    else:
-                        if value == "@Body":
-                            setattr(ent, key, context)
-                        else:
-                            setattr(ent, key, value)
             
-        else:
-            ent = exist_ents[0]
-
-        return ent
-    
-    def make_entity(self, model, json):
-        context = representation.get_context(model, "Model", "Body", "MODEL_VIEW")
-        #verify if entity exists in file
-        if 'Name' in json:
-            exist_ents = [e for e in model.by_type(json['ifc_class']) if e.Name == json['Name']]
-        else:
-            exist_ents = []
-
-        # if not exists create entity, if exists return found entity
-        if not len(exist_ents) > 0:
-            ent = model.create_entity(json['ifc_class'])
-            if hasattr(ent, 'GlobalId'):
-                ent.GlobalId = ifcopenshell.guid.new()
-
-            for key, value in json.items():
-                if key not in ['ifc_class', '@material']:   
-
-                    if isinstance(value, list) and isinstance(value[0], dict):
-                        l = []
-                        for item in value:
-                            ent2 = self.make_entity(model, item)
-                            l.append(ent2)
-                            setattr(ent, key, l)
-
-                    elif isinstance(value, dict) :
-                        ent2 = self.make_entity(model, value)
-                        setattr(ent, key, ent2)
-                    else:
-                        if value == "@Body":
-                            setattr(ent, key, context)
-                        else:
-                            setattr(ent, key, value)
-            
-        else:
-            ent = exist_ents[0]
-
-        return ent
-    
-    def split_name(self, uri):
-        if '#' in uri:
-            return uri.split('#')[-1]
-        else:
-            return uri
-        
     def execute(self, context): 
             props = context.scene.og_props                     
             model = bonsai.tool.Ifc.get()        
-            type = Catalog.get_type(self.uri)       
+            type = model.by_id(self.id)           
+
             if type is not None:
-                if 'entity' in type:
-                    obj_name = f"{type['entity']['ifc_class']}/{type['entity']['Name']}"
-                    lt = [f'{x.is_a()}/{x.Name}' for x in model.by_type('IfcTypeProduct')]
-                    if not obj_name in lt:
-                        sty = None
+                tool.
+                self.report({'OPERATOR'}, 'Done!')
+                return {"FINISHED"} 
 
-                        # create element
-                        representation = None
-                        body = ifcopenshell.util.representation.get_context(model, "Model", "Body", "MODEL_VIEW") 
-                        element_type = model.create_entity(type['entity']['ifc_class'])
-                        element_type.GlobalId = ifcopenshell.guid.new()
-                        print(element_type)
-                        
-                        # add values to attributes
-                        for key, value in type['entity'].items():
-                            if key != 'ifc_class':   
-                                setattr(element_type, key, value)
 
-                        
-                        # create the geometry associate
-                        if 'geometry' in type:                                                 
-                            vertices = [type['geometry']['vertices']]
-                            faces = [type['geometry']['faces']]  
-
-                            builder = ifcopenshell.util.shape_builder.ShapeBuilder(tool.Ifc.get())
-                            item = builder.mesh(vertices[0], faces[0])
-                            representation = builder.get_representation(body, [item])
-                            geometry.assign_representation(model, product=element_type, representation=representation)
-            
-
-                        # create the associate material
-                        if 'material' in type:
-                            mat = self.make_entity(model, type['material'])
-                            print(mat)
-                            material.assign_material(model, products=[element_type], type=mat.is_a(), material=mat)
-
-                            # create the associate style
-                            if 'style' in type:
-                                sty = self.make_entity(model, type['style'])
-                                print(sty)
-                                materials = [m for m in model.by_type('IfcMaterial') if m.Name == type['style']['@material']] 
-                                print(materials)
-                                if len(materials) > 0: 
-                                    style.assign_material_style(model, material=materials[0], style=sty, context=body)
-                                    if representation is not None:
-                                        sty.Item = representation.Items[0]
-                                    print(materials[0])
-                                else:
-                                    print(f'material {materials["style"]["@material"]} não encontrado!')
-                            
-                        # import element type in bonsai
-                        i = Import_ifc()
-                        i.import_type_from_ifc(element_type, context)                        
-                    
-                        print('Done!')
-                        self.report({'OPERATOR'}, 'Done!')
-                        return {"FINISHED"} 
-
-                    else:
-                        print('The type already exists!')
-                        self.report({'ERROR'}, 'The type already exists!')
-                        return {"CANCELLED"}
-                else:
-                    print('No entities was created')
-                    self.report({'ERROR'}, 'No entities was created!')
-                    return {"CANCELLED"}
-
-                
-            else:
-                self.report({'ERROR'}, 'Failing connect!')
-                return {"CANCELLED"}
 
 # ==================================================================================================
 # ==================================================================================================
@@ -1134,8 +1010,6 @@ class Operator_props_load(bpy.types.Operator):
         except Exception as e:
             bpy.ops.og.error_message('INVOKE_DEFAULT', message=str(e))
             return {"CANCELLED"}
-
-        
     
 class Operator_props_expand(bpy.types.Operator):
     """"""
@@ -1489,3 +1363,175 @@ class ErrorMessage(bpy.types.Operator):
 
         row = layout.row()
         row.label(text=self.message, icon='ERROR')
+
+# class Operator_catalog_insert_type(bpy.types.Operator):
+#     """"""
+#     bl_idname  = "catag.select_type"
+#     bl_label   = "export element in json"
+#     bl_options = {"REGISTER", "UNDO"}  
+
+#     id : bpy.props.IntProperty(name="uri")
+
+#     def v_type(self, uri):
+#         result = uri.split('#')
+#         return result[1]
+    
+#     # Create a IFC entity 
+#     def make_entity_(self, model, json):
+#         context = representation.get_context(model, "Model", "Body", "MODEL_VIEW")
+#         #verify if entity exists in file
+#         if 'Name' in json:
+#             exist_ents = [e for e in model.by_type(json['ifc_class']) if e.Name == json['Name']]
+#         else:
+#             exist_ents = []
+
+#         # if not exists create entity, if exists return found entity
+#         if not len(exist_ents) > 0:
+#             ent = model.create_entity(json['ifc_class'])
+#             if hasattr(ent, 'GlobalId'):
+#                 ent.GlobalId = ifcopenshell.guid.new()
+
+#             for key, value in json.items():
+#                 if key != 'ifc_class':   
+
+#                     if isinstance(value, list) and isinstance(value[0], dict):
+#                         l = []
+#                         for item in value:
+#                             ent2 = self.make_entity(model, item)
+#                             l.append(ent2)
+#                             setattr(ent, key, l)
+
+#                     elif isinstance(value, dict) :
+#                         ent2 = self.make_entity(model, value)
+#                         setattr(ent, key, ent2)
+#                     else:
+#                         if value == "@Body":
+#                             setattr(ent, key, context)
+#                         else:
+#                             setattr(ent, key, value)
+            
+#         else:
+#             ent = exist_ents[0]
+
+#         return ent
+    
+#     def make_entity(self, model, json):
+#         context = representation.get_context(model, "Model", "Body", "MODEL_VIEW")
+#         #verify if entity exists in file
+#         if 'Name' in json:
+#             exist_ents = [e for e in model.by_type(json['ifc_class']) if e.Name == json['Name']]
+#         else:
+#             exist_ents = []
+
+#         # if not exists create entity, if exists return found entity
+#         if not len(exist_ents) > 0:
+#             ent = model.create_entity(json['ifc_class'])
+#             if hasattr(ent, 'GlobalId'):
+#                 ent.GlobalId = ifcopenshell.guid.new()
+
+#             for key, value in json.items():
+#                 if key not in ['ifc_class', '@material']:   
+
+#                     if isinstance(value, list) and isinstance(value[0], dict):
+#                         l = []
+#                         for item in value:
+#                             ent2 = self.make_entity(model, item)
+#                             l.append(ent2)
+#                             setattr(ent, key, l)
+
+#                     elif isinstance(value, dict) :
+#                         ent2 = self.make_entity(model, value)
+#                         setattr(ent, key, ent2)
+#                     else:
+#                         if value == "@Body":
+#                             setattr(ent, key, context)
+#                         else:
+#                             setattr(ent, key, value)
+            
+#         else:
+#             ent = exist_ents[0]
+
+#         return ent
+    
+#     def split_name(self, uri):
+#         if '#' in uri:
+#             return uri.split('#')[-1]
+#         else:
+#             return uri
+        
+#     def execute(self, context): 
+#             props = context.scene.og_props                     
+#             model = bonsai.tool.Ifc.get()        
+#             type = Catalog.get_type(self.uri)       
+#             if type is not None:
+#                 if 'entity' in type:
+#                     obj_name = f"{type['entity']['ifc_class']}/{type['entity']['Name']}"
+#                     lt = [f'{x.is_a()}/{x.Name}' for x in model.by_type('IfcTypeProduct')]
+#                     if not obj_name in lt:
+#                         sty = None
+
+#                         # create element
+#                         representation = None
+#                         body = ifcopenshell.util.representation.get_context(model, "Model", "Body", "MODEL_VIEW") 
+#                         element_type = model.create_entity(type['entity']['ifc_class'])
+#                         element_type.GlobalId = ifcopenshell.guid.new()
+#                         print(element_type)
+                        
+#                         # add values to attributes
+#                         for key, value in type['entity'].items():
+#                             if key != 'ifc_class':   
+#                                 setattr(element_type, key, value)
+
+                        
+#                         # create the geometry associate
+#                         if 'geometry' in type:                                                 
+#                             vertices = [type['geometry']['vertices']]
+#                             faces = [type['geometry']['faces']]  
+
+#                             builder = ifcopenshell.util.shape_builder.ShapeBuilder(tool.Ifc.get())
+#                             item = builder.mesh(vertices[0], faces[0])
+#                             representation = builder.get_representation(body, [item])
+#                             geometry.assign_representation(model, product=element_type, representation=representation)
+            
+
+#                         # create the associate material
+#                         if 'material' in type:
+#                             mat = self.make_entity(model, type['material'])
+#                             print(mat)
+#                             material.assign_material(model, products=[element_type], type=mat.is_a(), material=mat)
+
+#                             # create the associate style
+#                             if 'style' in type:
+#                                 sty = self.make_entity(model, type['style'])
+#                                 print(sty)
+#                                 materials = [m for m in model.by_type('IfcMaterial') if m.Name == type['style']['@material']] 
+#                                 print(materials)
+#                                 if len(materials) > 0: 
+#                                     style.assign_material_style(model, material=materials[0], style=sty, context=body)
+#                                     if representation is not None:
+#                                         sty.Item = representation.Items[0]
+#                                     print(materials[0])
+#                                 else:
+#                                     print(f'material {materials["style"]["@material"]} não encontrado!')
+                            
+#                         # import element type in bonsai
+#                         i = Import_ifc()
+#                         i.import_type_from_ifc(element_type, context)                        
+                    
+#                         print('Done!')
+#                         self.report({'OPERATOR'}, 'Done!')
+#                         return {"FINISHED"} 
+
+#                     else:
+#                         print('The type already exists!')
+#                         self.report({'ERROR'}, 'The type already exists!')
+#                         return {"CANCELLED"}
+#                 else:
+#                     print('No entities was created')
+#                     self.report({'ERROR'}, 'No entities was created!')
+#                     return {"CANCELLED"}
+
+                
+#             else:
+#                 self.report({'ERROR'}, 'Failing connect!')
+#                 return {"CANCELLED"}

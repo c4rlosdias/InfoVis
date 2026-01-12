@@ -1,0 +1,114 @@
+{
+    "IfcPipeFittingType": [
+        {
+            "id": 425,
+            "name": "EndFitting_Type_B",
+            "description": "End Fitting do tipo B",
+            "element_type": "FlangedEndFittingType"
+        },
+        {
+            "id": 453,
+            "name": "AnchoringCollar_Type_A",
+            "description": "Anchoring Collar do tipo A",
+            "element_type": "AnchoringCollarType"
+        },
+        {
+            "id": 477,
+            "name": "IntermediateStiffener_Type_J",
+            "description": "Intermediate Stiffener do tipo J",
+            "element_type": "IntermediateBendStiffenerType"
+        },
+        {
+            "id": 502,
+            "name": "StopperCollar_Type_K",
+            "description": "Stopper Collar do tipo K",
+            "element_type": "StopperCollarType"
+        },
+        {
+            "id": 524,
+            "name": "TopStiffener_Type_Y",
+            "description": "Top Stiffener do tipo Y",
+            "element_type": "TopBendStiffenerType"
+        },
+        {
+            "id": 549,
+            "name": "HangOff_Type_A",
+            "description": "Hang Off do tipo A",
+            "element_type": "HangOffCollarType"
+        },
+        {
+            "id": 574,
+            "name": "PullingHead_Type_G",
+            "description": "Pulling Head do tipo G",
+            "element_type": "PullingHeadType"
+        },
+        {
+            "id": 941,
+            "name": "SetAnodeCollar_Type_C",
+            "description": "Set of Anode Collar Type C",
+            "element_type": "AnodeCollarType"
+        },
+        {
+            "id": 976,
+            "name": "PullInCollar_Type_A",
+            "description": "Colar Pull In do tipo A",
+            "element_type": "PullInCollarType"
+        },
+        {
+            "id": 1073,
+            "name": "Restritor de curvatura",
+            "description": "Restritor de curvatura",
+            "element_type": "BendRestrictorType"
+        }
+    ],
+    "IfcPipeSegmentType": [
+        {
+            "id": 670,
+            "name": "PRESSURE SHEATH RILSAN P40TL TP01",
+            "description": "Camada PRESSURE SHEATH RILSAN P40TL TP01",
+            "element_type": "InternalPressureSheathType"
+        },
+        {
+            "id": 689,
+            "name": "HIGH STRENGTH TAPE",
+            "description": "Camada HIGH STRENGTH TAPE",
+            "element_type": "HighStrengthTapeType"
+        },
+        {
+            "id": 708,
+            "name": "FIRST ARMOUR LAY. FI42",
+            "description": "Camada FIRST ARMOUR LAY. FI42",
+            "element_type": "PressureArmourType"
+        },
+        {
+            "id": 727,
+            "name": "INTERMED SHEATH TP-FLEX TP26",
+            "description": "Camada INTERMED SHEATH TP-FLEX TP26",
+            "element_type": "IntermediateSheathType"
+        },
+        {
+            "id": 746,
+            "name": "EXTERNAL SHEATH HD-FLEX TP26",
+            "description": "Camada EXTERNAL SHEATH HD-FLEX TP26",
+            "element_type": "SacrificialSheathType"
+        },
+        {
+            "id": 815,
+            "name": "Estrutura A",
+            "description": "Estrutura de camadas do tipo A",
+            "element_type": "SubseaFlexibleStructure"
+        },
+        {
+            "id": 1052,
+            "name": "Capa anti-atrito",
+            "description": "Capa anti-atrito",
+            "element_type": "AntiWearSheathType"
+        },
+        {
+            "id": 10613,
+            "name": "Flexible Pipe Structure 1",
+            "description": "",
+            "element_type": "FlexiblePipeStructure"
+        }
+    ]
+}

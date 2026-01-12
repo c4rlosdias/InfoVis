@@ -29,6 +29,10 @@ def active_product_changed(self, context):
     #self.classes_shown.clear()
     self.product_loaded = False
 
+def active_type_changed(self, context):
+    #self.classes_shown.clear()
+    self.types_loaded = False
+
 
 def load_products(self, context):   
     props = context.scene.my_props
@@ -63,6 +67,19 @@ class Class_info(PropertyGroup):
     parent      : StringProperty(name="parent")
     level_index : IntProperty(name="level index")
     type        : StringProperty(name="class type")
+
+class Class_type(PropertyGroup):
+    id          : IntProperty(name='id')
+    name        : StringProperty(name='name')
+    description : StringProperty(name='description')
+    element_type : StringProperty(name='element type')
+    has_children: BoolProperty(name="has children")    
+    is_hidden   : BoolProperty(name="is Hidded", default=True)
+    is_expanded : BoolProperty(name="Is Expanded", default=True)
+    index       : IntProperty(name="index")
+    parent      : StringProperty(name="parent")
+    level_index : IntProperty(name="level index")
+
 
 class Enumeration_values(PropertyGroup):        
     enumerated  : BoolProperty(name="enumerated", default=False)
@@ -185,9 +202,13 @@ class OG_Properties(PropertyGroup):
     
     # O&G Catalog
     products                 : CollectionProperty(name="products", type=Class_info)
+    types                    : CollectionProperty(name="types", type=Class_type)    
+    types_show               : CollectionProperty(name="types", type=Class_type)           
     products_show            : CollectionProperty(name="products", type=Class_info)
     products_loaded          : BoolProperty(name="products loaded", default=False)
+    types_loaded          : BoolProperty(name="products loaded", default=False)
     active_product_index     : IntProperty(name='product index', default=0, update=active_product_changed)
+    active_type_index     : IntProperty(name='product index', default=0, update=active_product_changed)
     product_description      : StringProperty(name='product description', default='')
 
     # O&G Properties

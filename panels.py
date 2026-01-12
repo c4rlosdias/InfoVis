@@ -19,12 +19,13 @@ def get_properties(ifc_obj):
     result = []
     result.append()
 
-def get_product_description(context, index):
+def get_product_attribute(context, index, attribute):
     props = context.scene.og_props 
-    products = props.products_show
+    products = props.types_show
     for product in products:
         if product.index == index:
-            return product.description
+            result = getattr(product, attribute)
+            return result
     
 
 # ---------------------------------------------------------------------
@@ -371,7 +372,7 @@ class Panel_Catalog(bpy.types.Panel):
         row.operator("catag.load_products", text="Load type products")   
 
         # Imprime os produtos 
-        if len(props.products) > 0:
+        if len(props.types) > 0:
             row = layout.row()
             row.label(text="Classes Information:", icon='INFO')
 
@@ -379,18 +380,23 @@ class Panel_Catalog(bpy.types.Panel):
                 "BIM_UL_products",
                 "",
                 props,
-                "products_show",
+                "types_show",
                 props,
-                "active_product_index",
+                "active_type_index",
                 rows=10
             )
             
             row = layout.row()
             row.label(text="Product Information:", icon='INFO')
+            description = get_product_attribute(context, props.active_type_index, 'description')
+            element_type = get_product_attribute(context, props.active_type_index, 'element_type')
             box = layout.box()
             rowb = box.row()
-            text = get_product_description(context, props.active_product_index)
-            _label_multiline(context = context, parent = box, text = text)
+            rowb.label(text=f'Description:{description}')
+            rowb = box.row()
+            rowb.label(text=f'Element Type:{element_type}')
+            
+            
 
 # Painel de produtos             
 class BIM_UL_products(bpy.types.UIList):
@@ -428,13 +434,13 @@ class BIM_UL_products(bpy.types.UIList):
                 else:
                     row.label(text="", icon="BLANK1") 
 
-
-                row.label(text= f'{item.name}', icon = icontype )
+                
+                row.label(text= f'{item.name}' )
+                row.label(text= f'{item.id}' )
 
                 if not item.has_children:
-                    row.operator("catag.insert_type", text="", icon="PLUS").uri = item.name
-                if item.uri != '':
-                    row.operator("object.uri", text="", icon="URL").uri = item.uri
+                    row.operator("catag.select_type", text="", icon="PLUS").id = item.id
+                
 
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
@@ -707,7 +713,6 @@ class Panel_Properties(bpy.types.Panel):
                     old_is_a = pset.is_a # type or instance
         for area in context.screen.areas:
             area.tag_redraw()
-
 
 
 #============================================================================================

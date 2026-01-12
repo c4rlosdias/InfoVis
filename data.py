@@ -55,6 +55,22 @@ def refresh_products(context):
             new_item.is_hidden = classe.is_hidden
             new_item.type = classe.type
 
+def refresh_types(context):
+    props = context.scene.og_props
+    props.types_show.clear()
+    for classe in props.types:
+        if not classe.is_hidden:
+            new_item = props.types_show.add()
+            new_item.id = classe.id
+            new_item.name = classe.name
+            new_item.description = classe.description
+            new_item.level_index = classe.level_index
+            new_item.element_type = classe.element_type
+            new_item.index = classe.index
+            new_item.has_children = classe.has_children
+            new_item.is_expanded = classe.is_expanded
+            new_item.is_hidden = classe.is_hidden
+
 def refresh_container(context):
     props = context.scene.og_props
     props.containers_show.clear()
