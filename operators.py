@@ -739,6 +739,7 @@ class Operator_load_products(bpy.types.Operator):
         types = model.by_type('IfcTypeProduct')
         c = -1
         result = {}
+        data = Catalog.get_ifc_type()
         classe_title = {
             'name': '',
             'description' : '',
@@ -760,7 +761,10 @@ class Operator_load_products(bpy.types.Operator):
         save_json(result)
 
         for key, values in  result.items():
-                classe_title['name'] = key
+                if key in data:
+                    classe_title['name'] = data[key]
+                else:
+                    classe_title['name'] = key
                 new_c = build_products(context, classe_title, c, 1, '', False, True)
                 c += 1
                 print(values)
@@ -894,7 +898,18 @@ class Operator_catalog_select_type(bpy.types.Operator):
             type = model.by_id(self.id)           
 
             if type is not None:
-                tool.
+                obj = tool.Ifc.get_object(type)
+                # bpy.ops.object.select_all(action='DESELECT')
+                # context.view_layer.objects.active = obj
+                # obj.select_set(True)
+
+                if obj:
+                    if obj.hide_get():
+                        obj.hide_set(False)
+                    obj.select_set(True)
+                    context.view_layer.objects.active = obj
+                    #bpy.ops.props.load_properties()
+
                 self.report({'OPERATOR'}, 'Done!')
                 return {"FINISHED"} 
 
@@ -999,17 +1014,16 @@ class Operator_props_load(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"} 
 
     def execute(self, context):
-        try:
+        # try:
             if tool.Ifc.get() is None:
                 bpy.ops.og.error_message('INVOKE_DEFAULT', message='No Ifc file loaded')
                 return {"CANCELLED"}
-            else:
-                print(100*'-')
+            else:                
                 refresh_props(context)
                 return {"FINISHED"} 
-        except Exception as e:
-            bpy.ops.og.error_message('INVOKE_DEFAULT', message=str(e))
-            return {"CANCELLED"}
+        # except Exception as e:
+        #     bpy.ops.og.error_message('INVOKE_DEFAULT', message=str(e))
+        #     return {"CANCELLED"}
     
 class Operator_props_expand(bpy.types.Operator):
     """"""

@@ -434,12 +434,12 @@ class BIM_UL_products(bpy.types.UIList):
                 else:
                     row.label(text="", icon="BLANK1") 
 
-                
                 row.label(text= f'{item.name}' )
-                row.label(text= f'{item.id}' )
+                row.label(text= f'{item.element_type}' )
+                
 
                 if not item.has_children:
-                    row.operator("catag.select_type", text="", icon="PLUS").id = item.id
+                    row.operator("catag.select_type", text="", icon="OBJECT_DATA").id = item.id
                 
 
 # ---------------------------------------------------------------------
@@ -470,7 +470,7 @@ class Panel_Properties(bpy.types.Panel):
         obj = context.active_object  
          
         
-        if obj is not None and len(context.selected_objects) > 0:   
+        if obj is not None and obj.select_get():#len(context.selected_objects) > 0:   
             model = tool.Ifc.get()     
             row = layout.row()                      
             row.operator("props.load_properties", text="Load properties")    

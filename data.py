@@ -14,6 +14,9 @@ from bonsai.bim.ifc import IfcStore
 
 last_active = None
 # Functions
+def call_back():
+    bpy.ops.props.load_properties()
+
 def on_active_object_change(scene):
     global last_active
     obj = bpy.context.view_layer.objects.active
@@ -162,6 +165,7 @@ def set_properties(props, ifc_obj, is_a, i):
     id = ifc_obj.id()
     # get psets    
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)    
+    print(psets)
     for pset, _props in psets.items():             
         _pset = get_pset(ifc_obj, pset)        
         table = {}    
@@ -279,23 +283,30 @@ def refresh_props(context):
     props.has_document = False
     props.document = ''
     obj = context.active_object
-    ifc_obj = tool.Ifc.get_entity(obj)
+    if obj:
+        ifc_obj = tool.Ifc.get_entity(obj)
+        # se o tipo do elemento tem algum documento associado
+        ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
+        if ifc_obj_type.HasAssociations:
+            props.has_document = True
+            for association in ifc_obj_type.HasAssociations:
+                if association.is_a('IfcRelAssociatesDocument'):
+                    document = association.RelatingDocument
+                    newdocument = props.documents.add()
+                    newdocument.name = document.Name
+                    newdocument.identification = document.Identification
+                    if document.Location:
+                        newdocument.location = document.Location.wrappedValue
+                    else:
+                        newdocument.location = ''
 
-    # se o tipo do elemento tem algum documento associado
-    ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
-    if ifc_obj_type.HasAssociations:
-        props.has_document = True
-        for association in ifc_obj_type.HasAssociations:
-            document = association.RelatingDocument
-            newdocument = props.documents.add()
-            newdocument.name = document.Name
-            newdocument.identification = document.Identification
-            newdocument.location = document.Location.wrappedValue  
+        ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
 
-    ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
-
-    i = set_properties(props, ifc_obj, "instance", 0)
-    set_properties(props, ifc_type_obj, "type", i)
+        if ifc_obj.is_a('IfcTypeProduct'):
+            set_properties(props, ifc_type_obj, "type", 0)
+        else:
+            i = set_properties(props, ifc_obj, "instance", 0)
+            set_properties(props, ifc_type_obj, "type", i)
 
 # Classes
 
@@ -585,18 +596,14 @@ class PropTempl:
             return False
 
 class Catalog:
-
+    
     @classmethod
-    def get_type_(cls, product):
-        with open(f'./resources/{product}.ttl', 'r', encoding='utf-8') as file:
+    def get_ifc_type(cls):
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources', 'ifc_types.json')
+        with open(path, 'r', encoding='utf-8') as file:
             data = json.load(file)
         return data
 
-    @classmethod
-    def get_type(cls, product):
-        with open(f'./resources/{product}.json', 'r', encoding='utf-8') as file:
-            data = json.load(file)
-        return data
 
 
 

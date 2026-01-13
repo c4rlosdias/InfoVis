@@ -16,9 +16,9 @@ bl_info = {
     "name"        : "Oil&Gas Tools",
     "author"      : "Carlos Dias",
     "description" : "",
-    "blender"     : (4, 3, 0),
-    "version"     : (0, 0, 1),
-    "location"    : "View3D > Panel > Oil&Gas Tools",
+    "blender"     : (5, 0, 0),
+    "version"     : (0, 1, 1),
+    "location"    : "View3D > Panel > O&G Tools",
     "warning"     : "",
     "category"    : "User"
 }
@@ -96,16 +96,24 @@ classes = [
     Container,      
     OG_Properties,
 ]
-
+owner = object()
 def register():
     for c in classes:
         register_class(c)
     Scene.og_props = PointerProperty(type=OG_Properties)
-    bpy.app.handlers.depsgraph_update_post.append(data.on_active_object_change)
+    bpy.msgbus.subscribe_rna( 
+        key=(bpy.types.LayerObjects, "active"),
+        owner=object(),
+        args=(),
+        notify=data.call_back 
+    )
+    #bpy.app.handlers.depsgraph_update_post.append(data.on_active_object_change)
+
 
 
 def unregister():
-    bpy.app.handlers.depsgraph_update_post.remove(data.on_active_object_change)
+    #bpy.app.handlers.depsgraph_update_post.remove(data.on_active_object_change)
+    bpy.msgbus.clear_by_owner(owner)
     del Scene.og_props
     for c in classes:
         unregister_class(c)
