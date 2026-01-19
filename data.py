@@ -287,9 +287,10 @@ def refresh_props(context):
         ifc_obj = tool.Ifc.get_entity(obj)
         # se o tipo do elemento tem algum documento associado
         ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
-        if ifc_obj_type.HasAssociations:
+        if getattr(ifc_obj_type, 'HasAssociations', None):
+            associations = ifc_obj_type.HasAssociations
             props.has_document = True
-            for association in ifc_obj_type.HasAssociations:
+            for association in associations:
                 if association.is_a('IfcRelAssociatesDocument'):
                     document = association.RelatingDocument
                     newdocument = props.documents.add()

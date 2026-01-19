@@ -1014,16 +1014,16 @@ class Operator_props_load(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"} 
 
     def execute(self, context):
-        # try:
+        try:
             if tool.Ifc.get() is None:
                 bpy.ops.og.error_message('INVOKE_DEFAULT', message='No Ifc file loaded')
                 return {"CANCELLED"}
             else:                
                 refresh_props(context)
                 return {"FINISHED"} 
-        # except Exception as e:
-        #     bpy.ops.og.error_message('INVOKE_DEFAULT', message=str(e))
-        #     return {"CANCELLED"}
+        except Exception as e:
+            bpy.ops.og.error_message('INVOKE_DEFAULT', message=str(e))
+            return {"CANCELLED"}
     
 class Operator_props_expand(bpy.types.Operator):
     """"""

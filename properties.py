@@ -41,7 +41,7 @@ def load_products(self, context):
                 ('pipe1','Pipe 1','Pipe 1'),
                 ('pipe2','Pipe 2','Pipe 2'),
                 ('valve1','Valve 3','Valve 1')
-            ]
+        ]
 
     else:
         products = [] 
