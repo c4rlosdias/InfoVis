@@ -18,7 +18,12 @@ Um add-on para Blender que oferece ferramentas especializadas para modelagem e a
    - Clique Install 'AddOn from disk'
    - Selecione o arquivo zip correspondente ao release que deseja instalar
 
+### Criação do release
+1. **Execute:**
 
+```
+>_ build_realease.bat
+```
 
 ## 🏗️ Estrutura do Projeto
 
@@ -61,13 +66,13 @@ Um add-on para Blender que oferece ferramentas especializadas para modelagem e a
 Consulte o arquivo LICENSE para mais informações.
 
 ```
+README.md                            # Este arquivo
 docs/
-├── README.md                    # Este arquivo
 │
-├── ARCHITECTURE.md              # Arquitetura técnica profunda
-├── DEVELOPMENT.md               # Guia de desenvolvimento
+├── ARCHITECTURE.md                  # Arquitetura técnica profunda
+├── DEVELOPMENT.md                   # Guia de desenvolvimento
 │
-├── guides/                       # Guias por Módulo
+├── guides/                          # Guias por Módulo
 │   ├── OPERATORS_DOCUMENTATION.md       # operators.py (1551 linhas)
 │   ├── PANELS_DOCUMENTATION.md          # panels.py (766 linhas)
 │   ├── PROPERTIES_DOCUMENTATION.md      # properties.py (234 linhas)
@@ -79,7 +84,6 @@ docs/
 │
 └── extra/                       # Documentos Adicionais
     ├── SUMARIO_EXECUTIVO.md     # Resumo para gestão
-    ├── MAPA_MENTAL.md           # Trilhas de aprendizado
     ├── PROXIMOS_PASSOS.md       # Ações pós-documentação
     └── DOCUMENTACAO_CONCLUIDA.md # Verificação final
 ```
@@ -105,8 +109,6 @@ docs/
 **"Preciso de referência rápida"**
 - Consulte: `reference/GLOSSARY.md`
 
-**"Quero planejar aprendizado"**
-- Use: `extra/MAPA_MENTAL.md`
 
 **"Qual é o próximo passo?"**
 - Veja: `extra/PROXIMOS_PASSOS.md`

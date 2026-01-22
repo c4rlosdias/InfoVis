@@ -774,66 +774,6 @@ class Operator_load_products(bpy.types.Operator):
         refresh_types(context)
         return {"FINISHED"} 
         
-
-        
-# # Load catalog products
-# class Operator_load_products(bpy.types.Operator):
-#     """"""
-#     bl_idname  = "catag.load_products"
-#     bl_label   = "load products from catalog"
-#     bl_options = {"REGISTER", "UNDO"}    
-
-#     def execute(self, context): 
-#         props = context.scene.og_props               
-#         props.products.clear()
-#         props.products_loaded = True
-#         ifc_reference = {
-#             'TopBendStiffenerType'           : 'Pipe Fitting',
-#             'IntermediateBendStiffenerType' : 'Pipe Fitting',
-#             'StopperCollarType'             : 'Pipe Fitting',
-#             'PulInCollarType'               : 'Pipe Fitting',
-#             'AnchoringCollarType'           : 'Pipe Fitting',
-#             'DeadweightCollarType'          : 'Pipe Fitting',
-#             'BuoyancyModuleType'            : 'Pipe Fitting',
-#             'HangOffCollarType'             : 'Pipe Fitting',
-#             'BendRestrictorType'            : 'Pipe Fitting',
-#             'EndFittingType'                : 'Pipe Fitting',
-#             'PipePullingHeadType'           : 'Pipe Fitting',
-#             'FlexiblePipeStructure'         : 'Pipe Segment'
-
-#         }
-#         dic = {}
-#         classe_title = {
-#             'name': '',
-#             'uri' : '',
-#             'code': '',
-#             'descriptionPart' : ''
-#         }
-#         c = -1
-#         result = bSDD.load_classes(props.dictionary, False)
-#         if result:
-#             for classe in bSDD.data_class:  
-#                 print(classe['code'])
-#                 if classe['name'].endswith('Type') or classe['name'].endswith('Structure'): 
-#                     print('---' + classe['name'])                   
-#                     if classe['name'] in  ifc_reference:
-#                         if ifc_reference[classe['name']] not in dic:
-#                             dic[ifc_reference[classe['name']]] = []
-#                         dic[ifc_reference[classe['name']]].append(classe)
-            
-#             for key, values in  dic.items():
-#                     classe_title['name'] = key
-#                     new_c = build_products(context, classe_title, c, 1, '', False, True)
-#                     c += 1
-#                     for value in values:
-#                         new_c = build_products(context, value, c, 2, '', True, False)
-#                         c = new_c
-#             refresh_products(context)
-#             return {"FINISHED"} 
-#         else:
-#             self.report({'ERROR'}, bSDD.response)
-#             return {"CANCELLED"}
-
 # contract products
 class Operator_contract_products(bpy.types.Operator):
     """"""
