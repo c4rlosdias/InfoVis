@@ -1,58 +1,105 @@
-# Guia de Arquitetura - Oil & Gas Tools
+# 🏗️ Arquitetura - Oil & Gas Tools
 
-## 🏗️ Visão Geral da Arquitetura
+## Visão Geral
 
-O Oil & Gas Tools é estruturado como um **add-on Blender modular** que segue o padrão **MVC (Model-View-Controller)** adaptado para Blender.
+O Oil & Gas Tools é um **add-on Blender modular** que segue o padrão **MVC (Model-View-Controller)** adaptado para Blender.
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                        BLENDER (Host)                         │
-├──────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │              UI Layer (panels.py)                    │   │
-│  │  - Panel_Connect: Subsea Classes                     │   │
-│  │  - List UI Items: BIM_UL_classes                     │   │
-│  │  - Layouts e componentes visuais                     │   │
-│  └──────────────────┬───────────────────────────────────┘   │
-│                     │                                         │
-│  ┌──────────────────▼───────────────────────────────────┐   │
-│  │        Properties Layer (properties.py)              │   │
-│  │  - Ifc_properties                                    │   │
-│  │  - Class_info                                        │   │
-│  │  - Class_type                                        │   │
-│  │  - PropertyGroup collections                         │   │
-│  └──────────────────┬───────────────────────────────────┘   │
-│                     │                                         │
-│  ┌──────────────────▼───────────────────────────────────┐   │
-│  │        Operators Layer (operators.py)                │   │
-│  │  - Extração IFC                                      │   │
-│  │  - Construção de hierarquias                         │   │
-│  │  - Análise e visualização                            │   │
-│  └──────────────────┬───────────────────────────────────┘   │
-│                     │                                         │
-│  ┌──────────────────▼───────────────────────────────────┐   │
-│  │        Data Layer (data.py)                          │   │
-│  │  - Synchronization & Events                          │   │
-│  │  - Refresh functions                                 │   │
-│  │  - bSDD Integration                                  │   │
-│  └──────────────────┬───────────────────────────────────┘   │
-│                     │                                         │
-└─────────────────────┼──────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│            BLENDER (Host)                        │
+├──────────────────────────────────────────────────┤
+│  Panels (UI)           → panels.py               │
+│  Properties (Data)     → properties.py           │
+│  Operators (Logic)     → operators.py            │
+│  Data Layer            → data.py                 │
+└─────────────────────┬──────────────────────────┘
                       │
                       ▼
-         ┌────────────────────────────┐
-         │   External Services        │
-         ├────────────────────────────┤
-         │ • bSDD (buildingSMART)     │
-         │ • ifcopenshell             │
-         │ • matplotlib (graphs)      │
-         └────────────────────────────┘
+        ┌──────────────────────────┐
+        │  External Services       │
+        ├──────────────────────────┤
+        │ • bSDD                   │
+        │ • ifcopenshell           │
+        │ • matplotlib, scipy      │
+        └──────────────────────────┘
 ```
 
----
+## Camadas Principais
 
-## 📋 Camadas da Aplicação
+### 1. **UI Layer** (panels.py)
+Renderiza painéis na viewport com botões, listas e controles. Interage com o usuário através da interface do Blender.
+
+### 2. **Properties Layer** (properties.py)
+Define a estrutura de dados usando PropertyGroups do Blender. Armazena estado da aplicação e sincroniza com UI.
+
+### 3. **Operators Layer** (operators.py)
+Implementa a lógica de negócio: extração IFC, construção de hierarquias, processamento de dados.
+
+### 4. **Data Layer** (data.py)
+Gerencia sincronização entre camadas, callbacks, eventos e integração com bSDD.
+
+## Fluxo de Dados
+
+### Exemplo: Carregar Classes do bSDD
+
+```
+Usuário clica botão → Operador executa → Dados carregados
+      (UI)                (Logic)         (Properties)
+                            │
+                            ▼
+                    data.refresh() atualiza
+                            │
+                            ▼
+                    Panel redesenha
+```
+
+## Estrutura de Dados
+
+```
+context.scene.og_props
+├── classes: todas as classes (incluso ocultas)
+├── classes_shown: apenas visíveis
+├── types: todos os tipos
+├── types_show: tipos visíveis
+└── flags: status de carregamento
+```
+
+## Padrões de Design
+
+| Padrão | Arquivo | Uso |
+|--------|---------|-----|
+| PropertyGroup | properties.py | Dados sincronizados com UI |
+| Operator | operators.py | Lógica + undo/redo |
+| Panel | panels.py | Interface visual |
+| Callback | data.py | Reage a mudanças |
+
+## Fluxo de Inicialização
+
+```
+1. Usuário ativa add-on
+2. __init__.py carrega módulos
+3. Registra classes e PropertyGroups
+4. Painel aparece na View3D
+5. Pronto para usar
+```
+
+## Dependências Entre Módulos
+
+```
+__init__.py (registro)
+    ↓
+properties.py ← operators.py ← panels.py
+    ↓            ↓
+  data.py (sincronização)
+    ↓
+External APIs (ifcopenshell, bSDD, etc)
+```
+
+## Para Mais Detalhes
+
+- **[Desenvolvimento](DEVELOPMENT.md)** - Como setup e contribuir
+- **[Módulos](guides/)** - Documentação completa por arquivo
+- **[Glossário](reference/GLOSSARY.md)** - Termos e FAQ
 
 ### 1. **Initialization Layer** (`__init__.py`)
 
