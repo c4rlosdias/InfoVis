@@ -91,6 +91,38 @@ def refresh_container(context):
             new_item.object_type = classe.object_type  
             new_item.is_selected = classe.is_selected  
 
+def move_to_assembly(parent, children, type):
+    model = tool.Ifc.get()
+    if type == 'nests':
+        if children.Nests:
+            ifcopenshell.api.nest.change_nest(
+                model,
+                item=children,
+                new_parent=parent
+            )
+        else:
+            if children.ContainedInStructure:
+                ifcopenshell.api.spatial.unassign_container(model, products=[children])
+            ifcopenshell.api.nest.assign_object(
+                model,
+                related_objects=[children],
+                relating_object=parent
+            )
+
+    else:
+        if children.Decomposes:
+            ifcopenshell.api.aggregate.unassign_object(
+                model,
+                products=[children]
+            )
+        
+        ifcopenshell.api.spatial.unassign_container(model, products=[children])
+        ifcopenshell.api.aggregate.assign_object(
+            model,
+            products=[children],
+            relating_object=parent
+        )
+  
 def set_prop_type( prop, value_prop):
     res = ""
     if type(value_prop) == str:
@@ -214,7 +246,7 @@ def set_properties(props, ifc_obj, is_a, i):
                             for item_prop in value:    
                                 new_prop = new_item.props.add() 
                                 new_prop.name = prop
-                                new_prop.description = _prop.Description
+                                new_prop.description = _prop.Description if _prop.Description is not None else ''
                                 new_prop.datatype = get_unit(ifc_obj, pset, prop)
                                 new_prop.index = j      
                                 new_prop.type_prop = type_prop     
@@ -225,7 +257,7 @@ def set_properties(props, ifc_obj, is_a, i):
                         if type_prop == 'IfcPropertyEnumeratedValue':  
                             new_prop = new_item.props.add()                             
                             new_prop.name = prop  
-                            new_prop.description = _prop.Description 
+                            new_prop.description = _prop.Description if _prop.Description is not None else ''
                             new_prop.index = j      
                             new_prop.type_prop = type_prop   
                             new_prop.datatype = get_unit(ifc_obj, pset, prop)                                                        
@@ -245,7 +277,7 @@ def set_properties(props, ifc_obj, is_a, i):
 
                         new_prop = new_item.props.add()  
                         new_prop.name = prop
-                        new_prop.description = _prop.Description
+                        new_prop.description = _prop.Description if _prop.Description is not None else ''
                         new_prop.datatype = get_unit(ifc_obj, pset, prop)
                         new_prop.index = j                                                
                         set_prop_type(new_prop, value)        

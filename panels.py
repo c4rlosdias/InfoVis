@@ -303,7 +303,8 @@ class BIM_UL_decomposition(bpy.types.UIList):
         if item:
             row = layout.row(align=True)
             objs = [tool.Ifc.get_entity(x).id()  for x in context.selected_objects]           
-
+            # Define icons for different element types
+            blank = 1
             if item.type == "IfcProject":
                 icon = 'CURRENT_FILE'
             elif item.type == "IfcSite":
@@ -311,21 +312,27 @@ class BIM_UL_decomposition(bpy.types.UIList):
             elif item.type == "IfcBuilding":
                 icon = 'STICKY_UVS_LOC'
             elif item.type == "IfcElementAssembly":
-                icon = 'OBJECT_HIDDEN'
+                icon = 'STICKY_UVS_LOC'
             elif item.type == "IfcPipeSegment":
-                icon = 'IPO_EASE_OUT'            
+                icon = 'IPO_EASE_OUT'   
+       
             elif item.type == "IfcCableSegment":
                 icon = 'DOT'  
+
             elif item.type == "IfcValve":
-                icon = 'DOT'           
+                icon = 'DOT'   
+    
             else:
                 icon = 'DOT'
+
 
             #props = context.scene.og_props
 
             if not item.is_hidden:
-                for i in range(0, item.level - 1):
+
+                for i in range(0, item.level - blank):
                     row.label(text="", icon="BLANK1")
+
                 if item.has_children:
                     if item.is_expanded:
                         row.operator(
@@ -335,13 +342,18 @@ class BIM_UL_decomposition(bpy.types.UIList):
                         row.operator(
                             "element.expand_decomposition", text="", emboss=False, icon="DISCLOSURE_TRI_RIGHT"
                         ).index = item.index
-                else:
-                    row.label(text="", icon="BLANK1") 
+                # else:
+                #     row.label(text="", icon="BLANK1") 
                 row.label(text= f'[{item.object_type}] {item.name}', icon=icon)
                 icon2 = "CANCEL" if item.is_selected == True else "RESTRICT_SELECT_OFF"      
                 row.operator("decomposition.select_element", text="", icon='OBJECT_DATAMODE').index = item.index                          
                 row.operator("decomposition.select_components", text="", icon=icon2).index = item.index
-             
+                op = row.operator("decomposition.move", text="", icon="LONGDISPLAY")
+                op.index = item.index
+                op.type = 'nests'
+                op = row.operator("decomposition.move", text="", icon="IMGDISPLAY")
+                op.index = item.index
+                op.type = 'aggregations'
 
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
@@ -611,8 +623,9 @@ class Panel_Properties(bpy.types.Panel):
                         titulos = '' 
                         i = 1
                         
-
+                        #################################
                         # para cada propriedade
+                        #################################
                         for item in pset.props:   
                                                              
                             # se existe a palavra Table no nome da propriedade
@@ -703,9 +716,13 @@ class Panel_Properties(bpy.types.Panel):
                                 # se for o valor da propriedade simples                               
                                 else:
                                     col = rowb.column()
-                                    col.scale_x =0.6
+                                    #col.scale_x =0.8
+                                    col.alignment = 'RIGHT'
                                     act_prop = f"value{item.type_value}"                                
-                                    col.prop(item, act_prop, text=item.datatype)
+                                    col.prop(item, act_prop, text='')
+                                    col = rowb.column()
+                                    col.scale_x =0.4
+                                    col.label(text=item.datatype)
                                     old_name_prop = item.name 
 
                             i += 1

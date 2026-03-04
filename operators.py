@@ -562,27 +562,13 @@ class Operator_load_decomposition(bpy.types.Operator):
         
         elements = get_decomposition(container, is_recursive=False) 
         add_elements([container])
-        #add_elements(elements)
-
            
 
     def execute(self, context):                       
         props = context.scene.og_props
         props.elements_containers.clear()
         model = tool.Ifc.get()
-        #elements = selector.filter_elements(model, "IfcElement, IsNestedBy != (), Nests = ()")   
-        
-        # spatial_elements =  [
-        #     e for e in model.by_type('IfcSpatialElement')
-        #     if not ifcopenshell.util.element.get_aggregate(e).is_a('IfcProject')
-        # ]
-        
-        # product_elements = [
-        #     e for e in model.by_type("IfcProduct")
-        #     if e.Nests == () and e.Decomposes == ()
-        # ]
 
-        #elements = spatial_elements 
         elements = model.by_type("IfcProject")
         if len(elements) > 0:
             for element in elements:
@@ -591,7 +577,7 @@ class Operator_load_decomposition(bpy.types.Operator):
             for element in props.elements_containers:
                 element.index = i
                 element.is_hidden = False if element.level==1 else True
-                element.is_expanded = False if element.level==1 else True                
+                element.is_expanded = False if element.level==1 else True  
                 i += 1   
             refresh_container(context)
         return {"FINISHED"} 
@@ -660,9 +646,11 @@ class Operator_decomposition_select_element(bpy.types.Operator):
         props = context.scene.og_props       
         item =  props.elements_containers[self.index]                                   
         model = tool.Ifc.get()        
-        ifc_element = model.by_id(item.id) 
-        print(ifc_element)
-        obj = tool.Ifc.get_object(ifc_element)
+        ifc_element = model.by_id(item.id)         
+        obj = tool.Ifc.get_object(ifc_element)  
+        print(f'id: {item.id}')   
+        print(f'elemento: {ifc_element}')
+        print(f'objeto: {obj}')   
         if obj:
             obj.select_set(item.is_selected)            
             bpy.context.view_layer.objects.active =  obj
@@ -718,6 +706,32 @@ class Operator_decomposition_select_components(bpy.types.Operator):
         refresh_container(context) 
         return {"FINISHED"} 
     
+class Operator_decomposition_move(bpy.types.Operator):
+    """"""
+    bl_idname  = "decomposition.move"
+    bl_label   = "Move object to selected parent"
+    bl_options = {"REGISTER", "UNDO"}    
+    index : bpy.props.IntProperty(name="index")
+    type  : bpy.props.StringProperty(name="type", default="nest")
+
+    def execute(self, context):   
+        props = context.scene.og_props       
+        model = tool.Ifc.get() 
+        item =  props.elements_containers[self.index]   
+        entity_children = model.by_id(item.id)
+        parent = props.containers_show[props.active_element_index]  
+        entity_parent = model.by_id(parent.id)  
+
+             
+        print(f'entity_parent: {entity_parent}')
+        print(f'entity_children: {entity_children}')
+        move_to_assembly(entity_parent, entity_children, self.type)
+        self.report({'OPERATOR'}, 'Moved successfully!')
+
+       
+        refresh_container(context) 
+        bpy.ops.elements.decomposition()
+        return {"FINISHED"}
 # ==================================================================================================
 # ==================================================================================================
 # CATALOG

@@ -1,0 +1,189 @@
+{
+    "IfcBuildingElementProxyType": [
+        {
+            "id": 298211,
+            "name": "Sleeper",
+            "description": "",
+            "element_type": "SleeperType"
+        },
+        {
+            "id": 299145,
+            "name": "Line Mechanical Support",
+            "description": "",
+            "element_type": "LineMechanicalSupportType"
+        }
+    ],
+    "IfcCoveringType": [
+        {
+            "id": 21901,
+            "name": "External coatings",
+            "description": "",
+            "element_type": "RigidPipeSegmentExternalCoatings"
+        }
+    ],
+    "IfcMemberType": [
+        {
+            "id": 115478,
+            "name": "Chain segment A",
+            "description": "",
+            "element_type": "ChainSegmentType"
+        }
+    ],
+    "IfcPileType": [
+        {
+            "id": 272586,
+            "name": "Suction Pile",
+            "description": "",
+            "element_type": "SuctionPileType"
+        }
+    ],
+    "IfcValveType": [
+        {
+            "id": 276675,
+            "name": "Straight Pipe Section",
+            "description": "",
+            "element_type": "ProcessBallValveType"
+        }
+    ],
+    "IfcPipeFittingType": [
+        {
+            "id": 14527,
+            "name": "JUNCAO",
+            "description": "",
+            "element_type": "?????"
+        },
+        {
+            "id": 14531,
+            "name": "Bracelet Anode",
+            "description": "",
+            "element_type": "BraceletAnodeType"
+        },
+        {
+            "id": 15773,
+            "name": "Buoyancy Module",
+            "description": "",
+            "element_type": "BuoyancyModuleType"
+        },
+        {
+            "id": 19760,
+            "name": "End Fitting",
+            "description": "",
+            "element_type": ""
+        },
+        {
+            "id": 19761,
+            "name": "End Fitting",
+            "description": "",
+            "element_type": "FlexibleJointType"
+        },
+        {
+            "id": 223987,
+            "name": "AnchoringCollar",
+            "description": "",
+            "element_type": "AnchoringCollarType"
+        },
+        {
+            "id": 257555,
+            "name": "Plet",
+            "description": "",
+            "element_type": "PletType"
+        },
+        {
+            "id": 272894,
+            "name": "Curved Pipe Section",
+            "description": "",
+            "element_type": "CurvedPipeSectionType"
+        },
+        {
+            "id": 273168,
+            "name": "Flow Connector",
+            "description": "",
+            "element_type": "FlowConnectorType"
+        },
+        {
+            "id": 276087,
+            "name": "Line Endpoint",
+            "description": "",
+            "element_type": "LineEndpointType"
+        },
+        {
+            "id": 276776,
+            "name": "Flange",
+            "description": "",
+            "element_type": "FlangeType"
+        },
+        {
+            "id": 278127,
+            "name": "Bend",
+            "description": "",
+            "element_type": ""
+        },
+        {
+            "id": 288835,
+            "name": "Cylinder",
+            "description": "",
+            "element_type": "BraceletAnodeType"
+        },
+        {
+            "id": 296773,
+            "name": "Flexible Joint",
+            "description": "",
+            "element_type": "FlexibleJointType"
+        }
+    ],
+    "IfcPipeSegmentType": [
+        {
+            "id": 11257,
+            "name": "Pipe B",
+            "description": "",
+            "element_type": "RigidPipeSegmentType"
+        },
+        {
+            "id": 272850,
+            "name": "Straight Pipe Section",
+            "description": "",
+            "element_type": "StraightPipeSection"
+        },
+        {
+            "id": 286427,
+            "name": "Pipe C",
+            "description": "",
+            "element_type": "LinePipeType"
+        }
+    ],
+    "IfcDiscreteAccessoryType": [],
+    "IfcMechanicalFastenerType": [
+        {
+            "id": 286284,
+            "name": "UNS Bolt Set",
+            "description": "",
+            "element_type": "UNSBoltSetType"
+        },
+        {
+            "id": 131752,
+            "name": "Hook A",
+            "description": "",
+            "element_type": "HookType"
+        },
+        {
+            "id": 58280,
+            "name": "Pear linkl A",
+            "description": "",
+            "element_type": "PearLinkType"
+        },
+        {
+            "id": 22111,
+            "name": "Shackle A",
+            "description": "",
+            "element_type": "ShackleType"
+        }
+    ],
+    "IfcGeographicElementType": [
+        {
+            "id": 19695,
+            "name": "mar",
+            "description": "",
+            "element_type": "water"
+        }
+    ]
+}

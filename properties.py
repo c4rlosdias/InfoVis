@@ -155,6 +155,7 @@ class Container(PropertyGroup):
     type          : StringProperty(name="element type")   
     name          : StringProperty(name="name") 
     object_type   : StringProperty(name="object_type")
+    is_nested     : BoolProperty(name="is nested", default=False)
 
 class OG_Properties(PropertyGroup): 
     

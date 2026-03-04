@@ -48,6 +48,7 @@ classes = [
     Operator_expand_products,
     Operator_contract_decomposition,
     Operator_expand_decomposition,
+    Operator_decomposition_move,
     Operator_add_properties,
     Operator_clear_properties,
     Operator_get_prop_info,
