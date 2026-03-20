@@ -41,13 +41,8 @@ from . import data
 classes = [     
     Operator_get_properties,
     Operator_get_classes,
-    Operator_load_decomposition,
-    Operator_contract_classes,
-    Operator_contract_products,
-    Operator_expand_classes,
-    Operator_expand_products,
-    Operator_contract_decomposition,
-    Operator_expand_decomposition,
+    Operator_contract_tree,
+    Operator_expand_tree,
     Operator_decomposition_move,
     Operator_add_properties,
     Operator_clear_properties,
@@ -61,6 +56,7 @@ classes = [
     Operator_decomposition_select_components,
     Operator_decomposition_select_element,
     Operator_catalog_select_type,
+    Operator_catalog_select_elements,
     Operator_load_products,
     Operator_props_load,
     Operator_props_expand,
@@ -73,13 +69,15 @@ classes = [
     Operator_document_load,
     Operator_document_open,
     Operator_show_table,
-    ErrorMessage,
+    Operator_decomposition_load,
+    ErrorMessage,    
     Panel_Connect, 
     Panel_Decompositions,  
     Panel_Catalog, 
     Panel_Properties,
     Panel_Settings,
     Panel_Info,
+    BIM_UL_tree,
     BIM_UL_ifc_properties,
     BIM_UL_classes,
     BIM_UL_class_prop,
@@ -94,7 +92,7 @@ classes = [
     Class_prop_info,
     Property_info,
     Pset_info,
-    Container,      
+    Container,
     OG_Properties,
 ]
 owner = object()
@@ -104,7 +102,7 @@ def register():
     Scene.og_props = PointerProperty(type=OG_Properties)
     bpy.msgbus.subscribe_rna( 
         key=(bpy.types.LayerObjects, "active"),
-        owner=object(),
+        owner=owner,
         args=(),
         notify=data.call_back 
     )

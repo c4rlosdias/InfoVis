@@ -13,10 +13,73 @@ from bonsai.bim import import_ifc
 from bonsai.bim.ifc import IfcStore
 
 last_active = None
+
+# =======================================================================
 # Functions
+# =======================================================================
+def load_contained_elements_by_decomposition(container: ifcopenshell.entity_instance, name_props: str, context : bpy.types.Context ) -> None:
+            props = context.scene.og_props        
+            def get_decomposition(element: ifcopenshell.entity_instance, is_recursive : bool) -> set[ifcopenshell.entity_instance]:
+
+                queue = [element]            
+                results = []
+
+                while queue:
+                    element = queue.pop()
+                    for rel in getattr(element, "IsGroupedBy", []):
+                        related = rel.RelatedObjects
+                        queue.extend(related)
+                        results.extend(related) 
+                    for rel in getattr(element, "ContainsElements", []):
+                        related = rel.RelatedElements
+                        queue.extend(related)
+                        results.extend(related)      
+                    for rel in getattr(element, "IsDecomposedBy", []):
+                        related = rel.RelatedObjects
+                        queue.extend(related)
+                        results.extend(related)
+                    for rel in getattr(element, "IsNestedBy", []):
+                        related = rel.RelatedObjects
+                        #related = [x for x in related if not x.is_a('IfcDistributionPort')]
+                        queue.extend(related)
+                        results.extend(related)
+                    if not is_recursive:
+                        break
+                return results
+
+            def add_elements(elements, name_props, level=1):
+                #l_elements = [x for x in elements]
+                for element in elements:                        
+                    # if not props.should_include_children and tool.Root.is_spatial_element(element):
+                    #     continue
+                    # ifc_definition_id = element.id()
+                    print(getattr(props, name_props))
+                    new = getattr(props, name_props).add()
+                    
+                    new.name = element.Name or 'Unnamed'
+                    new.type = element.is_a()
+                    new.level = level 
+                    new.id = element.id()                
+                    new.object_type = element.ObjectType or 'Unnamed'                            
+                    children = [
+                        e
+                        for e in get_decomposition(element, is_recursive=False)
+                        if not e.is_a("IfcFeatureElement")
+                    ]
+                    if children:
+                        new.has_children = True                    
+                        new.is_expanded = False
+                        add_elements(children, name_props, level=level + 1)
+            
+            getattr(props, name_props).clear()
+            elements = get_decomposition(container, is_recursive=False) 
+            add_elements([container], name_props)
+
+# Call back para carregar as propriedades ao mudar o objeto ativo
 def call_back():
     bpy.ops.props.load_properties()
 
+# Handler para carregar as propriedades ao mudar o objeto ativo
 def on_active_object_change(scene):
     global last_active
     obj = bpy.context.view_layer.objects.active
@@ -24,7 +87,8 @@ def on_active_object_change(scene):
         last_active = obj        
         bpy.ops.props.load_properties()
 
-def refresh(context):
+# Registra o handler
+def refresh_classes(context):
     props = context.scene.og_props
     props.classes_shown.clear()
     for classe in props.classes:
@@ -33,7 +97,7 @@ def refresh(context):
             new_item.code = classe.code
             new_item.name = classe.name
             new_item.description = classe.description
-            new_item.level_index = classe.level_index
+            new_item.level = classe.level
             new_item.uri = classe.uri
             new_item.index = classe.index
             new_item.has_children = classe.has_children
@@ -41,6 +105,7 @@ def refresh(context):
             new_item.is_hidden = classe.is_hidden
             new_item.type = classe.type
 
+# Call back para carregar as propriedades ao mudar o objeto ativo
 def refresh_products(context):
     props = context.scene.og_props
     props.products_show.clear()
@@ -50,7 +115,7 @@ def refresh_products(context):
             new_item.code = classe.code
             new_item.name = classe.name
             new_item.description = classe.description
-            new_item.level_index = classe.level_index
+            new_item.level = classe.level
             new_item.uri = classe.uri
             new_item.index = classe.index
             new_item.has_children = classe.has_children
@@ -58,6 +123,7 @@ def refresh_products(context):
             new_item.is_hidden = classe.is_hidden
             new_item.type = classe.type
 
+# Call back para carregar as propriedades ao mudar o objeto ativo
 def refresh_types(context):
     props = context.scene.og_props
     props.types_show.clear()
@@ -65,15 +131,61 @@ def refresh_types(context):
         if not classe.is_hidden:
             new_item = props.types_show.add()
             new_item.id = classe.id
+            new_item.tag = classe.tag
             new_item.name = classe.name
             new_item.description = classe.description
-            new_item.level_index = classe.level_index
+            new_item.level = classe.level
             new_item.element_type = classe.element_type
             new_item.index = classe.index
             new_item.has_children = classe.has_children
             new_item.is_expanded = classe.is_expanded
             new_item.is_hidden = classe.is_hidden
 
+# Função para desenhar a árvore de classes, produtos ou tipos
+
+def draw_tree(layout, item, operators, attributes, property, only_children = False):
+
+    ''' Desenha uma árvore de classes, produtos ou tipos no layout do blender.
+            layout: layout do blender
+            item: item da coleção a ser desenhado
+            operators: operadores a serem adicionados para cada item
+            attributes: atributos a serem mostrados para cada item
+            property: nome da propriedade onde a coleção está armazenada
+            only_children: se True, mostra apenas os operadores para os itens que tem filhos, caso contrário, mostra para todos os itens
+        retorna o layout com a árvore desenhada
+    '''
+    if not item.is_hidden:
+        
+        row = layout.row(align=True)
+        # adiciona os ícones de hierarquia
+        for _ in range(0, item.level - 1):
+            row.label(text="", icon="BLANK1")
+
+        # adiciona o ícone de expandir/contrair    
+        if item.has_children:
+            if item.is_expanded:
+                op = row.operator("element.contract_tree", text="", emboss=False, icon="DISCLOSURE_TRI_DOWN")
+                op.index = item.index
+                op.property = property
+            else:
+                op=row.operator("element.expand_tree", text="", emboss=False, icon="DISCLOSURE_TRI_RIGHT")
+                op.index = item.index
+                op.property = property
+        else:
+            row.label(text="", icon="BLANK1")
+  
+        # adiciona os atributos do item
+        for att in attributes:            
+            row.label(text=att[0], icon=att[1])  
+        
+        # se não for para mostrar apenas os filhos ou se o item não tiver filhos, mostra os operadores
+        if not only_children or not item.has_children:
+            for opt in operators:
+                op = row.operator(opt['name'], text="", icon=opt['icon'])
+                for att, value in opt['att']:
+                    setattr(op, att, value)
+
+# Call back para carregar as propriedades ao mudar o objeto ativo
 def refresh_container(context):
     props = context.scene.og_props
     props.containers_show.clear()
@@ -91,6 +203,18 @@ def refresh_container(context):
             new_item.object_type = classe.object_type  
             new_item.is_selected = classe.is_selected  
 
+# Call back para carregar as propriedades ao mudar o objeto ativo
+def refresh_tree(context, property):
+    if property == 'classes':
+        refresh_classes(context)
+    elif property == 'products':
+        refresh_products(context)
+    elif property == 'types':
+        refresh_types(context)
+    elif property == 'elements_containers':
+        refresh_container(context)
+
+# Função para mover um elemento para dentro de um assembly ou nest
 def move_to_assembly(parent, children, type):
     model = tool.Ifc.get()
     if type == 'nests':
@@ -122,7 +246,8 @@ def move_to_assembly(parent, children, type):
             products=[children],
             relating_object=parent
         )
-  
+
+# Função para mover um elemento para dentro de um assembly ou nest  
 def set_prop_type( prop, value_prop):
     res = ""
     if type(value_prop) == str:
@@ -141,6 +266,7 @@ def set_prop_type( prop, value_prop):
         prop.valuestr = str(value_prop)
         prop.type_value = "str"
 
+# Função para obter o valor da propriedade de acordo com o tipo
 def get_prop_type(prop):
         res = None
         if prop.type_value == "str":
@@ -153,6 +279,7 @@ def get_prop_type(prop):
             res = prop.valuefloat
         return res        
 
+# Função para obter o símbolo da unidade
 def get_unit_symbol(unit):
     symbol = ''
     if unit.is_a() == 'IfcDerivedUnit':                    
@@ -165,6 +292,7 @@ def get_unit_symbol(unit):
         symbol=ifcopenshell.util.unit.get_unit_symbol(unit)
     return symbol.replace('1', '')
 
+# Função para obter a unidade de uma propriedade
 def get_unit(ifc_obj, pset_name, prop_name):
     model = tool.Ifc.get()
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
@@ -180,6 +308,7 @@ def get_unit(ifc_obj, pset_name, prop_name):
             return symbol
     return symbol
 
+# Função para obter a propriedade de acordo com o nome e o pset
 def get_property(ifc_obj, pset_name, prop_name):
     model = tool.Ifc.get()
     pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
@@ -188,12 +317,16 @@ def get_property(ifc_obj, pset_name, prop_name):
             return prop
     return None
 
+# Função para obter o pset de acordo com o nome
 def get_pset(ifc_obj, pset_name):
     model = tool.Ifc.get()
     pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
     return pset
 
+# Função para obter as propriedades de um elemento e do seu tipo, e adicionar na coleção de propriedades do addon
 def set_properties(props, ifc_obj, is_a, i):     
+    if ifc_obj is None:
+        return i
     id = ifc_obj.id()
     # get psets    
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)    
@@ -307,6 +440,7 @@ def set_properties(props, ifc_obj, is_a, i):
         i += 1
     return i
 
+# Função para obter as propriedades de um elemento e do seu tipo, e adicionar na coleção de propriedades do addon
 def refresh_props(context):
     # get active object
     props = context.scene.og_props
@@ -317,6 +451,8 @@ def refresh_props(context):
     obj = context.active_object
     if obj:
         ifc_obj = tool.Ifc.get_entity(obj)
+        if ifc_obj is None:
+            return
         # se o tipo do elemento tem algum documento associado
         ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
         if getattr(ifc_obj_type, 'HasAssociations', None):
@@ -329,7 +465,7 @@ def refresh_props(context):
                     newdocument.name = document.Name
                     newdocument.identification = document.Identification
                     if document.Location:
-                        newdocument.location = document.Location.wrappedValue
+                        newdocument.location = document.Location
                     else:
                         newdocument.location = ''
 
@@ -340,6 +476,72 @@ def refresh_props(context):
         else:
             i = set_properties(props, ifc_obj, "instance", 0)
             set_properties(props, ifc_type_obj, "type", i)
+
+# Função para expandir ou contrair a árvore de classes, produtos ou tipos
+def set_hide_class(context, index, is_hidden):
+    props = context.scene.og_props
+    level = props.classes[index].level
+    for classe in props.classes:
+        if classe.index > index:
+            if classe.level > level:
+                classe.is_hidden = is_hidden                
+            else:
+                return
+
+# Função para expandir ou contrair a árvore de classes, produtos ou tipos
+def set_hide_product(context, index, is_hidden):
+    props = context.scene.og_props
+    level = props.products[index].level
+    for product in props.products:
+        if product.index > index:
+            if product.level_index > level:
+                product.is_hidden = is_hidden                
+            else:
+                return
+
+# Função para expandir ou contrair a árvore de classes, produtos ou tipos           
+def build_products(context, classe, c, level, parent, hide, children):
+    c += 1 
+    props = context.scene.og_props
+    new_product = props.types.add()
+    new_product.id        = classe["id"]                 
+    new_product.name        = classe["name"]
+    new_product.tag        = classe["tag"]
+    new_product.description = classe['description']   
+    new_product.element_type         = classe["element_type"] 
+    new_product.index       =   c  
+    new_product.level = level
+    new_product.parent = parent
+    new_product.is_expanded = False
+    new_product.is_hidden = hide
+    new_product.has_children = children
+    return c
+
+# Função para expandir ou contrair a árvore de classes, produtos ou tipos
+def build_classes(context, classe, c, level, parent, hide):
+    c += 1 
+    props = context.scene.og_props
+    new_class = props.classes.add()
+    new_class.code        = classe["code"]                 
+    new_class.name        = classe["name"]                
+    new_class.description = classe['descriptionPart']   
+    new_class.uri         = classe["uri"]  
+    new_class.type        = classe["classType"]  
+    new_class.index       =   c  
+    new_class.level = level
+    new_class.parent = parent
+    new_class.is_expanded = False
+    new_class.is_hidden = hide
+    
+    if 'children' in classe:   
+        level = level + 1     
+        new_class.has_children = True
+        for child in classe['children']:            
+            c = build_classes(context, child , c, level, classe['name'], True)
+            set_hide_class(context, c, True)
+    else:
+        new_class.has_children = False
+    return c
 
 # Classes
 
@@ -637,8 +839,156 @@ class Catalog:
             data = json.load(file)
         return data
 
+class CDE_Api:
+    def __init__(self, endpoint):
+        self.endpoint = endpoint
+    
+    def get_projects(self):
+        response = requests.get(f'{self.endpoint}/projects')
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
+    
+    def get_contracts(self):
+        #response = requests.get(f'{self.endpoint}/projects/{project_id}/contracts')
+        contracts = [
+            {
+                "id": "ct1",
+                "name": "Contracto-001",
+                "objects": [
+                    {
+                        "id" : "TR-001",
+                        "name" : "Trench-001",
+                        "objects": [
+                            {
+                                "id" : "AC-001",
+                                "name" : "AC-001"
+                            },
+                            {
+                                "id" : "AC-002",
+                                "name" : "AC-002"
+                            }
+                        ]
+                    },
+                    {
+                        "id" : "TR-002",
+                        "name" : "Trench-002",
+                        "objects": [
+                            {
+                                "id" : "AC-003",
+                                "name" : "AC-003"
+                            },
+                            {
+                                "id" : "AC-004",
+                                "name" : "AC-004"
+                            }
+                        ]
+                    }
 
+                ]
+            },
+            {
+                "id": "ct2",
+                "name": "Contracto-002",
+                "objects": [
+                    {
+                        "id" : "TR-003",
+                        "name" : "Trench-003",
+                        "objects": [
+                            {
+                                "id" : "AC-005",
+                                "name" : "AC-005"
+                            },
+                            {
+                                "id" : "AC-006",
+                                "name" : "AC-006"
+                            }
+                        ]
+                    },
+                    {
+                        "id" : "TR-004",
+                        "name" : "Trench-004",
+                        "objects": [
+                            {
+                                "id" : "AC-007",
+                                "name" : "AC-007"
+                            },
+                            {
+                                "id" : "AC-008",
+                                "name" : "AC-008"
+                            }
+                        ]
+                    }
 
+                ]
+            }
+        ]
 
+        return contracts
 
+    def get_assets(self):
+        assets = [
+            {
+                "id": "as1",
+                "name": "Asset-001",
+                "objects": [
+                    {
+                        "id" : "AC-001",
+                        "name" : "AC-001"
+                    },
+                    {
+                        "id" : "AC-002",
+                        "name" : "AC-002"
+                    }
+                ]
+            },
+            {
+                "id": "as2",
+                "name": "Asset-002",
+                "objects": [
+                    {
+                        "id" : "AC-003",
+                        "name" : "AC-003"
+                    },
+                    {
+                        "id" : "AC-004",
+                        "name" : "AC-004"
+                    }
+                ]
+            }
+        ]
+        return assets
 
+    def get_inventory(self):
+        inventory = [
+            {
+                "id": "in1",
+                "name": "Inventory-001",
+                "objects": [
+                    {
+                        "id" : "AC-001",
+                        "name" : "AC-001"
+                    },
+                    {
+                        "id" : "AC-002",
+                        "name" : "AC-002"
+                    }
+                ]
+            },
+            {
+                "id": "in2",
+                "name": "Inventory-002",
+                "objects": [
+                    {
+                        "id" : "AC-003",
+                        "name" : "AC-003"
+                    },
+                    {
+                        "id" : "AC-004",
+                        "name" : "AC-004"
+                    }
+                ]
+            }
+        ]
+        return inventory

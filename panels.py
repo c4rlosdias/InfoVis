@@ -1,11 +1,11 @@
 import bpy
 from .operators import *
 
-
 import bonsai.tool as tool
 import textwrap
 
 
+# Panel functions
 
 def _label_multiline(context, text, parent):
     chars = int(context.region.width / 8)   # 7 pix on 1 character
@@ -218,34 +218,43 @@ class BIM_UL_property_class(bpy.types.UIList):
             op = row.operator("object.uri", text="", icon="URL")
             op.uri = item.uri
          
-        
+     
 # Painel de classes             
 class BIM_UL_classes(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
         if item:
             row = layout.row(align=True)
+            icon_type="COLOR"
             if item.type == 'Material':
-                icontype = 'MATERIAL_DATA'
+                icon_type = 'MATERIAL_DATA'
             else:
-                icontype = 'COLOR'
+                icon_type = 'COLOR'
 
-            if not item.is_hidden:
-                for i in range(0, item.level_index - 1):
-                    row.label(text="", icon="BLANK1")
-                if item.has_children:
-                    if item.is_expanded:
-                        row.operator(
-                            "object.contract_classes", text="", emboss=False, icon="DISCLOSURE_TRI_DOWN"
-                        ).index = item.index
-                    else:
-                        row.operator(
-                            "object.expand_classes", text="", emboss=False, icon="DISCLOSURE_TRI_RIGHT"
-                        ).index = item.index
-                else:
-                    row.label(text="", icon="BLANK1") 
+            draw_tree(layout, item,
+                operators = [
+                    {"name": "object.uri", "icon": 'URL', "att": [("uri", item.uri)]}
+                ],
+                attributes = [(f'[{item.code}] {item.name}', icon_type)],                
+                property = 'classes'
+            )
+ 
+            # if not item.is_hidden:
+            #     for i in range(0, item.level_index - 1):
+            #         row.label(text="", icon="BLANK1")
+            #     if item.has_children:
+            #         if item.is_expanded:
+            #             row.operator(
+            #                 "object.contract_classes", text="", emboss=False, icon="DISCLOSURE_TRI_DOWN"
+            #             ).index = item.index
+            #         else:
+            #             row.operator(
+            #                 "object.expand_classes", text="", emboss=False, icon="DISCLOSURE_TRI_RIGHT"
+            #             ).index = item.index
+            #     else:
+            #         row.label(text="", icon="BLANK1") 
 
-                row.label(text= f'[{item.code}] {item.name}', icon = icontype )                 
-                row.operator("object.uri", text="", icon="URL").uri = item.uri
+            #     row.label(text= f'[{item.code}] {item.name}', icon = icontype )                 
+            #     row.operator("object.uri", text="", icon="URL").uri = item.uri
 
 # Painel de propriedades da classe             
 class BIM_UL_class_prop(bpy.types.UIList):
@@ -279,14 +288,13 @@ class Panel_Decompositions(bpy.types.Panel):
         layout = self.layout     
         props = context.scene.og_props
         row = layout.row()
-        row.operator("elements.decomposition", text="load")
+        row.operator("decomposition.load", text="Load decompositions")
+        row = layout.row()
+        row.label(text="Project Composition:", icon='INFO')  
+        # Imprime a arvore de decomposicao de elementos 
         row = layout.row()
         row.prop(props, "show_ports")
-        # Imprime a arvore de decomposicao de elementos 
-        if len(props.elements_containers) > 0:
-            row = layout.row()
-            row.label(text="Element decomposition:", icon='INFO')
-
+        if len(props.containers_show) > 0:
             self.layout.template_list(
                 "BIM_UL_decomposition",
                 "",
@@ -296,13 +304,33 @@ class Panel_Decompositions(bpy.types.Panel):
                 "active_element_index",
                 rows=5
             )
+            row = layout.row()
+
+        # imprime a árvore de contratos, ativos ou estoque
+        row.label(text="Tree decomposition:", icon='INFO')
+        row = layout.row()
+        row.prop(props, "tree_type", expand=True)
+        
+
+        if len(props.elements_tree) > 0:           
+
+            self.layout.template_list(
+                "BIM_UL_tree",
+                "",
+                props,
+                "elements_tree",
+                props,
+                "active_tree_element_index",
+                rows=5
+            )
+            row = layout.row()
 
 # Painel de classes             
 class BIM_UL_decomposition(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        props = context.scene.og_props
         if item:
             row = layout.row(align=True)
-            objs = [tool.Ifc.get_entity(x).id()  for x in context.selected_objects]           
             # Define icons for different element types
             blank = 1
             if item.type == "IfcProject":
@@ -314,46 +342,42 @@ class BIM_UL_decomposition(bpy.types.UIList):
             elif item.type == "IfcElementAssembly":
                 icon = 'STICKY_UVS_LOC'
             elif item.type == "IfcPipeSegment":
-                icon = 'IPO_EASE_OUT'   
-       
+                icon = 'IPO_EASE_OUT'         
             elif item.type == "IfcCableSegment":
                 icon = 'DOT'  
-
             elif item.type == "IfcValve":
-                icon = 'DOT'   
-    
+                icon = 'DOT'      
             else:
                 icon = 'DOT'
 
+            draw_tree(layout, item,
+                operators = [
+                    {"name": "decomposition.select_element", "icon": 'OBJECT_DATAMODE', "att": [("index", item.index)]},
+                    {"name": "decomposition.select_components", "icon": 'RESTRICT_SELECT_OFF', "att": [("index", item.index)]},
+                    {"name": "decomposition.move", "icon": 'LONGDISPLAY', "att": [("index", item.index), ("type", "nests")]},
+                    {"name": "decomposition.move", "icon": 'IMGDISPLAY', "att": [("index", item.index), ("type", "aggregations")]},
+                ],
+                attributes = [(f'[{item.object_type}] {item.name}', icon)],                
+                property = 'elements_containers'
+            )
+# Painel de classes             
+class BIM_UL_tree(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        props = context.scene.og_props
+        if item:
+            row = layout.row(align=True)
+            # Define icons for different element types
+            blank = 1
+            icon = 'NONE'
 
-            #props = context.scene.og_props
-
-            if not item.is_hidden:
-
-                for i in range(0, item.level - blank):
-                    row.label(text="", icon="BLANK1")
-
-                if item.has_children:
-                    if item.is_expanded:
-                        row.operator(
-                            "element.contract_decomposition", text="", emboss=False, icon="DISCLOSURE_TRI_DOWN"
-                        ).index = item.index
-                    else:
-                        row.operator(
-                            "element.expand_decomposition", text="", emboss=False, icon="DISCLOSURE_TRI_RIGHT"
-                        ).index = item.index
-                # else:
-                #     row.label(text="", icon="BLANK1") 
-                row.label(text= f'[{item.object_type}] {item.name}', icon=icon)
-                icon2 = "CANCEL" if item.is_selected == True else "RESTRICT_SELECT_OFF"      
-                row.operator("decomposition.select_element", text="", icon='OBJECT_DATAMODE').index = item.index                          
-                row.operator("decomposition.select_components", text="", icon=icon2).index = item.index
-                op = row.operator("decomposition.move", text="", icon="LONGDISPLAY")
-                op.index = item.index
-                op.type = 'nests'
-                op = row.operator("decomposition.move", text="", icon="IMGDISPLAY")
-                op.index = item.index
-                op.type = 'aggregations'
+            draw_tree(layout, item,
+                operators = [
+                    {"name": "decomposition.select_element", "icon": 'OBJECT_DATAMODE', "att": [("index", item.index)]},
+                    {"name": "decomposition.select_components", "icon": 'RESTRICT_SELECT_OFF', "att": [("index", item.index)]}
+                ],
+                attributes = [(f'[{item.object_type}] {item.name}', icon)],                
+                property = 'elements_tree'
+            )
 
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
@@ -369,7 +393,7 @@ class Panel_Catalog(bpy.types.Panel):
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
     bl_category     = "O&G Tools"
-    #bl_options      = {"DEFAULT_CLOSED"}
+    bl_options      = {"DEFAULT_CLOSED"}
     
     def draw_header(self, context):
         layout = self.layout
@@ -408,9 +432,8 @@ class Panel_Catalog(bpy.types.Panel):
             rowb = box.row()
             rowb.label(text=f'Element Type:{element_type}')
             
-            
 
-# Painel de produtos             
+# Painel de tipos             
 class BIM_UL_products(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
         if item:
@@ -422,37 +445,21 @@ class BIM_UL_products(bpy.types.UIList):
             if item.name in icons:
                 icontype = icons[item.name]
             else:
-                icontype = 'LAYER_ACTIVE'
+                icontype = 'NONE'
 
 
-            if not item.is_hidden:
-                for i in range(0, item.level_index - 1):
-                    row.label(text="", icon="BLANK1")
-                if item.has_children:
-                    if item.is_expanded:
-                        row.operator(
-                            "object.contract_products",
-                            text="",
-                            emboss=False,
-                            icon="DISCLOSURE_TRI_DOWN"
-                        ).index = item.index
-                    else:
-                        row.operator(
-                            "object.expand_products",
-                            text="",
-                            emboss=False,
-                            icon="DISCLOSURE_TRI_RIGHT"
-                        ).index = item.index
-                else:
-                    row.label(text="", icon="BLANK1") 
+            draw_tree(layout, item,
+                operators = [
+                    {"name": "catag.select_type", "icon": 'OBJECT_DATA', "att": [("id", item.id)]},
+                    {"name": "catag.select_elements", "icon": 'RESTRICT_SELECT_OFF', "att": [("id", item.id)]}
+                ],
+                #attributes = [(item.tag, 'NONE'), (item.name, 'NONE'), (item.element_type, 'NONE')],  
+                attributes = [(f'[{item.tag}] - {item.name}', icontype)] if item.tag != '' else [(item.name, icontype)],             
+                property = 'types',
+                only_children=True
+            )
 
-                row.label(text= f'{item.name}' )
-                row.label(text= f'{item.element_type}' )
-                
 
-                if not item.has_children:
-                    row.operator("catag.select_type", text="", icon="OBJECT_DATA").id = item.id
-                
 
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
@@ -481,7 +488,7 @@ class Panel_Properties(bpy.types.Panel):
         # select objects 
         obj = context.active_object  
          
-        
+        print(obj)
         if obj is not None and obj.select_get():#len(context.selected_objects) > 0:   
             model = tool.Ifc.get()     
             row = layout.row()                      
@@ -731,6 +738,51 @@ class Panel_Properties(bpy.types.Panel):
         for area in context.screen.areas:
             area.tag_redraw()
 
+#============================================================================================
+# Contracts / stoks
+#============================================================================================
+
+# class Panel_Contracts(bpy.types.Panel):
+    
+#     bl_label        = "Contracts / Stocks"
+#     bl_idname       = "VIEW3D_PT_og_contracts"
+#     bl_space_type   = 'VIEW_3D'
+#     bl_region_type  = 'UI'
+#     bl_context      = "objectmode"
+#     bl_category     = "O&G Tools"
+#     bl_options      = {"DEFAULT_CLOSED"}
+    
+#     def draw_header(self, context):
+#         layout = self.layout
+#         layout.label(text="", icon='FILE_BLEND')
+
+#     def draw(self, context):   
+#         layout = self.layout     
+#         row = layout.row()
+#         row.operator("contracts.load", text="Load contracts and stocks")
+#         props = context.scene.og_props
+#         if len(props.contracts) > 0:
+#             row = layout.row()
+#             row.label(text="Contracts and Stocks:", icon='INFO')
+#             self.layout.template_list(
+#                 "BIM_UL_contracts",
+#                 "",
+#                 props,
+#                 "contracts",
+#                 props,
+#                 "active_contract_index",
+#                 rows=10
+#             )
+# class BIM_UL_contracts(bpy.types.UIList):
+#     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+#         if item:
+#             draw_tree(layout, item,
+#                 operators = [],
+#                 attributes = [(item.id, 'NONE'), (item.name, 'NONE')],                
+#                 property = 'contracts',
+#                 only_children=True
+#             ) 
+
 
 #============================================================================================
 # Settings
@@ -779,4 +831,6 @@ class Panel_Info(bpy.types.Panel):
         layout = self.layout
         row = layout.row()
         row.label(text="O&G Tools V 0.1.1", icon='MOD_LINEART')
+        layout.separator()
+
 

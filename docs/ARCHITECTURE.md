@@ -12,7 +12,7 @@ O Oil & Gas Tools é um **add-on Blender modular** que segue o padrão **MVC (Mo
 │  Properties (Data)     → properties.py           │
 │  Operators (Logic)     → operators.py            │
 │  Data Layer            → data.py                 │
-└─────────────────────┬──────────────────────────┘
+└─────────────────────┬────────────────────────────┘
                       │
                       ▼
         ┌──────────────────────────┐

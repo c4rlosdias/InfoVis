@@ -2,9 +2,78 @@ import bpy
 from bpy.types import PropertyGroup
 from bpy.props import *
 import bonsai.tool as tool
+import ifcopenshell
+import ifcopenshell.util.selector as selector
 import requests
-from .data import bSDD
+from .data import *
 
+# update function for the decomposition tree 
+def update_tree_type(self, context):
+    def add_elements(elements,level=0):
+        new = self.elements_tree.add()
+        for element in elements:
+            new.name = element['name'] or 'Unnamed'
+            new.object_type = element['id'] or 'Unnamed'
+            new.level = level
+            new.is_expanded = False
+            
+            if 'objects' in element and len(element['objects']) > 0:
+                new.has_children = True
+                add_elements(element['objects'], level=level+1)
+            else:
+                new.has_children = False
+
+    cde = CDE_Api('')
+    elements_tree = []
+    if self.tree_type == 'assets':
+        elements_tree = cde.get_assets()    
+    elif self.tree_type == 'contracts':
+        elements_tree = cde.get_contracts()
+    elif self.tree_type == 'inventory':
+        elements_tree = cde.get_inventory()
+    i = 0
+    
+    for element in elements_tree:
+        self.elements_tree.clear()
+        new = self.elements_tree.add()
+        new.name = element['name'] or 'Unnamed'        
+        new.object_type = element['id'] or 'Unnamed'
+        new.level = 0
+        new.is_expanded = False
+        new.has_children = True if 'objects' in element and len(element['objects']) > 0 else False
+        if 'objects' in element and len(element['objects']) > 0:
+            add_elements(element['objects'], level=1)
+
+
+
+
+
+        new.is_hidden = False if new.has_children else True
+        i += 1
+
+    # self.elements_containers.clear()
+    # model = tool.Ifc.get()
+     
+    # # dependendo do tipo de decomposição selecionada, busca os elementos raiz para montar a árvore
+    # if self.tree_type == 'assets':
+    #     elements = selector.filter_elements(model, "IfcGroup, ObjectType=SubseaAsset")
+    # elif self.tree_type == 'contracts':
+    #     elements = selector.filter_elements(model, "IfcGroup, ObjectType=SubseaContract")
+    # elif self.tree_type == 'inventory':
+    #     elements = selector.filter_elements(model, "IfcGroup, ObjectType=SubseaInventory")
+    # else:
+    #     elements = []
+
+    # if len(elements) > 0:
+    #     for element in elements: 
+    #         load_contained_elements_by_decomposition(element, 'elements_tree', context)  
+    #     i = 0          
+    #     for element in self.elements_containers:
+    #         element.index = i
+    #         element.is_hidden = False if element.level==1 else True
+    #         element.is_expanded = False if element.level==1 else True  
+    #         i += 1   
+    #     refresh_container(context)
 
 def get_dictionaries(self, context):                
     if not bSDD.is_loaded:
@@ -65,11 +134,12 @@ class Class_info(PropertyGroup):
     is_expanded : BoolProperty(name="Is Expanded", default=True)
     index       : IntProperty(name="index")
     parent      : StringProperty(name="parent")
-    level_index : IntProperty(name="level index")
+    level       : IntProperty(name="level")
     type        : StringProperty(name="class type")
 
 class Class_type(PropertyGroup):
     id          : IntProperty(name='id')
+    tag         : StringProperty(name='tag')
     name        : StringProperty(name='name')
     description : StringProperty(name='description')
     element_type : StringProperty(name='element type')
@@ -78,7 +148,7 @@ class Class_type(PropertyGroup):
     is_expanded : BoolProperty(name="Is Expanded", default=True)
     index       : IntProperty(name="index")
     parent      : StringProperty(name="parent")
-    level_index : IntProperty(name="level index")
+    level       : IntProperty(name="level index")
 
 
 class Enumeration_values(PropertyGroup):        
@@ -157,29 +227,43 @@ class Container(PropertyGroup):
     object_type   : StringProperty(name="object_type")
     is_nested     : BoolProperty(name="is nested", default=False)
 
+
 class OG_Properties(PropertyGroup): 
     
     # O&G Dictionary
 
-    dictionary               : EnumProperty(items=get_dictionaries, name='',  description='Get Dictionaries')  
-    active_property_index    : IntProperty(name='property index', default=0, update=active_prop_changed)
-    ifc_prop                 : CollectionProperty(name='properties', type=Ifc_properties) 
-    active_info_prop_index   : IntProperty(name='object index', default=0)
-    class_info               : CollectionProperty(name='info class', type=Class_info)    
-    active_class_index       : IntProperty(name='class index', default=0, update=active_class_changed)
-    active_class_prop_index  : IntProperty(name='class prop index', default=0, update=active_class_prop_changed)
-    classes                  : CollectionProperty(name='classes', type=Class_info) 
-    classes_shown            : CollectionProperty(name='classes show', type=Class_info) 
-    active_element_index     : IntProperty(name='element index', default=0)
+    dictionary                 : EnumProperty(items=get_dictionaries, name='',  description='Get Dictionaries')  
+    active_property_index      : IntProperty(name='property index', default=0, update=active_prop_changed)
+    ifc_prop                   : CollectionProperty(name='properties', type=Ifc_properties) 
+    active_info_prop_index     : IntProperty(name='object index', default=0)
+    class_info                 : CollectionProperty(name='info class', type=Class_info)    
+    active_class_index         : IntProperty(name='class index', default=0, update=active_class_changed)
+    active_class_prop_index    : IntProperty(name='class prop index', default=0, update=active_class_prop_changed)
+    classes                    : CollectionProperty(name='classes', type=Class_info) 
+    classes_shown              : CollectionProperty(name='classes show', type=Class_info) 
+    active_element_index       : IntProperty(name='element index', default=0)
+    active_tree_element_index  : IntProperty(name='element index', default=0)
     
     # Decomposition
-    elements_containers      : CollectionProperty(name='elements containers', type=Container) 
-    containers_show          : CollectionProperty(name='containers show', type=Container) 
+    tree_type                : EnumProperty(
+                                    items=[
+                                        ('assets', 'Assets', 'Assets'),
+                                        ('contracts', 'Contracts', 'Contracts'),
+                                        ('inventory', 'Inventory', 'Inventory')                                        
+                                    ],
+                                    name='Tree Type',
+                                    update=update_tree_type
+                               ) # type: ignore
+    elements_containers      : CollectionProperty(name='elements containers', type=Container)  # type: ignore
+    containers_show          : CollectionProperty(name='containers show', type=Container)  # pyright: ignore[reportInvalidTypeForm]
+    elements_tree            : CollectionProperty(name='elements tree', type=Container)
+    elements_tree_show        : CollectionProperty(name='elements tree show', type=Container)
+    
     show_ports               : BoolProperty(name="show ports", default=False)
 
 
     add_prop_clicked         : BoolProperty(name="add property clicked", default=False)
-    class_description        : StringProperty(name='class description')
+    class_description        : StringProperty(name='class description') 
     class_definition         : StringProperty(name='class definition')
     class_version            : StringProperty(name='class version date') 
     class_type               : StringProperty(name='class type') 
@@ -229,6 +313,8 @@ class OG_Properties(PropertyGroup):
     documents                : CollectionProperty(name='documents', type=Documents)
 
     show_table               : BoolProperty(name='Show table', default=False)
+
+
 
 
 

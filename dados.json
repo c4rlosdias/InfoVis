@@ -1,189 +1,153 @@
 {
-    "IfcBuildingElementProxyType": [
-        {
-            "id": 298211,
-            "name": "Sleeper",
-            "description": "",
-            "element_type": "SleeperType"
-        },
-        {
-            "id": 299145,
-            "name": "Line Mechanical Support",
-            "description": "",
-            "element_type": "LineMechanicalSupportType"
-        }
-    ],
-    "IfcCoveringType": [
-        {
-            "id": 21901,
-            "name": "External coatings",
-            "description": "",
-            "element_type": "RigidPipeSegmentExternalCoatings"
-        }
-    ],
-    "IfcMemberType": [
-        {
-            "id": 115478,
-            "name": "Chain segment A",
-            "description": "",
-            "element_type": "ChainSegmentType"
-        }
-    ],
-    "IfcPileType": [
-        {
-            "id": 272586,
-            "name": "Suction Pile",
-            "description": "",
-            "element_type": "SuctionPileType"
-        }
-    ],
-    "IfcValveType": [
-        {
-            "id": 276675,
-            "name": "Straight Pipe Section",
-            "description": "",
-            "element_type": "ProcessBallValveType"
-        }
-    ],
     "IfcPipeFittingType": [
         {
-            "id": 14527,
-            "name": "JUNCAO",
+            "id": 8926,
+            "name": "End Fitting 6\" ID Production Bottom Riser 7 1/16\" API 6BX Flange, 10000 psi, BX 156 with N2 Seal Port (MODA)",
+            "tag": "4",
             "description": "",
-            "element_type": "?????"
+            "element_type": "EndFittingType"
         },
         {
-            "id": 14531,
-            "name": "Bracelet Anode",
+            "id": 7549,
+            "name": "End Fitting 6\" ID Production Top Riser 7 1/16\" API 17SS Flange, 5000 psi, BX 156 with N2 Seal Port",
+            "tag": "5",
             "description": "",
-            "element_type": "BraceletAnodeType"
+            "element_type": "EndFittingType"
         },
         {
-            "id": 15773,
-            "name": "Buoyancy Module",
+            "id": 1862,
+            "name": "End Fitting 6\" ID Production Bottom Riser 7 1/16\" API 17SS Flange, 5000 psi, BX 156 With N2 Seal Port",
+            "tag": "6",
             "description": "",
-            "element_type": "BuoyancyModuleType"
+            "element_type": "EndFittingType"
         },
         {
-            "id": 19760,
-            "name": "End Fitting",
+            "id": 9576,
+            "name": "End Fitting 6\" ID Production Flowline 7 1/16\" API 17SS Flange, 5000 psi, BX 156 With N2 Seal Port",
+            "tag": "7",
             "description": "",
-            "element_type": ""
+            "element_type": "EndFittingType"
         },
         {
-            "id": 19761,
-            "name": "End Fitting",
+            "id": 850,
+            "name": "6in Top Bend Stiffener with Latch Sleeve and Protection",
+            "tag": "8",
             "description": "",
-            "element_type": "FlexibleJointType"
+            "element_type": "TopBendStiffenerType"
         },
         {
-            "id": 223987,
-            "name": "AnchoringCollar",
+            "id": 2981,
+            "name": "6in Bend Restrictor 72 degrees",
+            "tag": "9",
+            "description": "",
+            "element_type": "BendRestrictorType"
+        },
+        {
+            "id": 7266,
+            "name": "Intermediate Bend Stiffener 6in - Bottom Riser",
+            "tag": "10",
+            "description": "",
+            "element_type": "IntermediateBendStiffenerType"
+        },
+        {
+            "id": 6011,
+            "name": "Hang Off Collar 6 in",
+            "tag": "12",
+            "description": "",
+            "element_type": "HangOffCollarType"
+        },
+        {
+            "id": 5639,
+            "name": "Pull In Kit 6in Top Riser",
+            "tag": "13",
+            "description": "",
+            "element_type": "PipePullingHeadType"
+        },
+        {
+            "id": 1079,
+            "name": "6in Stopper Clamp",
+            "tag": "14",
+            "description": "",
+            "element_type": "StopperCollarType"
+        },
+        {
+            "id": 6217,
+            "name": "Pulling Head 7 /16 API 6BX Flange, 1000PSI, BX 156 (SWL=300tf)",
+            "tag": "15",
+            "description": "",
+            "element_type": "PipePullingHeadType"
+        },
+        {
+            "id": 7065,
+            "name": "Handling/Test Head, 7 1/16\" API 17SS Flange, 5000 psi, BX 156 (SWL= 55 tf)",
+            "tag": "16",
+            "description": "",
+            "element_type": "PipePullingHeadType"
+        },
+        {
+            "id": 8174,
+            "name": "Installation/Test Head, 7 1/16\" API 17SS Flange, 5000 psi, BX 156 (SWL= 300 tf)",
+            "tag": "17",
+            "description": "",
+            "element_type": "PipePullingHeadType"
+        },
+        {
+            "id": 8281,
+            "name": "Installation/Test Head, 7 1/16\" API 17SS Flange, 5000 psi, BX 156 (SWL= 200 tf)",
+            "tag": "18",
+            "description": "",
+            "element_type": "PipePullingHeadType"
+        },
+        {
+            "id": 2109,
+            "name": "6in Anchor Collar",
+            "tag": "19",
             "description": "",
             "element_type": "AnchoringCollarType"
         },
         {
-            "id": 257555,
-            "name": "Plet",
-            "description": "",
-            "element_type": "PletType"
+            "id": 1219,
+            "name": "Anode Collar for Service Life 30 Kg",
+            "tag": "27",
+            "description": "Anode Collar for Service Life 30 Kg (3 per EndFitting, Drawing Number CB-TDXXXXXXX-00-01.16AI) + Neoprene Blanket",
+            "element_type": "AnodeCollarSet"
         },
         {
-            "id": 272894,
-            "name": "Curved Pipe Section",
-            "description": "",
-            "element_type": "CurvedPipeSectionType"
+            "id": 1442,
+            "name": "Anode Collar for Service Life 33 Kg",
+            "tag": "28",
+            "description": "Anode Collar for Service Life 30 Kg (3 per EndFitting, Drawing Number CB-TDXXXXXXX-00-01.16AI) + Neoprene Blanket",
+            "element_type": "AnodeCollarSet"
         },
         {
-            "id": 273168,
-            "name": "Flow Connector",
-            "description": "",
-            "element_type": "FlowConnectorType"
+            "id": 1647,
+            "name": "Anode Collar for Service Life 200 Kg",
+            "tag": "29",
+            "description": "Anode Collar for Service Life 30 Kg (3 per EndFitting, Drawing Number CB-TDXXXXXXX-00-01.16AI) + Neoprene Blanket",
+            "element_type": "AnodeCollarSet"
         },
         {
-            "id": 276087,
-            "name": "Line Endpoint",
+            "id": 8439,
+            "name": "Abrasion Protection / Anchor Collar Protection - 3 meters with Installation Tool",
+            "tag": "31",
             "description": "",
-            "element_type": "LineEndpointType"
-        },
-        {
-            "id": 276776,
-            "name": "Flange",
-            "description": "",
-            "element_type": "FlangeType"
-        },
-        {
-            "id": 278127,
-            "name": "Bend",
-            "description": "",
-            "element_type": ""
-        },
-        {
-            "id": 288835,
-            "name": "Cylinder",
-            "description": "",
-            "element_type": "BraceletAnodeType"
-        },
-        {
-            "id": 296773,
-            "name": "Flexible Joint",
-            "description": "",
-            "element_type": "FlexibleJointType"
+            "element_type": "AnnodeCollarType"
         }
     ],
     "IfcPipeSegmentType": [
         {
-            "id": 11257,
-            "name": "Pipe B",
+            "id": 2231,
+            "name": "6in Flexible Bottom Riser",
+            "tag": "2",
             "description": "",
-            "element_type": "RigidPipeSegmentType"
+            "element_type": "FlexiblePipeStructure"
         },
         {
-            "id": 272850,
-            "name": "Straight Pipe Section",
+            "id": 2235,
+            "name": "6in Flexible Flowline",
+            "tag": "3",
             "description": "",
-            "element_type": "StraightPipeSection"
-        },
-        {
-            "id": 286427,
-            "name": "Pipe C",
-            "description": "",
-            "element_type": "LinePipeType"
-        }
-    ],
-    "IfcDiscreteAccessoryType": [],
-    "IfcMechanicalFastenerType": [
-        {
-            "id": 286284,
-            "name": "UNS Bolt Set",
-            "description": "",
-            "element_type": "UNSBoltSetType"
-        },
-        {
-            "id": 131752,
-            "name": "Hook A",
-            "description": "",
-            "element_type": "HookType"
-        },
-        {
-            "id": 58280,
-            "name": "Pear linkl A",
-            "description": "",
-            "element_type": "PearLinkType"
-        },
-        {
-            "id": 22111,
-            "name": "Shackle A",
-            "description": "",
-            "element_type": "ShackleType"
-        }
-    ],
-    "IfcGeographicElementType": [
-        {
-            "id": 19695,
-            "name": "mar",
-            "description": "",
-            "element_type": "water"
+            "element_type": "FlexiblePipeStructure"
         }
     ]
 }
