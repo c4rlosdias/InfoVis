@@ -598,13 +598,13 @@ class Import_ifc():
                 ifc_importer.create_style(element)
 
 class bSDD:
-    data_dic =[]
-    data_info_prop =[]
-    data_info_class={}
-    data_class_prop = []
-    properties = []
-    data_prop = {}
-    data_class = {}
+    data_dic =[] #(Version, Name, Version)
+    data_info_prop =[]# (URI, Name, Description, DataType, Unit, AllowedValues) 
+    data_info_class={} # (URI, Name, Description, RelatedIfcEntityNames, IsAbstract, IsDeprecated)
+    data_class_prop = [] # (ClassUri, PropertyUri, Name, Description, DataType, Unit, AllowedValues)
+    properties = [] # (URI, Name, Description, DataType, Unit, AllowedValues)
+    data_prop = {} # (URI, Name, Description, DataType, Unit, AllowedValues)
+    data_class = {} # (URI, Name, Description, RelatedIfcEntityNames, IsAbstract, IsDeprecated)
     response = ''
     is_loaded = False
     endpoint = 'https://api.bsdd.buildingsmart.org/api/'
@@ -623,12 +623,17 @@ class bSDD:
         else:
             cls.data_dic = [('0', 'ERROR connecting to bSDD', '')]
 
+        
     @classmethod
-    def load_classes(cls, version : str, use_nested : bool) -> bool:        
+    def load_classes(cls, version : str, use_nested : bool) -> bool:  
+
+        
+           
         params = {
             'uri' : f'{cls.uri}/{version}',
             'UseNestedClasses' : use_nested
         }
+
         response = requests.get(f'{cls.endpoint}Dictionary/v1/Classes', params=params)        
         if response.status_code == 200:            
             cls.data_class = response.json()['classes']
@@ -650,8 +655,8 @@ class bSDD:
             return False
     
     @classmethod
-    def get_class(cls, uri : str) -> bool:        
-        params = {'uri' : uri}
+    def get_class(cls, uri : str, include_properties : bool) -> bool:        
+        params = {'uri' : uri, 'includeClassProperties' : include_properties}
         response = requests.get(f'{cls.endpoint}Class/v1', params=params)        
         if response.status_code == 200:            
             cls.data_info_class = response.json()
@@ -839,7 +844,7 @@ class Catalog:
             data = json.load(file)
         return data
 
-class CDE_Api:
+class CDE_Api:  
     def __init__(self, endpoint):
         self.endpoint = endpoint
     

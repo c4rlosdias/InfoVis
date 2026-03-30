@@ -350,14 +350,44 @@ class Operator_export_ids(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
     filte_glob : bpy.props.StringProperty(default='*.ids', options={'HIDDEN'})
+    
+    def get_data_type(self, units):
+        # Implement your logic to get the data type based on units
+        return 'IfcLabel'  # Example return value, replace with actual logic
 
+    def get_children(self, classe):
+            if 'children' in classe:
+                leaves = []
+                for child in classe['children']:
+                    leaves.extend(self.get_children(child))
+                return leaves
+            else:
+                return [classe]
+            
     def execute(self, context):
         props = context.scene.og_props
         props.ids_file = self.filepath
         # obtem o template
-        PropTempl.get_template()
-        template = PropTempl.template
-         
+        # PropTempl.get_template()
+        # template = PropTempl.template
+
+        data = bSDD.data_class
+        if len(data) == 0:
+            self.report({'ERROR'}, "No data to export. Please load the classes from bSDD first.")
+            return {"CANCELLED"}
+        
+        # cria data_classes
+        data_classes = []
+        for classe in data:
+            leaves = self.get_children(classe)
+            for leave in leaves:
+                response = bSDD.get_class(leave['uri'], True)
+                if response:
+                    data_classes.append(bSDD.data_info_class)
+        # with open('data_classes.json', 'w', encoding='utf-8') as file:
+        #     json.dump(data_classes, file, ensure_ascii=False, indent=4)
+
+        # return {"FINISHED"} if len(data_classes) > 0 else {"CANCELLED"}
         # Cria o ids
         my_ids = ids.Ids(
             title='Oil & Gas Subsea',
@@ -369,46 +399,46 @@ class Operator_export_ids(bpy.types.Operator):
         )
 
         # povoa ids
-        pset_templates = template.by_type('IfcPropertySetTemplate')
-        for pset_template in tqdm(pset_templates, total=len(pset_templates), desc='Processing specifications:'):
-            applicability = pset_template.ApplicableEntity.split('/') 
-            # define a especificação
-            my_spec = ids.Specification(
-                name=pset_template.Name,
-                description='',
-                minOccurs=1,
-                maxOccurs='unbounded',
-                ifcVersion='IFC4'
-            )
-
-            #define a aplicabilidade
-            entity = ids.Entity(
-                name=applicability[0],
-                predefinedType='USERDEFINED'
-            )
-
-            my_spec.applicability.append(entity)
-            if len(applicability) > 1:
-                attribute = ids.Attribute(
-                    name='ObjectType',
-                    value=applicability[1]
-                )                
-                my_spec.applicability.append(attribute)
-            props_templ = pset_template.HasPropertyTemplates
-
-            # requisitos
-            for prop_templ in props_templ:
-                print(prop_templ.Name)
-                property = ids.Property(
-                    baseName= prop_templ.Name,
-                    propertySet= pset_template.Name,
-                    dataType= prop_templ.PrimaryMeasureType.upper(),
-                    cardinality='required' 
+        #pset_templates = template.by_type('IfcPropertySetTemplate')
+        for classe in tqdm(data_classes, total=len(data_classes), desc='Processing specifications:'):
+            if 'classProperties' in classe:             
+                # define a especificação
+                my_spec = ids.Specification(
+                    name='Specification for ' + classe['referenceCode'],
+                    description='',
+                    minOccurs=1,
+                    maxOccurs='unbounded',
+                    ifcVersion='IFC4'
                 )
-            
-                my_spec.requirements.append(property)
 
-            my_ids.specifications.append(my_spec)
+                #define a aplicabilidade
+                entity = ids.Entity(
+                    name=classe['relatedIfcEntityNames'][0] if 'relatedIfcEntityNames' in classe and len(classe['relatedIfcEntityNames']) > 0 else 'Undefined',
+                    predefinedType='USERDEFINED'
+                )
+
+                attribute = ids.Attribute(
+                    name='ElementType' if classe['relatedIfcEntityNames'][0][-4:] == 'Type' else 'ObjectType',
+                    value=classe['referenceCode']
+                )
+
+                my_spec.applicability.append(entity)
+                my_spec.applicability.append(attribute)
+
+
+                # requisitos
+                for prop in classe['classProperties']:                
+                    property = ids.Property(
+                        baseName= prop['name'],
+                        propertySet= prop['propertySet'],
+                        dataType= self.get_data_type(prop['units'][0]) if 'units' in prop else 'IfcLabel',
+                        cardinality='required',
+                        uri=prop['uri']
+                    )
+
+                    my_spec.requirements.append(property)
+
+                my_ids.specifications.append(my_spec)
         
         try:
             my_ids.to_xml(self.filepath)
