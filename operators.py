@@ -1,8 +1,9 @@
-import bonsai.core
+﻿import bonsai.core
 import bonsai.core.geometry
 import bonsai.core.material
 import bonsai.core.type
 import webbrowser
+import json
 import base64
 from io import BytesIO
 import os
@@ -18,7 +19,7 @@ import ifcopenshell.api.geometry as geometry
 import ifcopenshell.api.style as style
 import ifcopenshell
 import webbrowser
-from .data import bSDD, PropTempl,Catalog, Import_ifc, refresh, refresh_container, refresh_products, refresh_props, get_prop_type
+from .data import *
 import bonsai.core as core
 import bonsai
 import bonsai.tool as tool
@@ -32,108 +33,80 @@ from scipy.interpolate import interp1d
 
 dynamic_items = []
 
+def save_json(dados):
+
+    for key in dados:
+        if isinstance(dados[key], list):
+            dados[key].sort(key=lambda item: int(item.get("tag", 0)))
+    
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "dados.json")
+    with open(path, 'w', encoding='utf-8') as file:
+        json.dump(dados, file, ensure_ascii=False, indent=4)
+
 def get_options(self, context):    
     return dynamic_items
 
-def set_hide_class(context, index, is_hidden):
-    props = context.scene.my_props
-    level = props.classes[index].level_index
-    for classe in props.classes:
-        if classe.index > index:
-            if classe.level_index > level:
-                classe.is_hidden = is_hidden                
-            else:
-                return
 
-def set_hide_product(context, index, is_hidden):
-    props = context.scene.my_props
-    level = props.products[index].level_index
-    for product in props.products:
-        if product.index > index:
-            if product.level_index > level:
-                product.is_hidden = is_hidden                
-            else:
-                return
-                
-def build_classes(context, classe, c, level, parent, hide):
-    c += 1 
-    props = context.scene.my_props
-    new_class = props.classes.add()
-    new_class.code        = classe["code"]                 
-    new_class.name        = classe["name"]                
-    new_class.description = classe['descriptionPart']   
-    new_class.uri         = classe["uri"]  
-    new_class.type        = classe["classType"]  
-    new_class.index       =   c  
-    new_class.level_index = level
-    new_class.parent = parent
-    new_class.is_expanded = False
-    #new_class.is_hidden = False if level == 1 else True
-    new_class.is_hidden = hide
-    
-    if 'children' in classe:   
-        level = level + 1     
-        new_class.has_children = True
-    # new_class.is_expanded = True
-        for child in classe['children']:            
-            c = build_classes(context, child , c, level, classe['name'], True)
-            set_hide_class(context, c, True)
-    else:
-        new_class.has_children = False
-    return c
+# ==================================================================================================
+# ==================================================================================================
+# 
+# Common
+# 
+# ==================================================================================================
+# ==================================================================================================
 
-def build_products(context, classe, c, level, parent, hide, children):
-    c += 1 
-    props = context.scene.my_props
-    new_product = props.products.add()
-    new_product.code        = classe["code"]                 
-    new_product.name        = classe["name"]                
-    new_product.description = classe['descriptionPart']   
-    new_product.uri         = classe["uri"] 
-    new_product.index       =   c  
-    new_product.level_index = level
-    new_product.parent = parent
-    new_product.is_expanded = False
-    new_product.is_hidden = hide
-    new_product.has_children = children
-    
-    # if 'children' in classe:   
-    #     level = level + 1     
-    #     new_product.has_children = True
-    #     for child in classe['children']:            
-    #        c = build_products(context, child , c, level, classe['name'], True)
-   
-    # else:
-    #     new_product.has_children = False
-    return c
+class Operator_expand_tree(bpy.types.Operator):
+    """"""
+    bl_idname  = "element.expand_tree"
+    bl_label   = "Expand item tree"
+    bl_options = {"REGISTER", "UNDO"}
 
-def _build_products(context, classe, c, level, parent, hide):
-    c += 1 
-    props = context.scene.my_props
-    new_product = props.products.add()
-    new_product.code        = classe["code"]                 
-    new_product.name        = classe["name"]                
-    new_product.description = classe['descriptionPart']   
-    new_product.uri         = classe["uri"]  
-    new_product.type        = classe["classType"]  
-    new_product.index       =   c  
-    new_product.level_index = level
-    new_product.parent = parent
-    new_product.is_expanded = False
-    #new_class.is_hidden = False if level == 1 else True
-    new_product.is_hidden = hide
+    index    : bpy.props.IntProperty(name="index")
+    property : bpy.props.StringProperty(name="property")
+
+    def execute(self, context):                
+        props = context.scene.og_props
+        #item = props.elements_containers[self.index]
+        item = getattr(props, self.property)[self.index]
+        item.is_expanded = True
+        imin = False
+        level = item.level
+        for classe in getattr(props, self.property):                 
+            if classe.index > item.index:                 
+                if classe.level == level + 1:
+                    classe.is_hidden = False 
+                    classe.is_expanded = False 
+                    imin = True
+                if classe.level <= level and imin:
+                    break
+        refresh_tree(context, property=self.property)  
+        return {"FINISHED"}   
+     
+class Operator_contract_tree(bpy.types.Operator):
+    """"""
+    bl_idname  = "element.contract_tree"
+    bl_label   = "Contract item tree"
+    bl_options = {"REGISTER", "UNDO"}
+
+    index    : bpy.props.IntProperty(name="index")
+    property : bpy.props.StringProperty(name="property")
+
+    def execute(self, context):                
+        props = context.scene.og_props       
+        #item =  props.elements_containers[self.index]   
+        item = getattr(props, self.property)[self.index]               
+        level = item.level
+        item.is_expanded = False
+        for element in getattr(props, self.property):
+            if element.index > self.index:
+                if element.level > level:
+                    element.is_hidden = True 
+                    element.is_expanded = False              
+                else:
+                    break
+        refresh_tree(context, property=self.property)          
+        return {"FINISHED"} 
     
-    if 'children' in classe:   
-        level = level + 1     
-        new_product.has_children = True
-    # new_class.is_expanded = True
-        for child in classe['children']:            
-            c = build_products(context, child , c, level, classe['name'], True)
-            #set_hide_product(context, c, True)
-    else:
-        new_product.has_children = False
-    return c
-   
 # ==================================================================================================
 # ==================================================================================================
 # 
@@ -150,7 +123,7 @@ class Operator_clear_properties(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.ifc_prop.clear()              
         return {"FINISHED"}    
 
@@ -162,7 +135,7 @@ class Operator_assign_all(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         for obj in props.ifc_prop:
             obj.is_selected = True              
         return {"FINISHED"}         
@@ -175,7 +148,7 @@ class Operator_unassign_all(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         for obj in props.ifc_prop:
             obj.is_selected = False              
         return {"FINISHED"}    
@@ -188,7 +161,7 @@ class Operator_get_properties(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.add_prop_clicked = False        
         props.ifc_prop.clear()
         result = bSDD.load_properties(props.dictionary)
@@ -228,7 +201,7 @@ class Operator_get_classes(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                
-        props = context.scene.my_props               
+        props = context.scene.og_props               
         props.classes.clear()
         props.classes_loaded = False
         c = -1
@@ -237,59 +210,11 @@ class Operator_get_classes(bpy.types.Operator):
             for classe in bSDD.data_class:  
                 new_c = build_classes(context, classe, c, 1, '', False)
                 c = new_c
-            refresh(context)
+            refresh_classes(context)
             return {"FINISHED"} 
         else:
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}
-
-# expand container
-class Operator_expand_classes(bpy.types.Operator):
-    """"""
-    bl_idname  = "object.expand_classes"
-    bl_label   = "Expand classes"
-    bl_options = {"REGISTER", "UNDO"}
-    index : bpy.props.IntProperty(name="index")
-
-    def execute(self, context):                
-        props = context.scene.my_props  
-        props.classes[self.index].is_expanded = True
-        imin = False
-        #set_hide(context, self.index, False)
-        level = props.classes[self.index].level_index
-        for classe in props.classes:                 
-            if classe.index > self.index:                 
-                if classe.level_index == level+1:
-                    classe.is_hidden = False 
-                    classe.is_expanded = False 
-                    imin = True
-                if classe.level_index <= level and imin:
-                    break
-
-        refresh(context)  
-        return {"FINISHED"} 
-
-# contract container
-class Operator_contract_classes(bpy.types.Operator):
-    """"""
-    bl_idname  = "object.contract_classes"
-    bl_label   = "Contract classes"
-    bl_options = {"REGISTER", "UNDO"}
-    index : bpy.props.IntProperty(name="index")
-
-    def execute(self, context):                
-        props = context.scene.my_props  
-        props.classes[self.index].is_expanded = False 
-        #set_hide(context, self.index, True)  
-        level = props.classes[self.index].level_index
-        for classe in props.classes:
-            if classe.index > self.index:
-                if classe.level_index > level:
-                    classe.is_hidden = True                
-                else:
-                    break
-        refresh(context)          
-        return {"FINISHED"} 
 
 # Add selected properties to Pset template
 class Operator_add_properties(bpy.types.Operator):
@@ -299,7 +224,7 @@ class Operator_add_properties(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):                        
-        props = context.scene.my_props
+        props = context.scene.og_props
         try:
             for prop in tqdm(props.ifc_prop, total= len(props.ifc_prop), desc='Processing properties'):
                 if prop.is_selected == True:
@@ -329,7 +254,7 @@ class Operator_get_prop_info(bpy.types.Operator):
     uri : bpy.props.StringProperty(name="uri")
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.info_prop_loaded = False
         result = bSDD.get_property(self.uri)
         if result:
@@ -362,7 +287,7 @@ class Operator_get_class_info(bpy.types.Operator):
     uri : bpy.props.StringProperty(name="uri")
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.info_prop_loaded = False
         result = bSDD.get_class(self.uri)
         if result:
@@ -387,7 +312,6 @@ class Operator_get_class_info(bpy.types.Operator):
             self.report({'ERROR'}, bSDD.response)
             return {"CANCELLED"}  
 
-
 # get class metadata 
 class Operator_get_class_prop(bpy.types.Operator): 
     """Get active class properties"""
@@ -397,7 +321,7 @@ class Operator_get_class_prop(bpy.types.Operator):
     uri : bpy.props.StringProperty(name="uri")
 
     def execute(self, context):                
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.info_class_prop_loaded = False
         result = bSDD.get_class_prop(self.uri)
         if result:
@@ -428,7 +352,7 @@ class Operator_export_ids(bpy.types.Operator):
     filte_glob : bpy.props.StringProperty(default='*.ids', options={'HIDDEN'})
 
     def execute(self, context):
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.ids_file = self.filepath
         # obtem o template
         PropTempl.get_template()
@@ -503,152 +427,28 @@ class Operator_export_ids(bpy.types.Operator):
 # DECOMPOSITION
 # ==================================================================================================
 # ==================================================================================================
-   
-# load decomposition
-class Operator_load_decomposition(bpy.types.Operator):
-    """Get active class information"""
-    bl_idname  = "elements.decomposition"
-    bl_label   = ""
+  
+class Operator_decomposition_load(bpy.types.Operator):
+    """"""
+    bl_idname  = "decomposition.load"
+    bl_label   = "Load element decomposition"
     bl_options = {"REGISTER", "UNDO"}
 
-    
-    @classmethod
-    def load_contained_elements_by_decomposition(cls, container: ifcopenshell.entity_instance, context) -> None:
-        props = context.scene.my_props
-        
-        def get_decomposition(element: ifcopenshell.entity_instance, is_recursive : bool) -> set[ifcopenshell.entity_instance]:
-            queue = [element]
-            #results = set()
-            results = []
-
-            while queue:
-                element = queue.pop()
-                for rel in getattr(element, "ContainsElements", []):                    
-                    related = rel.RelatedElements                    
-                    queue.extend(related)
-                    results.extend(related)
-                for rel in getattr(element, "IsDecomposedBy", []):
-                    related = rel.RelatedObjects
-                    queue.extend(related)
-                    results.extend(related)
-                for rel in getattr(element, "IsNestedBy", []):
-                    related = rel.RelatedObjects
-                    related = [x for x in related if not x.is_a('IfcDistributionPort')]
-                    queue.extend(related)
-                    results.extend(related)
-                if not is_recursive:
-                    break
-            return results
-        
-
-        def add_elements(elements, level=1):
-            #l_elements = [x for x in elements]
-            for element in elements:                        
-                # if not props.should_include_children and tool.Root.is_spatial_element(element):
-                #     continue
-                # ifc_definition_id = element.id()
-                new = props.elements_containers.add()
-                new.name = element.Name or 'Unnamed'
-                new.type = element.is_a()
-                new.level = level 
-                new.id = element.id()                
-                new.object_type = element.ObjectType or 'Unnamed'                            
-                children = [
-                    e
-                    for e in get_decomposition(element, is_recursive=False)
-                    if not e.is_a("IfcFeatureElement")
-                ]
-                if children:
-                    new.has_children = True                    
-                    new.is_expanded = False
-                    add_elements(children, level=level + 1)
-        
-        elements = get_decomposition(container, is_recursive=False) 
-        add_elements([container])
-        #add_elements(elements)
-
-           
-
-    def execute(self, context):                       
-        props = context.scene.my_props
-        props.elements_containers.clear()
+    def execute(self, context):   
+        props = context.scene.og_props        
         model = tool.Ifc.get()
-        #elements = selector.filter_elements(model, "IfcElement, IsNestedBy != (), Nests = ()")   
+        elements = model.by_type('IfcProject')
         
-        # spatial_elements =  [
-        #     e for e in model.by_type('IfcSpatialElement')
-        #     if not ifcopenshell.util.element.get_aggregate(e).is_a('IfcProject')
-        # ]
-        
-        # product_elements = [
-        #     e for e in model.by_type("IfcProduct")
-        #     if e.Nests == () and e.Decomposes == ()
-        # ]
-
-        #elements = spatial_elements 
-        elements = model.by_type("IfcProject")
         if len(elements) > 0:
-            for element in elements:
-                self.load_contained_elements_by_decomposition(element, context)              
+            for element in elements: 
+                load_contained_elements_by_decomposition(element, 'elements_containers', context)  
             i = 0          
             for element in props.elements_containers:
                 element.index = i
                 element.is_hidden = False if element.level==1 else True
-                element.is_expanded = False if element.level==1 else True                
+                element.is_expanded = False if element.level==1 else True  
                 i += 1   
             refresh_container(context)
-        return {"FINISHED"} 
-
-# expand decomposition container
-class Operator_expand_decomposition(bpy.types.Operator):
-    """"""
-    bl_idname  = "element.expand_decomposition"
-    bl_label   = "Expand classes"
-    bl_options = {"REGISTER", "UNDO"}
-    index : bpy.props.IntProperty(name="index")
-
-    def execute(self, context):                
-        props = context.scene.my_props  
-        item = props.elements_containers[self.index]
-        item.is_expanded = True
-        imin = False
-        #set_hide(context, self.index, False)
-        level = item.level
-        for classe in props.elements_containers:                 
-            if classe.index > item.index:                 
-                if classe.level == level + 1:
-                    classe.is_hidden = False 
-                    classe.is_expanded = False 
-                    imin = True
-                if classe.level <= level and imin:
-                    break
-
-                
-
-        refresh_container(context)  
-        return {"FINISHED"} 
-
-# contract decomposition container
-class Operator_contract_decomposition(bpy.types.Operator):
-    """"""
-    bl_idname  = "element.contract_decomposition"
-    bl_label   = "Contract classes"
-    bl_options = {"REGISTER", "UNDO"}
-    index : bpy.props.IntProperty(name="index")
-
-    def execute(self, context):                
-        props = context.scene.my_props       
-        item =  props.elements_containers[self.index]                  
-        level = item.level
-        item.is_expanded = False
-        for element in props.elements_containers:
-            if element.index > self.index:
-                if element.level > level:
-                    element.is_hidden = True 
-                    element.is_expanded = False              
-                else:
-                    break
-        refresh_container(context)          
         return {"FINISHED"} 
 
 # element decomposition select element
@@ -659,18 +459,33 @@ class Operator_decomposition_select_element(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}    
     index : bpy.props.IntProperty(name="index")
 
-    def execute(self, context):   
-        props = context.scene.my_props       
-        item =  props.elements_containers[self.index]                                   
-        model = tool.Ifc.get()        
-        ifc_element = model.by_id(item.id) 
-        obj = tool.Ifc.get_object(ifc_element)
-        if obj:
-            obj.select_set(item.is_selected)            
-            bpy.context.view_layer.objects.active =  obj
-       
-        refresh_container(context) 
-        return {"FINISHED"} 
+    def execute(self, context):  
+        try:
+            props = context.scene.og_props       
+            item = props.elements_containers[self.index]   
+
+            model = tool.Ifc.get()
+            if model is None:
+                self.report({'ERROR'}, "No IFC model loaded")
+                return {"CANCELLED"}
+
+            ifc_element = model.by_id(item.id)
+            if ifc_element is None:
+                self.report({'ERROR'}, f"Element with id {item.id} not found")
+                return {"CANCELLED"}
+
+            obj = tool.Ifc.get_object(ifc_element)  
+            if obj:
+                #obj.select_set(item.is_selected)            
+                obj.select_set(True)
+                bpy.context.view_layer.objects.active = obj
+ 
+        
+            return {"FINISHED"} 
+        except Exception as ex:
+            print(ex)
+            self.report({'ERROR'}, str(ex))
+            return {"CANCELLED"}
 
 # element decomposition selection
 class Operator_decomposition_select_components(bpy.types.Operator):
@@ -700,11 +515,12 @@ class Operator_decomposition_select_components(bpy.types.Operator):
         return objs
 
     def execute(self, context):   
-        props = context.scene.my_props       
+        props = context.scene.og_props       
         item =  props.elements_containers[self.index] 
         item.is_selected = not item.is_selected                           
         model = tool.Ifc.get()        
         ifc_element = model.by_id(item.id) 
+        print(ifc_element)
         objs = self.sel_objects(ifc_element) 
         for obj in objs:
             if obj:
@@ -719,6 +535,33 @@ class Operator_decomposition_select_components(bpy.types.Operator):
         refresh_container(context) 
         return {"FINISHED"} 
     
+class Operator_decomposition_move(bpy.types.Operator):
+    """"""
+    bl_idname  = "decomposition.move"
+    bl_label   = "Move object to selected parent"
+    bl_options = {"REGISTER", "UNDO"}    
+    index : bpy.props.IntProperty(name="index")
+    type  : bpy.props.StringProperty(name="type", default="nest")
+
+    def execute(self, context):   
+        props = context.scene.og_props       
+        model = tool.Ifc.get() 
+        item =  props.elements_containers[self.index]   
+        entity_children = model.by_id(item.id)
+        parent = props.containers_show[props.active_element_index]  
+        entity_parent = model.by_id(parent.id)  
+
+             
+        print(f'entity_parent: {entity_parent}')
+        print(f'entity_children: {entity_children}')
+        move_to_assembly(entity_parent, entity_children, self.type)
+        self.report({'OPERATOR'}, 'Moved successfully!')
+
+       
+        refresh_container(context) 
+        bpy.ops.elements.decomposition()
+        return {"FINISHED"}
+
 # ==================================================================================================
 # ==================================================================================================
 # CATALOG
@@ -733,295 +576,105 @@ class Operator_load_products(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}    
 
     def execute(self, context): 
-        props = context.scene.my_props               
-        props.products.clear()
-        props.products_loaded = True
-        ifc_reference = {
-            'TopBendStiffenerType'           : 'Pipe Fitting',
-            'IntermediateBendStiffenerType' : 'Pipe Fitting',
-            'StopperCollarType'             : 'Pipe Fitting',
-            'PulInCollarType'               : 'Pipe Fitting',
-            'AnchoringCollarType'           : 'Pipe Fitting',
-            'DeadweightCollarType'          : 'Pipe Fitting',
-            'BuoyancyModuleType'            : 'Pipe Fitting',
-            'HangOffCollarType'             : 'Pipe Fitting',
-            'BendRestrictorType'            : 'Pipe Fitting',
-            'EndFittingType'                : 'Pipe Fitting',
-            'PipePullingHeadType'           : 'Pipe Fitting',
-            'FlexiblePipeStructure'         : 'Pipe Segment'
-
-        }
-        dic = {}
+        props = context.scene.og_props               
+        props.types.clear()
+        props.types_loaded = True
+        model = tool.Ifc.get()
+        types = model.by_type('IfcTypeProduct')
+        c = -1
+        result = {}
+        data = Catalog.get_ifc_type()
         classe_title = {
             'name': '',
-            'uri' : '',
-            'code': '',
-            'descriptionPart' : ''
+            'tag': '',
+            'description' : '',
+            'element_type': '',
+            'id' : 0
         }
-        c = -1
-        result = bSDD.load_classes(props.dictionary, False)
-        if result:
-            for classe in bSDD.data_class:  
-                print(classe['code'])
-                if classe['name'].endswith('Type') or classe['name'].endswith('Structure'): 
-                    print('---' + classe['name'])                   
-                    if classe['name'] in  ifc_reference:
-                        if ifc_reference[classe['name']] not in dic:
-                            dic[ifc_reference[classe['name']]] = []
-                        dic[ifc_reference[classe['name']]].append(classe)
-            
-            for key, values in  dic.items():
-                    classe_title['name'] = key
-                    new_c = build_products(context, classe_title, c, 1, '', False, True)
-                    c += 1
-                    for value in values:
-                        new_c = build_products(context, value, c, 2, '', True, False)
-                        c = new_c
-            refresh_products(context)
-            return {"FINISHED"} 
-        else:
-            self.report({'ERROR'}, bSDD.response)
-            return {"CANCELLED"}
-        
-    def execute_(self, context): 
-        props = context.scene.my_props               
-        props.products.clear()
-        props.products_loaded = True
-        
-        c = -1
-        result = bSDD.load_classes(props.dictionary, False)
-        if result:
-            for classe in bSDD.data_class:  
-                if classe['name'].endswith('Type') or classe['name'].endswith('Structure'):
-                    new_c = build_products(context, classe, c, 1, '', False)
-                    c = new_c
-            refresh_products(context)
-            return {"FINISHED"} 
-        else:
-            self.report({'ERROR'}, bSDD.response)
-            return {"CANCELLED"}
 
-# contract products
-class Operator_contract_products(bpy.types.Operator):
-    """"""
-    bl_idname  = "object.contract_products"
-    bl_label   = "Contract products"
-    bl_options = {"REGISTER", "UNDO"}
-    index : bpy.props.IntProperty(name="index")
+        for type in types:
+            dic = {}   
+            dic['id'] = type.id()         
+            dic['name'] = type.Name or  ''
+            dic['tag'] = type.Tag or  ''
+            dic['description'] = type.Description or ''
+            dic['element_type'] = type.ElementType or ''
 
-    def execute(self, context):                
-        props = context.scene.my_props  
-        props.products[self.index].is_expanded = False 
-        #set_hide(context, self.index, True)  
-        level = props.products[self.index].level_index
-        for classe in props.products:
-            if classe.index > self.index:
-                if classe.level_index > level:
-                    classe.is_hidden = True                
+            if type.is_a() not in result:
+                result[type.is_a()] = []
+            else:
+                result[type.is_a()].append(dic)
+        save_json(result)
+        for key, values in  result.items():
+                if key in data:
+                    classe_title['name'] = data[key]
                 else:
-                    break
-        refresh_products(context)          
+                    classe_title['name'] = key
+                new_c = build_products(context, classe_title, c, 1, '', False, True)
+                c += 1
+                print(values)
+                for value in values:
+                    new_c = build_products(context, value, c, 2, '', True, False)
+                    c = new_c
+        refresh_types(context)
         return {"FINISHED"} 
-    
-# expand products
-class Operator_expand_products(bpy.types.Operator):
-    """"""
-    bl_idname  = "object.expand_products"
-    bl_label   = "Expand products"
-    bl_options = {"REGISTER", "UNDO"}
-    index : bpy.props.IntProperty(name="index")
-
-    def execute(self, context):                
-        props = context.scene.my_props  
-        props.products[self.index].is_expanded = True
-        imin = False
-        #set_hide(context, self.index, False)
-        level = props.products[self.index].level_index
-        for product in props.products:                 
-            if product.index > self.index:                 
-                if product.level_index == level+1:
-                    product.is_hidden = False 
-                    product.is_expanded = False 
-                    imin = True
-                if product.level_index <= level and imin:
-                    break
-
-        refresh_products(context)  
-        return {"FINISHED"} 
-
+        
 # Create a ifc entity from Json
-class Operator_catalog_insert_type(bpy.types.Operator):
+class Operator_catalog_select_type(bpy.types.Operator):
     """"""
-    bl_idname  = "catag.insert_type"
+    bl_idname  = "catag.select_type"
     bl_label   = "export element in json"
     bl_options = {"REGISTER", "UNDO"}  
 
-    uri : bpy.props.StringProperty(name="uri")
+    id : bpy.props.IntProperty(name="id")
 
-    def v_type(self, uri):
-        result = uri.split('#')
-        return result[1]
-    
-    # Create a IFC entity 
-    def make_entity_(self, model, json):
-        context = representation.get_context(model, "Model", "Body", "MODEL_VIEW")
-        #verify if entity exists in file
-        if 'Name' in json:
-            exist_ents = [e for e in model.by_type(json['ifc_class']) if e.Name == json['Name']]
-        else:
-            exist_ents = []
-
-        # if not exists create entity, if exists return found entity
-        if not len(exist_ents) > 0:
-            ent = model.create_entity(json['ifc_class'])
-            if hasattr(ent, 'GlobalId'):
-                ent.GlobalId = ifcopenshell.guid.new()
-
-            for key, value in json.items():
-                if key != 'ifc_class':   
-
-                    if isinstance(value, list) and isinstance(value[0], dict):
-                        l = []
-                        for item in value:
-                            ent2 = self.make_entity(model, item)
-                            l.append(ent2)
-                            setattr(ent, key, l)
-
-                    elif isinstance(value, dict) :
-                        ent2 = self.make_entity(model, value)
-                        setattr(ent, key, ent2)
-                    else:
-                        if value == "@Body":
-                            setattr(ent, key, context)
-                        else:
-                            setattr(ent, key, value)
             
-        else:
-            ent = exist_ents[0]
-
-        return ent
-    
-    def make_entity(self, model, json):
-        context = representation.get_context(model, "Model", "Body", "MODEL_VIEW")
-        #verify if entity exists in file
-        if 'Name' in json:
-            exist_ents = [e for e in model.by_type(json['ifc_class']) if e.Name == json['Name']]
-        else:
-            exist_ents = []
-
-        # if not exists create entity, if exists return found entity
-        if not len(exist_ents) > 0:
-            ent = model.create_entity(json['ifc_class'])
-            if hasattr(ent, 'GlobalId'):
-                ent.GlobalId = ifcopenshell.guid.new()
-
-            for key, value in json.items():
-                if key not in ['ifc_class', '@material']:   
-
-                    if isinstance(value, list) and isinstance(value[0], dict):
-                        l = []
-                        for item in value:
-                            ent2 = self.make_entity(model, item)
-                            l.append(ent2)
-                            setattr(ent, key, l)
-
-                    elif isinstance(value, dict) :
-                        ent2 = self.make_entity(model, value)
-                        setattr(ent, key, ent2)
-                    else:
-                        if value == "@Body":
-                            setattr(ent, key, context)
-                        else:
-                            setattr(ent, key, value)
-            
-        else:
-            ent = exist_ents[0]
-
-        return ent
-    
-    def split_name(self, uri):
-        if '#' in uri:
-            return uri.split('#')[-1]
-        else:
-            return uri
-        
     def execute(self, context): 
-            props = context.scene.my_props                     
+            props = context.scene.og_props                     
             model = bonsai.tool.Ifc.get()        
-            type = Catalog.get_type(self.uri)       
+            type = model.by_id(self.id)           
+
             if type is not None:
-                if 'entity' in type:
-                    obj_name = f"{type['entity']['ifc_class']}/{type['entity']['Name']}"
-                    lt = [f'{x.is_a()}/{x.Name}' for x in model.by_type('IfcTypeProduct')]
-                    if not obj_name in lt:
-                        sty = None
+                obj = tool.Ifc.get_object(type)
+                # bpy.ops.object.select_all(action='DESELECT')
+                # context.view_layer.objects.active = obj
+                # obj.select_set(True)
 
-                        # create element
-                        representation = None
-                        body = ifcopenshell.util.representation.get_context(model, "Model", "Body", "MODEL_VIEW") 
-                        element_type = model.create_entity(type['entity']['ifc_class'])
-                        element_type.GlobalId = ifcopenshell.guid.new()
-                        print(element_type)
-                        
-                        # add values to attributes
-                        for key, value in type['entity'].items():
-                            if key != 'ifc_class':   
-                                setattr(element_type, key, value)
+                if obj:
+                    if obj.hide_get():
+                        obj.hide_set(False)
+                    obj.select_set(True)
+                    context.view_layer.objects.active = obj
+                    #bpy.ops.props.load_properties()
 
-                        
-                        # create the geometry associate
-                        if 'geometry' in type:                                                 
-                            vertices = [type['geometry']['vertices']]
-                            faces = [type['geometry']['faces']]  
+                self.report({'OPERATOR'}, 'Done!')
+                return {"FINISHED"} 
 
-                            builder = ifcopenshell.util.shape_builder.ShapeBuilder(tool.Ifc.get())
-                            item = builder.mesh(vertices[0], faces[0])
-                            representation = builder.get_representation(body, [item])
-                            geometry.assign_representation(model, product=element_type, representation=representation)
+class Operator_catalog_select_elements(bpy.types.Operator):
+    """"""
+    bl_idname  = "catag.select_elements"
+    bl_label   = "select elements of the type"
+    bl_options = {"REGISTER", "UNDO"}  
+
+    id : bpy.props.IntProperty(name="id")
+
             
+    def execute(self, context): 
+            props = context.scene.og_props                     
+            model = bonsai.tool.Ifc.get()        
+            type = model.by_id(self.id)           
 
-                        # create the associate material
-                        if 'material' in type:
-                            mat = self.make_entity(model, type['material'])
-                            print(mat)
-                            material.assign_material(model, products=[element_type], type=mat.is_a(), material=mat)
+            if type is not None:                
+                elements = ifcopenshell.util.element.get_types(type)
+                for element in elements:
+                    obj = tool.Ifc.get_object(element)
+                    if obj:
+                        obj.select_set(True)
+                        context.view_layer.objects.active = obj
 
-                            # create the associate style
-                            if 'style' in type:
-                                sty = self.make_entity(model, type['style'])
-                                print(sty)
-                                materials = [m for m in model.by_type('IfcMaterial') if m.Name == type['style']['@material']] 
-                                print(materials)
-                                if len(materials) > 0: 
-                                    style.assign_material_style(model, material=materials[0], style=sty, context=body)
-                                    if representation is not None:
-                                        sty.Item = representation.Items[0]
-                                    print(materials[0])
-                                else:
-                                    print(f'material {materials["style"]["@material"]} não encontrado!')
-                            
-                        # import element type in bonsai
-                        i = Import_ifc()
-                        i.import_type_from_ifc(element_type, context)                        
-                    
-                        print('Done!')
-                        self.report({'OPERATOR'}, 'Done!')
-                        return {"FINISHED"} 
-
-                    else:
-                        print('The type already exists!')
-                        self.report({'ERROR'}, 'The type already exists!')
-                        return {"CANCELLED"}
-                else:
-                    print('No entities was created')
-                    self.report({'ERROR'}, 'No entities was created!')
-                    return {"CANCELLED"}
-
-                
-            else:
-                self.report({'ERROR'}, 'Failing connect!')
-                return {"CANCELLED"}
-
+                self.report({'OPERATOR'}, 'Done!')
+                return {"FINISHED"}
+            
 # ==================================================================================================
 # ==================================================================================================
 # PROPERTIES
@@ -1079,7 +732,7 @@ class Operator_props_edit(bpy.types.Operator):
     
     
     def execute(self, context):
-        props = context.scene.my_props 
+        props = context.scene.og_props 
         props.icon_edit_prop = 'CHECKMARK'
         model = tool.Ifc.get()
         new_pset = ''
@@ -1121,9 +774,16 @@ class Operator_props_load(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"} 
 
     def execute(self, context):
-        print(100*'-')
-        refresh_props(context)
-        return {"FINISHED"} 
+        try:
+            if tool.Ifc.get() is None:
+                bpy.ops.og.error_message('INVOKE_DEFAULT', message='No Ifc file loaded')
+                return {"CANCELLED"}
+            else:                
+                refresh_props(context)
+                return {"FINISHED"} 
+        except Exception as e:
+            bpy.ops.og.error_message('INVOKE_DEFAULT', message=str(e))
+            return {"CANCELLED"}
     
 class Operator_props_expand(bpy.types.Operator):
     """"""
@@ -1134,7 +794,7 @@ class Operator_props_expand(bpy.types.Operator):
     index : bpy.props.IntProperty(name="index")  
    
     def execute(self, context):
-        props = context.scene.my_props 
+        props = context.scene.og_props 
         for pset in props.prop_metadata:
             if pset.index == self.index:                    
                     pset.is_expanded = not(pset.is_expanded)
@@ -1151,7 +811,7 @@ class Operator_docs_expand(bpy.types.Operator):
     type  : bpy.props.StringProperty(name='type')
 
     def execute(self, context):
-        props = context.scene.my_props         
+        props = context.scene.og_props         
         if self.type == 'property':
             for pset in props.prop_metadata:
                 if pset.index == self.index:                    
@@ -1200,7 +860,7 @@ class Operator_props_graph(bpy.types.Operator):
     df : None 
     
     def draw(self, context):
-        props = context.scene.my_props
+        props = context.scene.og_props
         layout = self.layout
         cols = self.df.columns.to_list()
         
@@ -1260,7 +920,7 @@ class Operator_props_graph(bpy.types.Operator):
         self.columns.clear()
 
         # cria um dicionario com as propriedades e valores
-        props = context.scene.my_props
+        props = context.scene.og_props
         # se o documento esta associado a propriedade
         if self.pset_index > -1:
             for pset in props.prop_metadata:            
@@ -1375,7 +1035,7 @@ class Operator_props_invert(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"} 
 
     def execute(self, context):
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.invert_xy = not(props.invert_xy)
         return {"FINISHED"}
     
@@ -1401,7 +1061,7 @@ class Operator_document_edit(bpy.types.Operator):
             doc = rel[0].RelatingDocument
             doc.Identification = self.id
             doc.Name = self.name
-            doc.Location.wrappedValue = self.location
+            doc.Location = self.location
 
         return {"FINISHED"}
     
@@ -1419,7 +1079,7 @@ class Operator_document_load(bpy.types.Operator):
         return {'RUNNING_MODAL'}
     
     def execute(self, context):
-        props = context.scene.my_props
+        props = context.scene.og_props
         if self.index == -1:
             props.documents[self.doc_index].location = self.filepath
         else:
@@ -1435,11 +1095,25 @@ class Operator_document_open(bpy.types.Operator):
 
     
     def execute(self, context):   
-        if os.path.exists(self.location):     
-            webbrowser.open(self.location)
-            return {"FINISHED"}
-        else:
-            self.report({'ERROR'}, 'FILE NOT FOUND!')
+        location = self.location.strip()
+        if not location:
+            self.report({'ERROR'}, 'Location is empty!')
+            return {"CANCELLED"}
+        try:
+            # Se for URL, abre no navegador
+            if location.startswith(('http://', 'https://', 'ftp://')):
+                webbrowser.open(location)
+                return {"FINISHED"}
+            # Se for arquivo local
+            abs_path = os.path.abspath(os.path.normpath(location))
+            if os.path.exists(abs_path):
+                webbrowser.open(f'file://{abs_path}')
+                return {"FINISHED"}
+            else:
+                self.report({'ERROR'}, f'FILE NOT FOUND: {abs_path}')
+                return {"CANCELLED"}
+        except OSError as e:
+            self.report({'ERROR'}, f'Failed to open: {e}')
             return {"CANCELLED"}
     
 class Operator_show_table(bpy.types.Operator):
@@ -1450,6 +1124,31 @@ class Operator_show_table(bpy.types.Operator):
 
    
     def execute(self, context):
-        props = context.scene.my_props
+        props = context.scene.og_props
         props.show_table = not props.show_table
         return {"FINISHED"}
+
+#============================================================================================
+# Geral
+#============================================================================================
+
+class ErrorMessage(bpy.types.Operator):
+    bl_idname = "og.error_message"
+    bl_label = "Erro!"
+
+    message: bpy.props.StringProperty()
+    
+    def execute(self, context):
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_popup(self, width=400)
+    
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.label(text='ERROR:')
+
+        row = layout.row()
+        row.label(text=self.message, icon='ERROR')
+

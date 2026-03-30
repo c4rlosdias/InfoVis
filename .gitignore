@@ -12,6 +12,8 @@ __pycache__/
 *.xlsx
 .files
 /files
+.releases
+/releases
 
 # Distribution / packaging
 .Python

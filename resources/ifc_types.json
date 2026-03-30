@@ -1,0 +1,6 @@
+{
+    "IfcPipeFittingType" : "Pipe Fitting",
+    "IfcPipeSegmentType" : "Pipe Segment",
+    "IfcValveType" : "Valve",
+    "IfcMechanicalEquipmentType" : "Mechanical Equipment"
+}

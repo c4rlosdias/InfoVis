@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Arquitetura do Addon O&G Tools</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #fff; 
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 { margin-bottom: 12px; color: #333; font-size: 1.4rem; }
+        #controls {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 24px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        #downloadPng { background: #1976D2; color: #fff; }
+        #downloadPng:hover { background: #1565C0; }
+        #downloadSvg { background: #4CAF50; color: #fff; }
+        #downloadSvg:hover { background: #388E3C; }
+        #diagram-container {
+            background: #fff;
+            padding: 24px;
+            max-width: 100%;
+            overflow: auto;
+        }
+        .mermaid svg { max-width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+    <h1>Arquitetura do Addon O&amp;G Tools para Blender</h1>
+    <div id="controls">
+        <button id="downloadPng">📥 Baixar PNG</button>
+        <button id="downloadSvg">📥 Baixar SVG</button>
+    </div>
+    <div id="diagram-container">
+        <div class="mermaid">
+graph TB
+    subgraph EXTERNAL["Fontes Externas"]
+        IFC["Arquivos .ifc\n(Modelos BIM)"]
+        BSDD_API["bSDD API\n(buildingSMART Data Dictionary)\napi.bsdd.buildingsmart.org"]
+        CSV["CSV / Documentos\nExternos"]
+        RES["Resources\nifc_types.json | units.json\n*.ttl / *.json"]
+    end
+
+    subgraph BLENDER["Blender / Bonsai"]
+        BPY["bpy\n(Blender Python API)"]
+        IFCOS["ifcopenshell\n(Leitura/Escrita IFC)"]
+        BONSAI["bonsai.tool / bonsai.bim\n(BIM Toolkit)"]
+        MSGBUS["bpy.msgbus\n(Active Object Change)"]
+    end
+
+    subgraph LIBS["Bibliotecas Bundled (libs/site/packages/)"]
+        MPL["matplotlib 3.10.5\n(Gráficos)"]
+        SCIPY["scipy 1.16.2\n(Interpolação)"]
+        RDFLIB["rdflib 7.1.4\n(Parsing RDF/TTL)"]
+        TQDM["tqdm 4.67.1\n(Barras de Progresso)"]
+        PANDAS["pandas / numpy\n(Manipulação de Dados)"]
+    end
+
+    subgraph ADDON["OG_Tools Addon"]
+        subgraph INIT["__init__.py  —  Entry Point"]
+            REG["register()\n• Registra classes\n• Configura sys.path\n• Anexa OG_Properties à Scene\n• Subscreve msgbus callback"]
+        end
+
+        subgraph DATA["data.py  —  Camada de Dados"]
+            BSDD_CL["bSDD\n(Cliente API REST)\n• load_dictionaries()\n• load_classes()\n• load_properties()\n• get_class_info()"]
+            PROPT["PropTempl\n(Template IFC Local)\n• add_pset_template()\n• create_enumeration()\n• EPset_OG.ifc"]
+            CATALOG["Catalog\n(Leitura ifc_types.json)\n• Mapeia tipos IFC\n→ nomes amigáveis"]
+            IMPORT["Import_ifc\n(Import geometria\nvia Bonsai)"]
+            FUNCS["Funções Auxiliares\n• set_properties()\n• refresh_props()\n• build_classes()\n• build_products()\n• move_to_assembly()\n• draw_tree()\n• get_unit()"]
+        end
+
+        subgraph PROPS["properties.py  —  Modelo de Dados"]
+            OG["OG_Properties\n(Scene.og_props)"]
+            PG1["Ifc_properties\n(Propriedade bSDD)"]
+            PG2["Class_info\n(Classe bSDD + árvore)"]
+            PG3["Class_type\n(Tipo IFC + árvore)"]
+            PG4["Property_info\n(Valor tipado + enum)"]
+            PG5["Pset_info\n(Property Set + docs)"]
+            PG6["Container\n(Nó decomposição)"]
+            PG7["Documents\n(Referência documental)"]
+            PG8["Enumeration_values\n(Valor enumerado)"]
+            OG --> PG1
+            OG --> PG2
+            OG --> PG3
+            OG --> PG4
+            OG --> PG5
+            OG --> PG6
+            OG --> PG7
+            PG5 --> PG4
+            PG4 --> PG8
+        end
+
+        subgraph OPS["operators.py  —  Lógica de Negócio"]
+            direction TB
+            OP_BSDD["bSDD Operators\n• get_prop / get_class\n• get_class_info\n• add_prop / assign_all\n• export_ids"]
+            OP_DECOMP["Decomposition Operators\n• load_decomposition\n• select_element\n• select_components\n• move"]
+            OP_CAT["Catalog Operators\n• load_products\n• select_type"]
+            OP_PROPS["Properties Operators\n• load_properties\n• edit / expand\n• graph / show_table\n• doc_edit / doc_load"]
+            OP_TREE["Tree Operators\n• expand_tree\n• contract_tree"]
+            OP_AUDIT["Audit e Error\n• @audit_execute\n• view/open/clear_audit_log\n• ErrorMessage"]
+        end
+
+        subgraph PANELS["panels.py  —  Interface (UI)"]
+            direction TB
+            P1["Panel_Connect\n(bSDD Classes e Props)"]
+            P2["Panel_Decompositions\n(Árvore Espacial IFC)"]
+            P3["Panel_Catalog\n(Produtos por Tipo)"]
+            P4["Panel_Properties\n(Editor de Psets\n+ Gráficos + Docs)"]
+            P5["Panel_Settings\n(Seleção de Dicionário)"]
+            P6["Panel_Info\n(Versão + Audit Log)"]
+            UL["UILists (6)\n• BIM_UL_ifc_properties\n• BIM_UL_classes\n• BIM_UL_class_prop\n• BIM_UL_products\n• BIM_UL_decomposition\n• BIM_UL_property_class"]
+        end
+    end
+
+    IFC -->|"ifcopenshell"| DATA
+    BSDD_API -->|"HTTP/REST"| BSDD_CL
+    CSV -->|"pandas"| OP_PROPS
+    RES -->|"JSON/TTL"| DATA
+
+    BPY --> INIT
+    IFCOS --> DATA
+    BONSAI --> DATA
+    BONSAI --> IMPORT
+    MSGBUS -->|"on_active_object_change()"| OP_PROPS
+
+    MPL --> OP_PROPS
+    SCIPY --> OP_PROPS
+    RDFLIB --> DATA
+    TQDM --> OPS
+    PANDAS --> DATA
+
+    INIT --> DATA
+    INIT --> OPS
+    INIT --> PANELS
+    INIT --> PROPS
+
+    DATA --> PROPS
+    OPS -->|"Lê/Escreve"| PROPS
+    OPS -->|"Chama"| DATA
+    PANELS -->|"Renderiza"| PROPS
+    PANELS -->|"Invoca"| OPS
+
+    classDef external fill:#e8f4fd,stroke:#2196F3,stroke-width:2px,color:#333
+    classDef blender fill:#fff3e0,stroke:#FF9800,stroke-width:2px,color:#333
+    classDef libs fill:#f3e5f5,stroke:#9C27B0,stroke-width:2px,color:#333
+    classDef data fill:#e3f2fd,stroke:#1976D2,stroke-width:2px,color:#333
+    classDef props fill:#fff9c4,stroke:#F9A825,stroke-width:2px,color:#333
+    classDef ops fill:#fce4ec,stroke:#E91E63,stroke-width:2px,color:#333
+    classDef panels fill:#e0f7fa,stroke:#00ACC1,stroke-width:2px,color:#333
+
+    class IFC,BSDD_API,CSV,RES external
+    class BPY,IFCOS,BONSAI,MSGBUS blender
+    class MPL,SCIPY,RDFLIB,TQDM,PANDAS libs
+    class BSDD_CL,PROPT,CATALOG,IMPORT,FUNCS data
+    class OG,PG1,PG2,PG3,PG4,PG5,PG6,PG7,PG8 props
+    class OP_BSDD,OP_DECOMP,OP_CAT,OP_PROPS,OP_TREE,OP_AUDIT ops
+    class P1,P2,P3,P4,P5,P6,UL panels
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: { background: '#ffffff' },
+            flowchart: { useMaxWidth: false, htmlLabels: false },
+            securityLevel: 'loose'
+        });
+
+        document.getElementById('downloadPng').addEventListener('click', () => {
+            const svgEl = document.querySelector('.mermaid svg');
+            if (!svgEl) { alert('Diagrama ainda não renderizado.'); return; }
+
+            // Clone and prepare SVG with explicit dimensions and white bg
+            const clone = svgEl.cloneNode(true);
+            const bbox = svgEl.getBoundingClientRect();
+            clone.setAttribute('width', bbox.width);
+            clone.setAttribute('height', bbox.height);
+            clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+
+            // Add white background
+            const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bg.setAttribute('width', '100%');
+            bg.setAttribute('height', '100%');
+            bg.setAttribute('fill', '#ffffff');
+            clone.insertBefore(bg, clone.firstChild);
+
+            // Inline all styles into SVG
+            const styles = document.querySelectorAll('style');
+            const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+            let css = '';
+            styles.forEach(s => { css += s.textContent; });
+            // Also grab computed styles from mermaid's injected stylesheet
+            const mermaidStyles = svgEl.querySelectorAll('style');
+            mermaidStyles.forEach(s => { css += s.textContent; });
+            styleEl.textContent = css;
+            clone.insertBefore(styleEl, clone.firstChild);
+
+            const svgData = new XMLSerializer().serializeToString(clone);
+            const svgBase64 = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+
+            const scale = 2;
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = bbox.width * scale;
+                canvas.height = bbox.height * scale;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.scale(scale, scale);
+                ctx.drawImage(img, 0, 0, bbox.width, bbox.height);
+
+                canvas.toBlob((blob) => {
+                    const link = document.createElement('a');
+                    link.download = 'arquitetura_og_tools.png';
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+                }, 'image/png');
+            };
+            img.onerror = (e) => {
+                console.error('Erro ao carregar SVG como imagem:', e);
+                alert('Erro ao gerar PNG. Tente o botão SVG.');
+            };
+            img.src = svgBase64;
+        });
+
+        document.getElementById('downloadSvg').addEventListener('click', () => {
+            const svgEl = document.querySelector('.mermaid svg');
+            if (!svgEl) { alert('Diagrama ainda não renderizado.'); return; }
+
+            // Inject white background rect
+            const clone = svgEl.cloneNode(true);
+            const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bg.setAttribute('width', '100%');
+            bg.setAttribute('height', '100%');
+            bg.setAttribute('fill', '#ffffff');
+            clone.insertBefore(bg, clone.firstChild);
+
+            const svgData = new XMLSerializer().serializeToString(clone);
+            const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const link = document.createElement('a');
+            link.download = 'arquitetura_og_tools.svg';
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+        });
+    </script>
+</body>
+</html>

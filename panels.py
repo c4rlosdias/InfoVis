@@ -5,6 +5,7 @@ import bonsai.tool as tool
 import textwrap
 
 
+# Panel functions
 
 def _label_multiline(context, text, parent):
     chars = int(context.region.width / 8)   # 7 pix on 1 character
@@ -18,12 +19,13 @@ def get_properties(ifc_obj):
     result = []
     result.append()
 
-def get_product_description(context, index):
-    props = context.scene.my_props 
-    products = props.products_show
+def get_product_attribute(context, index, attribute):
+    props = context.scene.og_props 
+    products = props.types_show
     for product in products:
         if product.index == index:
-            return product.description
+            result = getattr(product, attribute)
+            return result
     
 
 # ---------------------------------------------------------------------
@@ -36,150 +38,24 @@ def get_product_description(context, index):
 
 class Panel_Connect(bpy.types.Panel):
     
-    bl_label        = "Choose dictionary version"
-    bl_idname       = "VIEW3D_PT_connect"
+    bl_label        = "Subsea Classes"
+    bl_idname       = "VIEW3D_PT_og_connect"
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
-    bl_context      = "objectmode"
-    bl_category     = "O&G Dictionary"
-    #bl_options      = {"DEFAULT_CLOSED"}
+    bl_context      = "objectmode"    
+    bl_category     = "O&G Tools"
+    bl_order = 0
+    bl_options      = {"DEFAULT_CLOSED"}
     
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='OUTLINER')
+
     def draw(self, context):           
         layout = self.layout
-        props = context.scene.my_props
-        row = layout.row()
-        row.prop(props, 'dictionary')
+        props = context.scene.og_props
+        model = tool.Ifc.get()
 
-
-# ---------------------------------------------------------------------
-# Importa e/ou atualiza as propriedades diretamente do dicionário no bSDD
-# para um template de propriedades no Bonsai
-# ---------------------------------------------------------------------
-
-class Panel_Import_Properties(bpy.types.Panel):
-    
-    bl_label        = "Oil & Gas Subsea Get Properties"
-    bl_idname       = "VIEW3D_PT_dictionary"
-    bl_space_type   = 'VIEW_3D'
-    bl_region_type  = 'UI'
-    bl_context      = "objectmode"
-    bl_category     = "O&G Dictionary"
-    bl_options      = {"DEFAULT_CLOSED"}
-    
-    
-    def draw(self, context):           
-        layout = self.layout     
-        props = context.scene.my_props
-        # botão para conectar com o bSDD e obter as propriedades do dicionario selecionado
-        row = layout.row()
-        row.operator("bsdd.get_prop", text="get properties from bSDD")
-        # imprime a lista de propriedades do elemento selecionado
-        if len(props.ifc_prop) > 0:
-            row = layout.row()
-            row.operator("object.clear_prop", text="Clear")
-            row.operator("object.assign_all", text="Assing all")
-            row.operator("object.unassign_all", text="Unassign all")
-            row = layout.row()
-            row.label(text="Properties of the selected objects:")                       
-            self.layout.template_list(
-                "BIM_UL_ifc_properties",
-                "",
-                props,
-                "ifc_prop",
-                props,
-                "active_property_index",
-            )
-            
-            # botao para imprimir info da propriedade ativa
-            active_property = props.ifc_prop[props.active_property_index]
-            row = layout.row()                                
-            op = row.operator("property.get_prop_info", text="  Get Property Information  ")
-            op.uri = active_property.uri
-
-            # Imprime informações da propriedade ativa 
-            if props.info_prop_loaded:
-                row = layout.row()
-                row.label(text="Property Information:", icon='INFO')
-                box = layout.box()
-                row = box.row(align=True)                    
-                row.label(text=f'Definition : ', icon='DOT')
-
-                _label_multiline(
-                    context=context,
-                    text=props.prop_definition,
-                    parent=box
-                )
-                
-                row = box.row()
-                row.label(text=f'Description : {props.prop_description}', icon='DOT')
-                row = box.row()
-                row.label(text=f'Data Type : {props.prop_datatype}', icon='DOT')
-                row = box.row()
-                row.label(text=f'Property Type : {props.prop_type}', icon='DOT')
-                row = box.row()
-                row.label(text=f'Units : {props.prop_units}', icon='DOT')
-                row = layout.row()
-                row.label(text="Related classes :", icon='DOT')
-                self.layout.template_list(
-                    "BIM_UL_property_class",
-                    "",
-                    props,
-                    "class_info",
-                    props,
-                    "active_info_prop_index",
-                )
-                
-            row = layout.row(align=True)
-            row = layout.row()
-            row.operator("object.add_prop", text="Add selected properties") 
-
-
-
-# Painel de propriedades            
-class BIM_UL_ifc_properties(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        if item:
-            row = layout.row(align=True)
-            if item.is_selected == True:
-                row.prop(item, "is_selected", text="", icon="RADIOBUT_ON")  
-            else:
-                row.prop(item, "is_selected", text="", icon="RADIOBUT_OFF", ) 
-            row.label(text=item.name, icon="TEXT")            
-            op = row.operator("object.uri", text="", icon="URL")
-            op.uri = item.uri
-
-
-# Painel de classe das propriedades            
-class BIM_UL_property_class(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        if item:
-            row = layout.row()
-            row.label(text=item.description)
-            row.label(text=item.name)
-            row.label(text=f'PSET: [{item.propertyset}]')
-            op = row.operator("object.uri", text="", icon="URL")
-            op.uri = item.uri
-            
-
-# ---------------------------------------------------------------------
-# Importa as classes diretamente do dicionário no bSDD 
-# da versão selecionada
-# ---------------------------------------------------------------------
-
-class Panel_Import_Classes(bpy.types.Panel):
-    
-    bl_label        = "Oil & Gas Subsea Get Classes"
-    bl_idname       = "VIEW3D_PT_import_classes"
-    bl_space_type   = 'VIEW_3D'
-    bl_region_type  = 'UI'
-    bl_context      = "objectmode"
-    bl_category     = "O&G Dictionary"
-    bl_options      = {"DEFAULT_CLOSED"}
-
-
-    def draw(self, context):           
-        layout = self.layout     
-        props = context.scene.my_props
         # botão para conectar com o bSDD e obter as propriedades do dicionario selecionado
         row = layout.row()
         row.operator("bsdd.get_class", text="get classes from bSDD")
@@ -250,35 +126,135 @@ class Panel_Import_Classes(bpy.types.Panel):
                     )
                 else:
                    row.label(text="Class has no properties", icon='WARNING_LARGE') 
-                
+
+        # botão para conectar com o bSDD e obter as propriedades do dicionario selecionado
+        row = layout.row()
+        row.operator("bsdd.get_prop", text="get properties from bSDD")
+        # imprime a lista de propriedades do elemento selecionado
+        if len(props.ifc_prop) > 0:
+            row = layout.row()
+            row.operator("object.clear_prop", text="Clear")
+            row.operator("object.assign_all", text="Assing all")
+            row.operator("object.unassign_all", text="Unassign all")
+            row = layout.row()
+            row.label(text="Properties of the selected objects:")                       
+            self.layout.template_list(
+                "BIM_UL_ifc_properties",
+                "",
+                props,
+                "ifc_prop",
+                props,
+                "active_property_index",
+            )
             
+            # botao para imprimir info da propriedade ativa
+            active_property = props.ifc_prop[props.active_property_index]
+            row = layout.row()                                
+            op = row.operator("property.get_prop_info", text="  Get Property Information  ")
+            op.uri = active_property.uri
+
+            # Imprime informações da propriedade ativa 
+            if props.info_prop_loaded:
+                row = layout.row()
+                row.label(text="Property Information:", icon='INFO')
+                box = layout.box()
+                row = box.row(align=True)                    
+                row.label(text=f'Definition : ', icon='DOT')
+
+                _label_multiline(
+                    context=context,
+                    text=props.prop_definition,
+                    parent=box
+                )
+                
+                row = box.row()
+                row.label(text=f'Description : {props.prop_description}', icon='DOT')
+                row = box.row()
+                row.label(text=f'Data Type : {props.prop_datatype}', icon='DOT')
+                row = box.row()
+                row.label(text=f'Property Type : {props.prop_type}', icon='DOT')
+                row = box.row()
+                row.label(text=f'Units : {props.prop_units}', icon='DOT')
+                row = layout.row()
+                row.label(text="Related classes :", icon='DOT')
+                self.layout.template_list(
+                    "BIM_UL_property_class",
+                    "",
+                    props,
+                    "class_info",
+                    props,
+                    "active_info_prop_index",
+                )
+                
+            row = layout.row(align=True)
+            row = layout.row()
+            row.operator("object.add_prop", text="Add selected properties") 
+            
+            if model:
+                row = layout.row()
+                row.operator("ids.export", text="Export local template to IDS file", icon="EXPORT")
+
+# Painel de propriedades            
+class BIM_UL_ifc_properties(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        if item:
+            row = layout.row(align=True)
+            if item.is_selected == True:
+                row.prop(item, "is_selected", text="", icon="RADIOBUT_ON")  
+            else:
+                row.prop(item, "is_selected", text="", icon="RADIOBUT_OFF", ) 
+            row.label(text=item.name, icon="TEXT")            
+            op = row.operator("object.uri", text="", icon="URL")
+            op.uri = item.uri
+
+# Painel de classe das propriedades            
+class BIM_UL_property_class(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        if item:
+            row = layout.row()
+            row.label(text=item.description)
+            row.label(text=item.name)
+            row.label(text=f'PSET: [{item.propertyset}]')
+            op = row.operator("object.uri", text="", icon="URL")
+            op.uri = item.uri
+         
+     
 # Painel de classes             
 class BIM_UL_classes(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
         if item:
             row = layout.row(align=True)
+            icon_type="COLOR"
             if item.type == 'Material':
-                icontype = 'MATERIAL_DATA'
+                icon_type = 'MATERIAL_DATA'
             else:
-                icontype = 'COLOR'
+                icon_type = 'COLOR'
 
-            if not item.is_hidden:
-                for i in range(0, item.level_index - 1):
-                    row.label(text="", icon="BLANK1")
-                if item.has_children:
-                    if item.is_expanded:
-                        row.operator(
-                            "object.contract_classes", text="", emboss=False, icon="DISCLOSURE_TRI_DOWN"
-                        ).index = item.index
-                    else:
-                        row.operator(
-                            "object.expand_classes", text="", emboss=False, icon="DISCLOSURE_TRI_RIGHT"
-                        ).index = item.index
-                else:
-                    row.label(text="", icon="BLANK1") 
+            draw_tree(layout, item,
+                operators = [
+                    {"name": "object.uri", "icon": 'URL', "att": [("uri", item.uri)]}
+                ],
+                attributes = [(f'[{item.code}] {item.name}', icon_type)],                
+                property = 'classes'
+            )
+ 
+            # if not item.is_hidden:
+            #     for i in range(0, item.level_index - 1):
+            #         row.label(text="", icon="BLANK1")
+            #     if item.has_children:
+            #         if item.is_expanded:
+            #             row.operator(
+            #                 "object.contract_classes", text="", emboss=False, icon="DISCLOSURE_TRI_DOWN"
+            #             ).index = item.index
+            #         else:
+            #             row.operator(
+            #                 "object.expand_classes", text="", emboss=False, icon="DISCLOSURE_TRI_RIGHT"
+            #             ).index = item.index
+            #     else:
+            #         row.label(text="", icon="BLANK1") 
 
-                row.label(text= f'[{item.code}] {item.name}', icon = icontype )                 
-                row.operator("object.uri", text="", icon="URL").uri = item.uri
+            #     row.label(text= f'[{item.code}] {item.name}', icon = icontype )                 
+            #     row.operator("object.uri", text="", icon="URL").uri = item.uri
 
 # Painel de propriedades da classe             
 class BIM_UL_class_prop(bpy.types.UIList):
@@ -287,31 +263,6 @@ class BIM_UL_class_prop(bpy.types.UIList):
             row = layout.row(align=True)
             row.label(text= f'{item.description}', icon = 'DOT' )             
             row.operator("object.uri", text="", icon="URL").uri = item.uri
-
-
-# ---------------------------------------------------------------------
-# Exporta as definições das propriedades no template do usuário para 
-# um arquivo IDS
-# ---------------------------------------------------------------------
-
-class Panel_Export_Properties(bpy.types.Panel):
-    
-    bl_label        = "Export Property template"
-    bl_idname       = "VIEW3D_PT_export"
-    bl_space_type   = 'VIEW_3D'
-    bl_region_type  = 'UI'
-    bl_context      = "objectmode"
-    bl_category     = "O&G Dictionary"
-    bl_options      = {"DEFAULT_CLOSED"}
-    
-    
-    def draw(self, context):           
-        layout = self.layout 
-        model = tool.Ifc.get()
-        if model:
-            row = layout.row()
-            row.operator("ids.export", text="Export local template to IDS file", icon="EXPORT")
-
 
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
@@ -322,26 +273,28 @@ class Panel_Export_Properties(bpy.types.Panel):
 class Panel_Decompositions(bpy.types.Panel):
     
     bl_label        = "Decompositions"
-    bl_idname       = "VIEW3D_PT_decompositions"
+    bl_idname       = "VIEW3D_PT_og_decompositions"
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Decomposition"
+    bl_category     = "O&G Tools"
     bl_options      = {"DEFAULT_CLOSED"}
     
-    
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='NODETREE')
+
     def draw(self, context):           
         layout = self.layout     
-        props = context.scene.my_props
+        props = context.scene.og_props
         row = layout.row()
-        row.operator("elements.decomposition", text="load")
+        row.operator("decomposition.load", text="Load decompositions")
+        row = layout.row()
+        row.label(text="Project Composition:", icon='INFO')  
+        # Imprime a arvore de decomposicao de elementos 
         row = layout.row()
         row.prop(props, "show_ports")
-        # Imprime a arvore de decomposicao de elementos 
-        if len(props.elements_containers) > 0:
-            row = layout.row()
-            row.label(text="Element decomposition:", icon='INFO')
-
+        if len(props.containers_show) > 0:
             self.layout.template_list(
                 "BIM_UL_decomposition",
                 "",
@@ -351,16 +304,35 @@ class Panel_Decompositions(bpy.types.Panel):
                 "active_element_index",
                 rows=5
             )
+            row = layout.row()
+
+        # imprime a árvore de contratos, ativos ou estoque
+        row.label(text="Tree decomposition:", icon='INFO')
+        row = layout.row()
+        row.prop(props, "tree_type", expand=True)
         
 
+        if len(props.elements_tree) > 0:           
+
+            self.layout.template_list(
+                "BIM_UL_tree",
+                "",
+                props,
+                "elements_tree",
+                props,
+                "active_tree_element_index",
+                rows=5
+            )
+            row = layout.row()
 
 # Painel de classes             
 class BIM_UL_decomposition(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        props = context.scene.og_props
         if item:
             row = layout.row(align=True)
-            objs = [tool.Ifc.get_entity(x).id()  for x in context.selected_objects]           
-
+            # Define icons for different element types
+            blank = 1
             if item.type == "IfcProject":
                 icon = 'CURRENT_FILE'
             elif item.type == "IfcSite":
@@ -368,37 +340,44 @@ class BIM_UL_decomposition(bpy.types.UIList):
             elif item.type == "IfcBuilding":
                 icon = 'STICKY_UVS_LOC'
             elif item.type == "IfcElementAssembly":
-                icon = 'OBJECT_HIDDEN'
+                icon = 'STICKY_UVS_LOC'
             elif item.type == "IfcPipeSegment":
-                icon = 'IPO_EASE_OUT'            
+                icon = 'IPO_EASE_OUT'         
             elif item.type == "IfcCableSegment":
                 icon = 'DOT'  
             elif item.type == "IfcValve":
-                icon = 'DOT'           
+                icon = 'DOT'      
             else:
                 icon = 'DOT'
 
-            #props = context.scene.my_props
+            draw_tree(layout, item,
+                operators = [
+                    {"name": "decomposition.select_element", "icon": 'OBJECT_DATAMODE', "att": [("index", item.index)]},
+                    {"name": "decomposition.select_components", "icon": 'RESTRICT_SELECT_OFF', "att": [("index", item.index)]},
+                    {"name": "decomposition.move", "icon": 'LONGDISPLAY', "att": [("index", item.index), ("type", "nests")]},
+                    {"name": "decomposition.move", "icon": 'IMGDISPLAY', "att": [("index", item.index), ("type", "aggregations")]},
+                ],
+                attributes = [(f'[{item.object_type}] {item.name}', icon)],                
+                property = 'elements_containers'
+            )
+# Painel de classes             
+class BIM_UL_tree(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        props = context.scene.og_props
+        if item:
+            row = layout.row(align=True)
+            # Define icons for different element types
+            blank = 1
+            icon = 'NONE'
 
-            if not item.is_hidden:
-                for i in range(0, item.level - 1):
-                    row.label(text="", icon="BLANK1")
-                if item.has_children:
-                    if item.is_expanded:
-                        row.operator(
-                            "element.contract_decomposition", text="", emboss=False, icon="DISCLOSURE_TRI_DOWN"
-                        ).index = item.index
-                    else:
-                        row.operator(
-                            "element.expand_decomposition", text="", emboss=False, icon="DISCLOSURE_TRI_RIGHT"
-                        ).index = item.index
-                else:
-                    row.label(text="", icon="BLANK1") 
-                row.label(text= f'[{item.object_type}] {item.name}', icon=icon)
-                icon2 = "CANCEL" if item.is_selected == True else "RESTRICT_SELECT_OFF"      
-                row.operator("decomposition.select_element", text="", icon='OBJECT_DATAMODE').index = item.index                          
-                row.operator("decomposition.select_components", text="", icon=icon2).index = item.index
-             
+            draw_tree(layout, item,
+                operators = [
+                    {"name": "decomposition.select_element", "icon": 'OBJECT_DATAMODE', "att": [("index", item.index)]},
+                    {"name": "decomposition.select_components", "icon": 'RESTRICT_SELECT_OFF', "att": [("index", item.index)]}
+                ],
+                attributes = [(f'[{item.object_type}] {item.name}', icon)],                
+                property = 'elements_tree'
+            )
 
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
@@ -409,15 +388,19 @@ class BIM_UL_decomposition(bpy.types.UIList):
 class Panel_Catalog(bpy.types.Panel):
     
     bl_label        = "Type catalog"
-    bl_idname       = "VIEW3D_PT_catalog"
+    bl_idname       = "VIEW3D_PT_og_catalog"
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Catalog"
-    #bl_options      = {"DEFAULT_CLOSED"}
+    bl_category     = "O&G Tools"
+    bl_options      = {"DEFAULT_CLOSED"}
     
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='GROUP_VCOL')
+
     def draw(self, context):   
-        props = context.scene.my_props 
+        props = context.scene.og_props 
         layout = self.layout       
         row = layout.row()     
 
@@ -425,7 +408,7 @@ class Panel_Catalog(bpy.types.Panel):
         row.operator("catag.load_products", text="Load type products")   
 
         # Imprime os produtos 
-        if len(props.products) > 0:
+        if len(props.types) > 0:
             row = layout.row()
             row.label(text="Classes Information:", icon='INFO')
 
@@ -433,21 +416,24 @@ class Panel_Catalog(bpy.types.Panel):
                 "BIM_UL_products",
                 "",
                 props,
-                "products_show",
+                "types_show",
                 props,
-                "active_product_index",
+                "active_type_index",
                 rows=10
             )
             
             row = layout.row()
             row.label(text="Product Information:", icon='INFO')
+            description = get_product_attribute(context, props.active_type_index, 'description')
+            element_type = get_product_attribute(context, props.active_type_index, 'element_type')
             box = layout.box()
             rowb = box.row()
-            text = get_product_description(context, props.active_product_index)
-            _label_multiline(context = context, parent = box, text = text)
+            rowb.label(text=f'Description:{description}')
+            rowb = box.row()
+            rowb.label(text=f'Element Type:{element_type}')
+            
 
-
-# Painel de produtos             
+# Painel de tipos             
 class BIM_UL_products(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
         if item:
@@ -459,37 +445,21 @@ class BIM_UL_products(bpy.types.UIList):
             if item.name in icons:
                 icontype = icons[item.name]
             else:
-                icontype = 'LAYER_ACTIVE'
+                icontype = 'NONE'
 
 
-            if not item.is_hidden:
-                for i in range(0, item.level_index - 1):
-                    row.label(text="", icon="BLANK1")
-                if item.has_children:
-                    if item.is_expanded:
-                        row.operator(
-                            "object.contract_products",
-                            text="",
-                            emboss=False,
-                            icon="DISCLOSURE_TRI_DOWN"
-                        ).index = item.index
-                    else:
-                        row.operator(
-                            "object.expand_products",
-                            text="",
-                            emboss=False,
-                            icon="DISCLOSURE_TRI_RIGHT"
-                        ).index = item.index
-                else:
-                    row.label(text="", icon="BLANK1") 
+            draw_tree(layout, item,
+                operators = [
+                    {"name": "catag.select_type", "icon": 'OBJECT_DATA', "att": [("id", item.id)]},
+                    {"name": "catag.select_elements", "icon": 'RESTRICT_SELECT_OFF', "att": [("id", item.id)]}
+                ],
+                #attributes = [(item.tag, 'NONE'), (item.name, 'NONE'), (item.element_type, 'NONE')],  
+                attributes = [(f'[{item.tag}] - {item.name}', icontype)] if item.tag != '' else [(item.name, icontype)],             
+                property = 'types',
+                only_children=True
+            )
 
 
-                row.label(text= f'{item.name}', icon = icontype )
-
-                if not item.has_children:
-                    row.operator("catag.insert_type", text="", icon="PLUS").uri = item.name
-                if item.uri != '':
-                    row.operator("object.uri", text="", icon="URL").uri = item.uri
 
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
@@ -497,30 +467,34 @@ class BIM_UL_products(bpy.types.UIList):
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
 
-
 class Panel_Properties(bpy.types.Panel):
     
     bl_label        = "Properties"
-    bl_idname       = "VIEW3D_PT_properties"
+    bl_idname       = "VIEW3D_PT_og_properties"
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Properties"
+    bl_category     = "O&G Tools"
     #bl_options      = {"DEFAULT_CLOSED"}
     
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='PROPERTIES')
+
     def draw(self, context):   
-        props = context.scene.my_props 
+        props = context.scene.og_props 
         layout = self.layout       
         row = layout.row()   
         # select objects 
-        obj = context.active_object       
-        
-        if obj is not None:   
+        obj = context.active_object  
+         
+        print(obj)
+        if obj is not None and obj.select_get():#len(context.selected_objects) > 0:   
             model = tool.Ifc.get()     
             row = layout.row()                      
             row.operator("props.load_properties", text="Load properties")    
 
-            # se o tipo do elemento tem algum documento externo associado
+            # if the element type have some external document associated
             if props.has_document:
                     row = layout.row() 
                     row.label(text='Referenced documents:', icon = 'DOCUMENTS') 
@@ -536,7 +510,7 @@ class Panel_Properties(bpy.types.Panel):
                         box = layout.box()
                         for document in props.documents:
                             row = box.row() 
-                            # operador para gravar a edicao do documento
+                            # operator to save the documento changes
                             op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
                             op4.ifc_id = tool.Ifc.get_entity(obj).id()
                             op4.id = document.identification
@@ -550,16 +524,16 @@ class Panel_Properties(bpy.types.Panel):
                             row = box.row()
                             row.prop(document, 'location')
 
-                            # operador de carregamento de arquivo externo
+                            # operator to load external file
                             op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
                             op0.index = -1
                             op0.doc_index = document.index
 
-                            # operador para visualizar o documento
+                            # operator to visualize document
                             op = row.operator("props.open_doc", icon='BORDERMOVE', text="")  
                             op.location = document.location
 
-                            # operador de plotagem
+                            # operator to plot
                             if document.location[-3:].upper() == 'CSV':
                                 op3 = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
                                 op3.pset_index = -1
@@ -656,8 +630,9 @@ class Panel_Properties(bpy.types.Panel):
                         titulos = '' 
                         i = 1
                         
-
+                        #################################
                         # para cada propriedade
+                        #################################
                         for item in pset.props:   
                                                              
                             # se existe a palavra Table no nome da propriedade
@@ -748,11 +723,114 @@ class Panel_Properties(bpy.types.Panel):
                                 # se for o valor da propriedade simples                               
                                 else:
                                     col = rowb.column()
-                                    col.scale_x =0.6
+                                    #col.scale_x =0.8
+                                    col.alignment = 'RIGHT'
                                     act_prop = f"value{item.type_value}"                                
-                                    col.prop(item, act_prop, text=item.datatype)
+                                    col.prop(item, act_prop, text='')
+                                    col = rowb.column()
+                                    col.scale_x =0.4
+                                    col.label(text=item.datatype)
                                     old_name_prop = item.name 
 
                             i += 1
 
                     old_is_a = pset.is_a # type or instance
+        for area in context.screen.areas:
+            area.tag_redraw()
+
+#============================================================================================
+# Contracts / stoks
+#============================================================================================
+
+# class Panel_Contracts(bpy.types.Panel):
+    
+#     bl_label        = "Contracts / Stocks"
+#     bl_idname       = "VIEW3D_PT_og_contracts"
+#     bl_space_type   = 'VIEW_3D'
+#     bl_region_type  = 'UI'
+#     bl_context      = "objectmode"
+#     bl_category     = "O&G Tools"
+#     bl_options      = {"DEFAULT_CLOSED"}
+    
+#     def draw_header(self, context):
+#         layout = self.layout
+#         layout.label(text="", icon='FILE_BLEND')
+
+#     def draw(self, context):   
+#         layout = self.layout     
+#         row = layout.row()
+#         row.operator("contracts.load", text="Load contracts and stocks")
+#         props = context.scene.og_props
+#         if len(props.contracts) > 0:
+#             row = layout.row()
+#             row.label(text="Contracts and Stocks:", icon='INFO')
+#             self.layout.template_list(
+#                 "BIM_UL_contracts",
+#                 "",
+#                 props,
+#                 "contracts",
+#                 props,
+#                 "active_contract_index",
+#                 rows=10
+#             )
+# class BIM_UL_contracts(bpy.types.UIList):
+#     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+#         if item:
+#             draw_tree(layout, item,
+#                 operators = [],
+#                 attributes = [(item.id, 'NONE'), (item.name, 'NONE')],                
+#                 property = 'contracts',
+#                 only_children=True
+#             ) 
+
+
+#============================================================================================
+# Settings
+#============================================================================================
+
+class Panel_Settings(bpy.types.Panel):
+    
+    bl_label        = "Settings"
+    bl_idname       = "VIEW3D_PT_og_settings"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"
+    bl_category     = "O&G Tools"
+    bl_options      = {"DEFAULT_CLOSED"}
+    
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='PREFERENCES')
+
+    def draw(self, context):
+        layout = self.layout
+        props = context.scene.og_props
+        row = layout.row()
+        row.label(text='Choose a bSDD dictionary:')
+        row = layout.row()
+        row.prop(props, 'dictionary')
+
+#============================================================================================
+# Info
+#============================================================================================
+class Panel_Info(bpy.types.Panel):
+    
+    bl_label        = "Info"
+    bl_idname       = "VIEW3D_PT_og_info"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"
+    bl_category     = "O&G Tools"
+    bl_options      = {"DEFAULT_CLOSED"}
+    
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='INFO_LARGE')
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.label(text="O&G Tools V 0.1.1", icon='MOD_LINEART')
+        layout.separator()
+
+

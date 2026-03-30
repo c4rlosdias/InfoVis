@@ -16,9 +16,9 @@ bl_info = {
     "name"        : "Oil&Gas Tools",
     "author"      : "Carlos Dias",
     "description" : "",
-    "blender"     : (4, 3, 0),
-    "version"     : (0, 0, 1),
-    "location"    : "View3D > Panel > Oil&Gas Tools",
+    "blender"     : (5, 0, 0),
+    "version"     : (0, 1, 1),
+    "location"    : "View3D > Panel > O&G Tools",
     "warning"     : "",
     "category"    : "User"
 }
@@ -30,25 +30,20 @@ from bpy.props import PointerProperty
 from bpy.types import Scene
 from bpy.utils import register_class, unregister_class
 
-
-
-#if sys.modules.get("bpy", None):
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs", "site", "packages"))
 
 from .operators import *
 from .panels import *
 from .properties import *
+from . import data
+
 
 classes = [     
     Operator_get_properties,
     Operator_get_classes,
-    Operator_load_decomposition,
-    Operator_contract_classes,
-    Operator_contract_products,
-    Operator_expand_classes,
-    Operator_expand_products,
-    Operator_contract_decomposition,
-    Operator_expand_decomposition,
+    Operator_contract_tree,
+    Operator_expand_tree,
+    Operator_decomposition_move,
     Operator_add_properties,
     Operator_clear_properties,
     Operator_get_prop_info,
@@ -60,7 +55,8 @@ classes = [
     Operator_export_ids,
     Operator_decomposition_select_components,
     Operator_decomposition_select_element,
-    Operator_catalog_insert_type,
+    Operator_catalog_select_type,
+    Operator_catalog_select_elements,
     Operator_load_products,
     Operator_props_load,
     Operator_props_expand,
@@ -73,13 +69,15 @@ classes = [
     Operator_document_load,
     Operator_document_open,
     Operator_show_table,
-    Panel_Connect,
-    Panel_Import_Properties,
-    Panel_Import_Classes,
-    Panel_Export_Properties, 
+    Operator_decomposition_load,
+    ErrorMessage,    
+    Panel_Connect, 
     Panel_Decompositions,  
     Panel_Catalog, 
     Panel_Properties,
+    Panel_Settings,
+    Panel_Info,
+    BIM_UL_tree,
     BIM_UL_ifc_properties,
     BIM_UL_classes,
     BIM_UL_class_prop,
@@ -90,21 +88,32 @@ classes = [
     Enumeration_values,
     Documents,  
     Class_info,
+    Class_type,
     Class_prop_info,
     Property_info,
     Pset_info,
-    Container,      
-    MyProperties,
+    Container,
+    OG_Properties,
 ]
-
+owner = object()
 def register():
     for c in classes:
         register_class(c)
-    Scene.my_props = PointerProperty(type=MyProperties)
+    Scene.og_props = PointerProperty(type=OG_Properties)
+    bpy.msgbus.subscribe_rna( 
+        key=(bpy.types.LayerObjects, "active"),
+        owner=owner,
+        args=(),
+        notify=data.call_back 
+    )
+    #bpy.app.handlers.depsgraph_update_post.append(data.on_active_object_change)
+
 
 
 def unregister():
-    del Scene.my_props
+    #bpy.app.handlers.depsgraph_update_post.remove(data.on_active_object_change)
+    bpy.msgbus.clear_by_owner(owner)
+    del Scene.og_props
     for c in classes:
         unregister_class(c)
 
