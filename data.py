@@ -12,6 +12,8 @@ from bonsai.bim.ifc import IfcStore
 from bonsai.bim import import_ifc
 from bonsai.bim.ifc import IfcStore
 
+# funções
+
 def refresh(context):
     props = context.scene.my_props
     props.classes_shown.clear()
@@ -60,8 +62,8 @@ def refresh_container(context):
             new_item.is_expanded = classe.is_expanded
             new_item.is_hidden = classe.is_hidden
             new_item.type = classe.type  
+            new_item.object_type = classe.object_type  
             new_item.is_selected = classe.is_selected  
-
 
 def set_prop_type( prop, value_prop):
     res = ""
@@ -80,37 +82,147 @@ def set_prop_type( prop, value_prop):
     else:
         prop.valuestr = str(value_prop)
         prop.type_value = "str"
-        print(type(value_prop))
 
-def set_properties(props, ifc_obj, is_a, i):
+def get_prop_type(prop):
+        res = None
+        if prop.type_value == "str":
+            res = prop.valuestr
+        elif prop.type_value == "int":
+            res = prop.valueint
+        elif prop.type_value == "bool":
+            res = prop.valuebool
+        elif prop.type_value == "float":
+            res = prop.valuefloat
+        return res        
+
+def get_unit_symbol(unit):
+    symbol = ''
+    if unit.is_a() == 'IfcDerivedUnit':                    
+        for sub_unit in unit.Elements: 
+            sub_symbol = ifcopenshell.util.unit.get_unit_symbol(sub_unit.Unit)
+            complement = str(sub_unit.Exponent)
+            sep = '/' if '-'in complement else ''
+            symbol += sep + sub_symbol + complement.replace('-', '')
+    else:
+        symbol=ifcopenshell.util.unit.get_unit_symbol(unit)
+    return symbol.replace('1', '')
+
+def get_unit(ifc_obj, pset_name, prop_name):
+    model = tool.Ifc.get()
+    psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
+    pset = model.by_id(psets[pset_name]['id'])
+    symbol = ''
+    for prop in pset.HasProperties:        
+        if prop.Name == prop_name:
+            unit = ifcopenshell.util.unit.get_property_unit(ifc_file=model, prop=prop)
+            if unit is not None:
+                symbol =f'[{get_unit_symbol(unit)}]'
+            else:
+                symbol=''
+            return symbol
+    return symbol
+
+def get_property(ifc_obj, pset_name, prop_name):
+    model = tool.Ifc.get()
+    pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
+    for prop in pset.HasProperties:
+        if prop.Name == prop_name:
+            return prop
+    return None
+
+def get_pset(ifc_obj, pset_name):
+    model = tool.Ifc.get()
+    pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
+    return pset
+
+def set_properties(props, ifc_obj, is_a, i):     
     id = ifc_obj.id()
     # get psets
+    print(ifc_obj)
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
+    print(psets)
     for pset, _props in psets.items():             
+        _pset = get_pset(ifc_obj, pset)        
         table = {}    
+
+        # cria um novo item
         new_item = props.prop_metadata.add()            
         new_item.name = pset  
         new_item.is_a = is_a 
         new_item.id_obj = id          
-        new_item.index = i  
-        j = 0      
+        new_item.index = i     
+
+        # se o pset tem algum documento associado
+        if _pset.HasAssociations:
+            new_item.has_document = True
+            c = 0
+            for association in _pset.HasAssociations:
+                document = association.RelatingDocument
+                print(document)
+                newdocument = new_item.documents.add()
+                newdocument.name = document.Name
+                newdocument.identification = document.Identification
+                newdocument.location = document.Location.wrappedValue 
+                newdocument.index = c
+                c += 1
+                   
+        j = 0   
+           
         for prop, value in _props.items():           
             if prop != 'id':  
                 if 'Table' in prop:
-                    table[prop]=value
+                    _prop = get_property(ifc_obj, pset, prop)
+                    table[f'{prop}||{_prop.Description}']=value
                 else:               
                     if type(value) == list:
-                        c = 0
-                        for item_prop in value:    
-                            new_prop = new_item.props.add() 
-                            new_prop.name = prop
+                        # obtem a propriedade
+                        _prop = get_property(ifc_obj, pset, prop)
+
+                        # verifica o tipo da propriedade
+                        if _prop is not None: 
+                            type_prop = _prop.is_a()
+                        else:
+                            type_prop = ''
+
+                        # se é uma propriedade de lista
+                        if type_prop == 'IfcPropertyListValue':
+                            #c = 0
+                            for item_prop in value:    
+                                new_prop = new_item.props.add() 
+                                new_prop.name = prop
+                                new_prop.description = _prop.Description
+                                new_prop.datatype = get_unit(ifc_obj, pset, prop)
+                                new_prop.index = j      
+                                new_prop.type_prop = type_prop     
+                                set_prop_type(new_prop, item_prop)
+                                #c += 1
+
+                        # se é uma propriedade enumerada
+                        if type_prop == 'IfcPropertyEnumeratedValue':  
+                            new_prop = new_item.props.add()                             
+                            new_prop.name = prop  
+                            new_prop.description = _prop.Description 
                             new_prop.index = j      
-                            new_prop.type_prop = 'list'                                                 
-                            set_prop_type(new_prop, item_prop)
-                            c += 1
+                            new_prop.type_prop = type_prop   
+                            new_prop.datatype = get_unit(ifc_obj, pset, prop)                                                        
+                            values = [x.wrappedValue for x in _prop.EnumerationValues ]
+                            for enumval in  _prop.EnumerationReference.EnumerationValues:
+                                new_value = new_prop.enumerations.add()
+                                if enumval.wrappedValue in values:
+                                    new_value.enumerated = True
+                                else:
+                                    new_value.enumerated = False
+                                set_prop_type(new_value, enumval.wrappedValue) 
+                    # se não é uma propriedade de lista nem enumerada
                     else:
+                        _prop = get_property(ifc_obj, pset, prop)
+                        # verifica se tem documento associado
+                        
+
                         new_prop = new_item.props.add()  
                         new_prop.name = prop
+                        new_prop.description = _prop.Description
+                        new_prop.datatype = get_unit(ifc_obj, pset, prop)
                         new_prop.index = j                                                
                         set_prop_type(new_prop, value)        
             j += 1
@@ -118,45 +230,74 @@ def set_properties(props, ifc_obj, is_a, i):
         # trata a tabela
         if len(table) > 0:
             df = pd.DataFrame(table)
+            dft = df.transpose()
             columns = df.columns.tolist()    
-            n = len(columns)  
-            # cria o cabecalho de colunas
-            # for column in columns:                  
-            #     new_prop = new_item.props.add()
-            #     new_prop.name = column
-            #     new_prop.n_columns = n
-            #     new_prop.index = j
-            #     new_prop.type_prop = 'table'
-            #     new_prop.type_value = '!coluna!'
-                
-
-            # iterage no datafreme para cria as propriedades com valor
-            for index, row in df.iterrows():                 
-                 for column in columns:
-                     new_prop = new_item.props.add()
-                     new_prop.name = column
-                     new_prop.n_columns = n                          
-                     new_prop.index = j    
-                     new_prop.type_prop = 'table'           
-                     set_prop_type(new_prop, row[column])
+            nc = len(columns)  
+            nr = len(df)
+            for index, row in dft.iterrows():   
+                for col, val in row.items():
+                    name = index.split('||')[0]
+                    description = index.split('||')[1]
+                    new_prop = new_item.props.add()
+                    new_prop.name = name
+                    new_prop.description = description
+                    new_prop.n_columns = nc 
+                    new_prop.n_rows = nr                         
+                    new_prop.index = j    
+                    new_prop.type_prop = 'table'  
+                    new_prop.datatype = get_unit(ifc_obj, pset, name)         
+                    set_prop_type(new_prop, val)
 
         i += 1
     return i
 
+# def refresh_props(context):
+#     # get active object
+#     props = context.scene.my_props
+#     props.prop_metadata.clear() 
+#     props.has_document = False
+#     props.document = ''
+#     obj = context.active_object
+#     ifc_obj = tool.Ifc.get_entity(obj)
 
+#     # se o tipo do elemento tem algum documento associado
+#     ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
+#     if ifc_obj_type.HasAssociations:
+#         props.has_document = True
+#         props.document = ifc_obj_type.HasAssociations[0].RelatingDocument.Location.wrappedValue  
+
+#     ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
+
+#     i = set_properties(props, ifc_obj, "instance", 0)
+#     set_properties(props, ifc_type_obj, "type", i)
 
 def refresh_props(context):
     # get active object
     props = context.scene.my_props
     props.prop_metadata.clear() 
+    props.documents.clear()
+    props.has_document = False
+    props.document = ''
     obj = context.active_object
     ifc_obj = tool.Ifc.get_entity(obj)
+
+    # se o tipo do elemento tem algum documento associado
+    ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
+    if ifc_obj_type.HasAssociations:
+        props.has_document = True
+        for association in ifc_obj_type.HasAssociations:
+            document = association.RelatingDocument
+            newdocument = props.documents.add()
+            newdocument.name = document.Name
+            newdocument.identification = document.Identification
+            newdocument.location = document.Location.wrappedValue  
+
     ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
+
     i = set_properties(props, ifc_obj, "instance", 0)
     set_properties(props, ifc_type_obj, "type", i)
-    
 
-
+# classes
 
 class Import_ifc():
 
@@ -214,6 +355,7 @@ class bSDD:
     data_dic =[]
     data_info_prop =[]
     data_info_class={}
+    data_class_prop = []
     properties = []
     data_prop = {}
     data_class = {}
@@ -236,10 +378,10 @@ class bSDD:
             cls.data_dic = [('0', 'ERROR connecting to bSDD', '')]
 
     @classmethod
-    def load_classes(cls, version : str) -> bool:        
+    def load_classes(cls, version : str, use_nested : bool) -> bool:        
         params = {
             'uri' : f'{cls.uri}/{version}',
-            'UseNestedClasses' : True
+            'UseNestedClasses' : use_nested
         }
         response = requests.get(f'{cls.endpoint}Dictionary/v1/Classes', params=params)        
         if response.status_code == 200:            
@@ -267,6 +409,17 @@ class bSDD:
         response = requests.get(f'{cls.endpoint}Class/v1', params=params)        
         if response.status_code == 200:            
             cls.data_info_class = response.json()
+            return True
+        else:
+            cls.response = response.text
+            return False
+    
+    @classmethod
+    def get_class_prop(cls, uri : str) -> bool:        
+        params = {'ClassUri' : uri}
+        response = requests.get(f'{cls.endpoint}Class/Properties/v1', params=params)        
+        if response.status_code == 200:                        
+            cls.data_class_prop = response.json()
             return True
         else:
             cls.response = response.text
@@ -326,7 +479,8 @@ class PropTempl:
         }
         prop_name = metadata['code']
         data_type = metadata['dataType']
-        units = metadata['units']    
+        units = metadata['units'] 
+        description = metadata['description']   
         definition = metadata['definition']
         if metadata['propertyValueKind'] in prop_type:
             template_type = prop_type[metadata['propertyValueKind']]
@@ -405,7 +559,7 @@ class PropTempl:
             # Se existe a propriedade naquele pset edita ela
             prop_templ = cls.get_prop(prop_name, pset_name, cls.template)
             if prop_templ is not None:
-                prop_templ.Description=definition
+                prop_templ.Description=description
                 prop_templ.PrimaryMeasureType=data_type
                 prop_templ.TemplateType=template_type
                 prop_templ.Enumerators=enumerators
