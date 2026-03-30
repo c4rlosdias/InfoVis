@@ -1,0 +1,77 @@
+{
+    "UUID" : "f00afc51-9186-49fb-a3f2-a721be8639ac",
+    "entity" : {
+            "ifc_class": "IfcPipeSegmentType",
+            "Name": "Flexible Pipe Structure 1",
+            "ElementType": "FlexiblePipeStructure",
+            "PredefinedType": "USERDEFINED"
+    },
+    "material" :{
+        "ifc_class": "IfcMaterialProfileSet",
+        "Name" : "Inner Sheath",
+        "MaterialProfiles" : [
+            {
+                "ifc_class" : "IfcMaterialProfile",
+                "Material" : {
+                    "ifc_class" : "IfcMaterial",
+                    "Name" : "Galvanic Steel",
+                    "Category" : "Umbilical"
+                },
+                "Profile" : {
+                    "ifc_class" : "IfcArbitraryProfileDefWithVoids",
+                    "ProfileType" : "AREA",
+                    "ProfileName" : "BubdleSteelTube",
+                    "OuterCurve" : {
+                        "ifc_class" : "IfcCircle",
+                        "Position" : {
+                            "ifc_class" : "IfcAxis2Placement2D",
+                            "Location" : {
+                                "ifc_class" : "IfcCartesianPoint",
+                                "Coordinates" : [0.0, 0.0]
+                            }
+                        },
+                        "Radius" : 0.094
+                    },
+                    "InnerCurves" : [
+                        {
+                            "ifc_class" : "IfcCircle",
+                            "Position" : {
+                                "ifc_class" : "IfcAxis2Placement2D",
+                                "Location" : {
+                                    "ifc_class" : "IfcCartesianPoint",
+                                    "Coordinates" : [0.0, 0.0]
+                                }
+                            },
+                            "Radius" : 0.0634
+                        }
+                    ]
+                }
+
+            }
+        ]
+    },
+    "style" : {
+        "ifc_class" : "IfcStyledItem",
+        "@material" : "Galvanic Steel",
+        "Name" : "Pipe",
+        "Styles" : [
+            {
+                "ifc_class" : "IfcSurfaceStyle",
+                "Name" : "pipe",
+                "Side" : "BOTH",
+                "Styles" : [
+                    {
+                        "ifc_class" : "IfcSurfaceStyleShading",
+                        "SurfaceColour" : {
+                            "ifc_class" : "IfcColourRgb",
+                            "Red" : 0.03,
+                            "Green" : 0.03,
+                            "Blue" : 0.062 
+                        }
+                    }
+                ]
+            }
+        ] 
+    }
+  
+}

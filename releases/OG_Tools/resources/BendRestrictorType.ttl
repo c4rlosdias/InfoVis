@@ -1,0 +1,62 @@
+@prefix edo: <http://energy-fomain-test.org/ifc-instances#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ifc: <http://standards.buildingsmart.org/IFC/DEV/IFC4_3/OWL#> .
+@prefix ifcowl: <http://www.buildingsmart-tech.org/ifcOWL/IFC4_ADD1#> .
+
+## Instância Principal - IfcPipeSegmentType
+edo:f00afc51-9186-49fb-a3f2-a721be8639ac a ifc:IfcPipeSegmentType ;
+    ifc:globalId "f00afc51-9186-49fb-a3f2-a721be8639ac" ;
+    ifc:name "LineAncillaryType" ;
+    ifc:predefinedType ifc:USERDEFINED ;
+    ifc:elementType "IntermediateSheath" ;
+    ifc:hasAssociations [
+        a ifc:IfcRelAssociatesMaterial ;
+        ifc:relatingMaterial edo:InnerSheath_MaterialProfileSet
+    ] .
+
+## Material Profile Set
+edo:InnerSheath_MaterialProfileSet a ifc:IfcMaterialProfileSet ;
+    ifc:name "Inner Sheath" ;
+    ifc:materialProfiles edo:GalvanicSteel_MaterialProfile .
+
+## Material Profile
+edo:GalvanicSteel_MaterialProfile a ifc:IfcMaterialProfile ;
+    ifc:material edo:GalvanicSteel_Material ;
+    ifc:profile  edo:BundleSteelTube_Profile .
+
+## Material
+edo:GalvanicSteel_Material a ifc:IfcMaterial ;
+    ifc:name "Galvanic Steel" ;
+    ifc:category "Umbilical" .
+
+## Profile Definition
+edo:BundleSteelTube_Profile a ifc:IfcArbitraryProfileDefWithVoids ;
+    ifc:profileType ifc:AREA ;
+    ifc:profileName "BubdleSteelTube" ;
+    ifc:outerCurve   edo:OuterCircle ;
+    ifc:innerCurves  edo:InnerCircle .
+
+## Outer Circle
+edo:OuterCircle a ifc:IfcCircle ;
+    ifc:radius 9.4 ;
+    ifc:position [
+        a ifc:IfcAxis2Placement2D ;
+        ifc:location [
+            a ifc:IfcCartesianPoint ;
+            ifc:coordinates (0.0 0.0)
+        ]
+    ] .
+
+## Inner Circle
+edo:InnerCircle a ifc:IfcCircle ;
+    ifc:radius 6.34 ;
+    ifc:position [
+        a ifc:IfcAxis2Placement2D ;
+        ifc:location [
+            a ifc:IfcCartesianPoint ;
+            ifc:coordinates (0.0 0.0)
+        ]
+    ] .
