@@ -14,10 +14,6 @@ def _label_multiline(context, text, parent):
     for text_line in text_lines:
         parent.label(text=text_line)
 
-def get_properties(ifc_obj):
-
-    result = []
-    result.append()
 
 def get_product_attribute(context, index, attribute):
     props = context.scene.og_props 

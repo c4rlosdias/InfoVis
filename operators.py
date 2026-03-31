@@ -353,7 +353,10 @@ class Operator_export_ids(bpy.types.Operator):
     
     def get_data_type(self, units):
         # Implement your logic to get the data type based on units
-        return 'IfcLabel'  # Example return value, replace with actual logic
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "resource", "units.json"), 'r', encoding='utf-8') as file:
+            units_data = json.load(file)
+        data_type = units_data[units] if units in units_data else 'IfcLabel'
+        return data_type
 
     def get_children(self, classe):
             if 'children' in classe:
@@ -384,10 +387,7 @@ class Operator_export_ids(bpy.types.Operator):
                 response = bSDD.get_class(leave['uri'], True)
                 if response:
                     data_classes.append(bSDD.data_info_class)
-        # with open('data_classes.json', 'w', encoding='utf-8') as file:
-        #     json.dump(data_classes, file, ensure_ascii=False, indent=4)
 
-        # return {"FINISHED"} if len(data_classes) > 0 else {"CANCELLED"}
         # Cria o ids
         my_ids = ids.Ids(
             title='Oil & Gas Subsea',
@@ -399,7 +399,6 @@ class Operator_export_ids(bpy.types.Operator):
         )
 
         # povoa ids
-        #pset_templates = template.by_type('IfcPropertySetTemplate')
         for classe in tqdm(data_classes, total=len(data_classes), desc='Processing specifications:'):
             if 'classProperties' in classe:             
                 # define a especificação
