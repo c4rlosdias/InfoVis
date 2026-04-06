@@ -102,6 +102,16 @@ def active_type_changed(self, context):
     #self.classes_shown.clear()
     self.types_loaded = False
 
+def active_element_changed(self, context):
+    model = tool.Ifc.get()
+    print(f"Active element index: {self.active_element_index}")
+    for element in self.containers_show:
+        if element.index == self.active_element_index:
+            o = tool.Ifc.get_entity(model.by_id(element.id))
+            print(f"Selected element: {o}")
+        else:
+            element.is_selected = False
+
 
 def load_products(self, context):   
     props = context.scene.my_props
@@ -227,6 +237,11 @@ class Container(PropertyGroup):
     object_type   : StringProperty(name="object_type")
     is_nested     : BoolProperty(name="is nested", default=False)
 
+class Layer(PropertyGroup):
+    id            : IntProperty(name="id")
+    name          : StringProperty(name="name")
+    description   : StringProperty(name="description")
+    is_selected   : BoolProperty(name="is selected", default=False)
 
 class OG_Properties(PropertyGroup): 
     
@@ -241,10 +256,11 @@ class OG_Properties(PropertyGroup):
     active_class_prop_index    : IntProperty(name='class prop index', default=0, update=active_class_prop_changed)
     classes                    : CollectionProperty(name='classes', type=Class_info) 
     classes_shown              : CollectionProperty(name='classes show', type=Class_info) 
-    active_element_index       : IntProperty(name='element index', default=0)
+    
     active_tree_element_index  : IntProperty(name='element index', default=0)
     
     # Decomposition
+
     tree_type                : EnumProperty(
                                     items=[
                                         ('assets', 'Assets', 'Assets'),
@@ -254,10 +270,11 @@ class OG_Properties(PropertyGroup):
                                     name='Tree Type',
                                     update=update_tree_type
                                ) # type: ignore
+    active_element_index     : IntProperty(name='element index', default=0, update=active_element_changed)
     elements_containers      : CollectionProperty(name='elements containers', type=Container)  # type: ignore
     containers_show          : CollectionProperty(name='containers show', type=Container)  # pyright: ignore[reportInvalidTypeForm]
     elements_tree            : CollectionProperty(name='elements tree', type=Container)
-    elements_tree_show        : CollectionProperty(name='elements tree show', type=Container)
+    elements_tree_show       : CollectionProperty(name='elements tree show', type=Container)
     
     show_ports               : BoolProperty(name="show ports", default=False)
 
@@ -295,6 +312,9 @@ class OG_Properties(PropertyGroup):
     active_product_index     : IntProperty(name='product index', default=0, update=active_product_changed)
     active_type_index     : IntProperty(name='product index', default=0, update=active_product_changed)
     product_description      : StringProperty(name='product description', default='')
+    layers                    : CollectionProperty(name="layers", type=Container)
+    active_layer_index       : IntProperty(name='layer index', default=0)
+    active_type_id : IntProperty(name='active type id', default=0)
 
     # O&G Properties
     active_pset_index        : IntProperty(name='pset index', default=0)
@@ -314,7 +334,16 @@ class OG_Properties(PropertyGroup):
 
     show_table               : BoolProperty(name='Show table', default=False)
 
-
+    # Element Connections
+    connect_type             : EnumProperty(
+                                    name="Connection Type",
+                                    items=[
+                                        ("IfcRelConnectsPorts", "IfcRelConnectsPorts",""),
+                                        ("IfcRelConnectsElements", "IfcRelConnectsElements",""),
+                                        ("IfcRelConnectsWithRealizingElements", "IfcRelConnectsWithRealizingElements","")
+                                    ],                                
+                                    default="IfcRelConnectsElements"
+                                )
 
 
 

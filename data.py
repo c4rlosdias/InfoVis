@@ -60,7 +60,14 @@ def load_contained_elements_by_decomposition(container: ifcopenshell.entity_inst
                     new.type = element.is_a()
                     new.level = level 
                     new.id = element.id()                
-                    new.object_type = element.ObjectType or 'Unnamed'                            
+                     
+                    if hasattr(element, "ObjectType") and element.ObjectType:
+                        new.object_type = element.ObjectType
+                    elif hasattr(element, "ElementType") and element.ElementType:
+                        new.object_type = element.ElementType
+                    else:
+                        new.object_type = 'Unnamed'      
+
                     children = [
                         e
                         for e in get_decomposition(element, is_recursive=False)
@@ -73,7 +80,8 @@ def load_contained_elements_by_decomposition(container: ifcopenshell.entity_inst
             
             getattr(props, name_props).clear()
             elements = get_decomposition(container, is_recursive=False) 
-            add_elements([container], name_props)
+            #add_elements([container], name_props)
+            add_elements(elements, name_props)
 
 # Call back para carregar as propriedades ao mudar o objeto ativo
 def call_back():
@@ -156,7 +164,7 @@ def draw_tree(layout, item, operators, attributes, property, only_children = Fal
     '''
     if not item.is_hidden:
         
-        row = layout.row(align=True)
+        row = layout.row()
         # adiciona os ícones de hierarquia
         for _ in range(0, item.level - 1):
             row.label(text="", icon="BLANK1")
@@ -465,7 +473,7 @@ def refresh_props(context):
                     newdocument.name = document.Name
                     newdocument.identification = document.Identification
                     if document.Location:
-                        newdocument.location = document.Location
+                        newdocument.location = str(document.Location.wrappedValue)
                     else:
                         newdocument.location = ''
 
@@ -718,8 +726,9 @@ class PropTempl:
         if cls.template is None:
             cls.get_template()
 
-        # Abre o arquivo com os tip[os dos valores de acordo com a unidade
-        with open('./resources/units.json', 'r') as file:
+        # Abre o arquivo com os tipos dos valores de acordo com a unidade
+        units_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources', 'units.json')
+        with open(units_path, 'r') as file:
             d_types = json.load(file)
 
         
@@ -997,3 +1006,39 @@ class CDE_Api:
             }
         ]
         return inventory
+
+
+# Função para criar conexões entre elementos, portas ou com elementos de realização
+def add_connections(obj_a, obj_b, obj_c, connect_type="IfcRelConnectsWithRealizingElements"):   
+    model = tool.Ifc.get()
+    element_a = tool.Ifc.get_entity(obj_a)
+    element_b = tool.Ifc.get_entity(obj_b)
+    element_c = tool.Ifc.get_entity(obj_c)
+    if element_a and element_b:
+        if connect_type == "IfcRelConnectsPorts":
+            rel = model.create_entity(
+                "IfcRelConnectsPorts",
+                GlobalId=ifcopenshell.guid.new(),
+                RelatingPort=element_a,
+                RelatedPort=element_b,
+                RealizingElement=element_c if element_c else None
+            )
+        elif connect_type == "IfcRelConnectsElements":
+            rel = model.create_entity(
+                "IfcRelConnectsElements",
+                GlobalId=ifcopenshell.guid.new(),
+                RelatingElement=element_a,
+                RelatedElement=element_b
+            )
+        elif connect_type == "IfcRelConnectsWithRealizingElements":
+            rel = model.create_entity(
+                "IfcRelConnectsWithRealizingElements",
+                GlobalId=ifcopenshell.guid.new(),
+                RelatingElement=element_a,
+                RelatedElement=element_b,
+                RealizingElements=[element_c]
+            )
+
+        return rel
+    else:
+        return None

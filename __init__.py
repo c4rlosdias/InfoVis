@@ -26,11 +26,27 @@ bl_info = {
 
 import sys
 import os
+import platform
+import subprocess
+import bpy
 from bpy.props import PointerProperty
 from bpy.types import Scene
 from bpy.utils import register_class, unregister_class
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs", "site", "packages"))
+if platform.system() == "Windows":
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs", "site", "packages"))
+else:
+    # On Linux/macOS the bundled libs contain Windows-only binaries (.pyd),
+    # so we install the required packages into Blender's Python instead.
+    _required = ["matplotlib", "scipy", "tqdm", "rdflib", "kiwisolver", "cycler"]
+    _missing = []
+    for _pkg in _required:
+        try:
+            __import__(_pkg)
+        except ImportError:
+            _missing.append(_pkg)
+    if _missing:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", *_missing])
 
 from .operators import *
 from .panels import *
@@ -57,11 +73,16 @@ classes = [
     Operator_decomposition_select_element,
     Operator_catalog_select_type,
     Operator_catalog_select_elements,
+    Operator_catalog_show_layers,
+    Operator_catalog_select_layer,
     Operator_load_products,
     Operator_props_load,
     Operator_props_expand,
     Operator_docs_expand,
     Operator_props_edit,
+    Operator_disconnect,
+    Operator_select_object,
+    Operator_add_connect,    
     Columns,
     Operator_props_graph,
     Operator_props_invert,
@@ -73,6 +94,7 @@ classes = [
     ErrorMessage,    
     Panel_Connect, 
     Panel_Decompositions,  
+    Panel_Connect_Elements,
     Panel_Catalog, 
     Panel_Properties,
     Panel_Settings,
@@ -90,6 +112,7 @@ classes = [
     Class_info,
     Class_type,
     Class_prop_info,
+    Layer,
     Property_info,
     Pset_info,
     Container,
@@ -100,6 +123,9 @@ def register():
     for c in classes:
         register_class(c)
     Scene.og_props = PointerProperty(type=OG_Properties)
+    bpy.types.WindowManager.add_connect_object_a = PointerProperty(type=bpy.types.Object, name="Object A")
+    bpy.types.WindowManager.add_connect_object_b = PointerProperty(type=bpy.types.Object, name="Object B")
+    bpy.types.WindowManager.add_connect_object_c = PointerProperty(type=bpy.types.Object, name="Object C")
     bpy.msgbus.subscribe_rna( 
         key=(bpy.types.LayerObjects, "active"),
         owner=owner,
@@ -113,9 +139,19 @@ def register():
 def unregister():
     #bpy.app.handlers.depsgraph_update_post.remove(data.on_active_object_change)
     bpy.msgbus.clear_by_owner(owner)
-    del Scene.og_props
+    if hasattr(bpy.types.WindowManager, "add_connect_object_c"):
+        del bpy.types.WindowManager.add_connect_object_c
+    if hasattr(bpy.types.WindowManager, "add_connect_object_b"):
+        del bpy.types.WindowManager.add_connect_object_b
+    if hasattr(bpy.types.WindowManager, "add_connect_object_a"):
+        del bpy.types.WindowManager.add_connect_object_a
+    if hasattr(Scene, "og_props"):
+        del Scene.og_props
     for c in classes:
-        unregister_class(c)
+        try:
+            unregister_class(c)
+        except RuntimeError:
+            pass
 
 if __name__ == "__main__":
     register()

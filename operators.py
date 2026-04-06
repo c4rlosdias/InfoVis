@@ -7,6 +7,7 @@ import json
 import base64
 from io import BytesIO
 import os
+from pathlib import Path
 import bpy
 from ifctester import ids
 from tqdm import tqdm
@@ -37,7 +38,7 @@ def save_json(dados):
 
     for key in dados:
         if isinstance(dados[key], list):
-            dados[key].sort(key=lambda item: int(item.get("tag", 0)))
+            dados[key].sort(key=lambda item: int(item.get("tag", 0) or 0))
     
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "dados.json")
     with open(path, 'w', encoding='utf-8') as file:
@@ -353,7 +354,7 @@ class Operator_export_ids(bpy.types.Operator):
     
     def get_data_type(self, units):
         # Implement your logic to get the data type based on units
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "resource", "units.json"), 'r', encoding='utf-8') as file:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources", "units.json"), 'r', encoding='utf-8') as file:
             units_data = json.load(file)
         data_type = units_data[units] if units in units_data else 'IfcLabel'
         return data_type
@@ -381,7 +382,7 @@ class Operator_export_ids(bpy.types.Operator):
         
         # cria data_classes
         data_classes = []
-        for classe in data:
+        for classe in tqdm(data, total=len(data), desc='Processing classes:'):
             leaves = self.get_children(classe)
             for leave in leaves:
                 response = bSDD.get_class(leave['uri'], True)
@@ -441,6 +442,7 @@ class Operator_export_ids(bpy.types.Operator):
         
         try:
             my_ids.to_xml(self.filepath)
+            self.report({'OPERATOR'}, f'IDS file exported successfully to {self.filepath}')
             return {'FINISHED'}
         except Exception as ex:
             self.report({'ERROR'}, str(ex))
@@ -631,8 +633,7 @@ class Operator_load_products(bpy.types.Operator):
 
             if type.is_a() not in result:
                 result[type.is_a()] = []
-            else:
-                result[type.is_a()].append(dic)
+            result[type.is_a()].append(dic)
         save_json(result)
         for key, values in  result.items():
                 if key in data:
@@ -703,7 +704,225 @@ class Operator_catalog_select_elements(bpy.types.Operator):
 
                 self.report({'OPERATOR'}, 'Done!')
                 return {"FINISHED"}
+
+class Operator_catalog_show_layers(bpy.types.Operator):
+    """"""
+    bl_idname  = "catag.show_layers"
+    bl_label   = "show layers of the type"
+    bl_options = {"REGISTER", "UNDO"}  
+
+    id : bpy.props.IntProperty(name="id")
+
+    def _build_html(self, type_name, type_props, nested_elements):
+        import html as html_mod
+        props_rows = ""
+        for pset_name, pset_values in type_props.items():
+            for prop, value in pset_values.items():
+                props_rows += f"<tr><td>{html_mod.escape(str(prop))}</td><td>{html_mod.escape(str(value))}</td></tr>\n"
+
+        # Coletar todas as propriedades (colunas) e valores por layer (linhas)
+        all_columns = []  # lista ordenada de (pset, prop)
+        columns_set = set()
+        layers_data = []  # lista de dicts: {label, values: {(pset,prop): value}}
+
+        for nest in nested_elements:
+            nest_name = getattr(nest, 'Name', '') or ''
+            obj_type = getattr(nest, 'ObjectType', '') or ''
+            label = f"{nest_name} [{obj_type}]" if obj_type else nest_name
+            nest_psets = ifcopenshell.util.element.get_psets(nest)
+
+            values = {}
+            for pset_name, pset_values in nest_psets.items():
+                for prop, value in pset_values.items():
+                    if prop == 'id':
+                        continue
+                    key = (pset_name, prop)
+                    values[key] = value
+                    if key not in columns_set:
+                        columns_set.add(key)
+                        all_columns.append(key)
+
+            layers_data.append({"label": label, "values": values})
+
+        # Montar cabeçalho da tabela de layers
+        header_cells = "<th>Layer</th>"
+        for pset, prop in all_columns:
+            header_cells += f"<th>{html_mod.escape(prop)}<br><small>{html_mod.escape(pset)}</small></th>"
+
+        # Montar linhas da tabela de layers
+        layer_rows = ""
+        for layer in layers_data:
+            cells = f"<td><strong>{html_mod.escape(layer['label'])}</strong></td>"
+            for key in all_columns:
+                val = layer["values"].get(key, "")
+                cells += f"<td>{html_mod.escape(str(val))}</td>"
+            layer_rows += f"<tr>{cells}</tr>\n"
+
+        return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{html_mod.escape(type_name)} - Layers</title>
+<style>
+    body {{ font-family: Arial, sans-serif; margin: 20px; background: #1e1e1e; color: #d4d4d4; }}
+    h2 {{ color: #569cd6; }}
+    h3 {{ color: #9cdcfe; margin-top: 24px; }}
+    table {{ border-collapse: collapse; width: 100%; }}
+    th, td {{ border: 1px solid #3c3c3c; padding: 8px 12px; text-align: left; white-space: nowrap; }}
+    th {{ background: #264f78; color: #ffffff; }}
+    th small {{ color: #9cdcfe; font-weight: normal; }}
+    tr:nth-child(even) {{ background: #2d2d2d; }}
+    tr:hover {{ background: #37373d; }}
+    .table-wrapper {{ overflow-x: auto; }}
+</style>
+</head>
+<body>
+<h2>{html_mod.escape(type_name)}</h2>
+
+<h3>Pipe Structure Properties</h3>
+<table>
+    <tr><th>Property</th><th>Value</th></tr>
+    {props_rows}
+</table>
+
+<h3>Layers</h3>
+<div class="table-wrapper">
+<table>
+    <tr>{header_cells}</tr>
+    {layer_rows}
+</table>
+</div>
+
+</body>
+</html>"""
+
+    def execute(self, context):                             
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        model = bonsai.tool.Ifc.get()        
+        ifc_type = model.by_id(self.id)   
+
+        if ifc_type is not None:                
+            type_name = ifc_type.Name or str(self.id)
+            type_props = ifcopenshell.util.element.get_psets(ifc_type, psets_only=True)
+            nested_elements = ifcopenshell.util.element.get_components(ifc_type) or []
+            print(nested_elements)
+
+            html = self._build_html(type_name, type_props, nested_elements)
+            html_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "layers.html")
+            with open(html_path, "w", encoding="utf-8") as f:
+                f.write(html)
+            webbrowser.open(Path(html_path).as_uri())
+
+            self.report({'INFO'}, "Layers opened in browser")
+            return {"FINISHED"}
+        else:
+            self.report({'ERROR'}, f"No type found for id {self.id}")
+            return {"CANCELLED"}
+
+class Operator_catalog_select_layer(bpy.types.Operator):
+    """"""
+    bl_idname  = "catag.select_layer"
+    bl_label   = "select elements of the layer"
+    bl_options = {"REGISTER", "UNDO"}  
+
+    id : bpy.props.IntProperty(name="id")
+
             
+    def execute(self, context): 
+            props = context.scene.og_props                     
+            model = bonsai.tool.Ifc.get()        
+            layer = model.by_id(self.id)           
+
+            obj_blender = tool.Ifc.get_object(layer)
+            if obj_blender:
+                obj_blender.select_set(True)
+                context.view_layer.objects.active = obj_blender
+
+                self.report({'OPERATOR'}, 'Done!')
+                return {"FINISHED"}    
+            else:
+                self.report({'ERROR'}, f"No layer found for id {self.id}")
+                return {"CANCELLED"}        
+# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# Connect Elements
+# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+
+def update_predefined_types():
+    model = tool.Ifc.get()
+    for entity in model.by_type('IfcElement'):
+        if entity.IsTypedBy:
+            type = entity.IsTypedBy[0].RelatingType
+            if type.ElementType:
+                object_type = type.ElementType.replace("Type", "")
+                entity.ObjectType = object_type
+                entity.PredefinedType = None  # Limpa o PredefinedType para forçar a atualização na UI
+    
+class Operator_disconnect(bpy.types.Operator):
+    """Operator para desconectar um objeto selecionado"""
+    bl_idname  = "conn.disconnect"
+    bl_label   = "Disconnect Object"
+    bl_options = {"REGISTER", "UNDO"} 
+    
+    rel_id: bpy.props.IntProperty()
+
+    def execute(self, context):
+        model = tool.Ifc.get()
+        rel = model.by_id(self.rel_id)
+        if rel:
+            model.remove(rel)            
+            self.report({'INFO'}, f"Disconnected connection {self.rel_id}")
+            return {'FINISHED'}
+        else:
+            self.report({'WARNING'}, f"No connection found for {self.rel_id}.")
+            return {'CANCELLED'}
+        
+class Operator_select_object(bpy.types.Operator):
+    """Operator para selecionar objeto com eyedropper e atribuir à propriedade correta"""
+    bl_idname  = "conn.select_object"
+    bl_label   = "Select Object"
+    bl_options = {"REGISTER", "UNDO"} 
+    
+    obj_name: bpy.props.StringProperty()
+
+    def execute(self, context):
+        wm = context.window_manager
+        # Blender armazena propriedades do operador em self.<property_name>
+
+        if getattr(wm, self.obj_name, None) is None:
+            setattr(wm, self.obj_name, context.active_object)
+            self.report({'INFO'}, f"Selected {context.active_object.name} for {self.obj_name}")
+            return {'FINISHED'}
+        else:
+            self.report({'WARNING'}, "Both connection object fields are already filled.")
+            return {'CANCELLED'}
+
+class Operator_add_connect(bpy.types.Operator):
+    """Adiciona conexão selecionando objeto via UI"""
+    bl_idname  = "conn.add_connect"
+    bl_label   = "Add Connection"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        wm = context.window_manager
+        props = context.scene.og_props
+        obj_a = getattr(wm, 'add_connect_object_a', None)
+        obj_b = getattr(wm, 'add_connect_object_b', None)
+        obj_c = getattr(wm, 'add_connect_object_c', None)
+        r = add_connections(obj_a, obj_b, obj_c, props.connect_type)
+        if r:
+            
+            self.report({'INFO'}, "Connection added successfully.")
+            return {'FINISHED'}
+        else:
+            
+            self.report({'ERROR'}, "Failed to add connection. Check console for details.")
+            return {'CANCELLED'}
+
+
 # ==================================================================================================
 # ==================================================================================================
 # PROPERTIES
@@ -811,7 +1030,7 @@ class Operator_props_load(bpy.types.Operator):
                 refresh_props(context)
                 return {"FINISHED"} 
         except Exception as e:
-            bpy.ops.og.error_message('INVOKE_DEFAULT', message=str(e))
+            bpy.ops.og.error_message('INVOKE_DEFAULT', message=str(e))            
             return {"CANCELLED"}
     
 class Operator_props_expand(bpy.types.Operator):
@@ -1052,9 +1271,10 @@ class Operator_props_graph(bpy.types.Operator):
         """
 
         # Salvar HTML e abrir no navegador
-        with open("graphic.html", "w") as f:
+        html_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "graphic.html")
+        with open(html_path, "w") as f:
             f.write(html)
-        webbrowser.open("graphic.html")
+        webbrowser.open(Path(html_path).as_uri())
         return {"FINISHED"} 
     
 class Operator_props_invert(bpy.types.Operator):
@@ -1136,7 +1356,7 @@ class Operator_document_open(bpy.types.Operator):
             # Se for arquivo local
             abs_path = os.path.abspath(os.path.normpath(location))
             if os.path.exists(abs_path):
-                webbrowser.open(f'file://{abs_path}')
+                webbrowser.open(Path(abs_path).as_uri())
                 return {"FINISHED"}
             else:
                 self.report({'ERROR'}, f'FILE NOT FOUND: {abs_path}')

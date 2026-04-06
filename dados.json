@@ -50,6 +50,13 @@
             "element_type": "IntermediateBendStiffenerType"
         },
         {
+            "id": 70,
+            "name": "Intermediate Bend Stiffener 6in - Top Riser",
+            "tag": "11",
+            "description": "",
+            "element_type": "IntermediateBendStiffenerType"
+        },
+        {
             "id": 6011,
             "name": "Hang Off Collar 6 in",
             "tag": "12",
@@ -135,6 +142,13 @@
         }
     ],
     "IfcPipeSegmentType": [
+        {
+            "id": 389,
+            "name": "6in Flexible Top Riser WSI 101.2519-RD-4032-X R1",
+            "tag": "1",
+            "description": "",
+            "element_type": "FlexiblePipeStructure"
+        },
         {
             "id": 2231,
             "name": "6in Flexible Bottom Riser",

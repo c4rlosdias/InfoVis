@@ -80,8 +80,8 @@ class Panel_Connect(bpy.types.Panel):
             op2.uri = active_class.uri
 
             row = layout.row()
-            row.label(text=str(active_class.name))
-            row.label(text=str(props.active_class_index))
+            row.separator()
+
             # Imprime informações da classe ativa 
             if props.classes_loaded:
                 row = layout.row()
@@ -123,9 +123,13 @@ class Panel_Connect(bpy.types.Panel):
                 else:
                    row.label(text="Class has no properties", icon='WARNING_LARGE') 
 
+        #################################################################################################
+        # VER POSSIBILIDADE DE DELETAR E APAGAR O OPERADOR E FUNCOES RELACIONADAS
+        ##################################################################################################
         # botão para conectar com o bSDD e obter as propriedades do dicionario selecionado
-        row = layout.row()
-        row.operator("bsdd.get_prop", text="get properties from bSDD")
+        # row = layout.row()
+        # row.operator("bsdd.get_prop", text="get properties from bSDD")
+
         # imprime a lista de propriedades do elemento selecionado
         if len(props.ifc_prop) > 0:
             row = layout.row()
@@ -186,9 +190,9 @@ class Panel_Connect(bpy.types.Panel):
             row = layout.row()
             row.operator("object.add_prop", text="Add selected properties") 
             
-            if model:
-                row = layout.row()
-                row.operator("ids.export", text="Export local template to IDS file", icon="EXPORT")
+        if len(props.classes_shown) > 0:
+            row = layout.row()
+            row.operator("ids.export", text="Export IDS file", icon="EXPORT")
 
 # Painel de propriedades            
 class BIM_UL_ifc_properties(bpy.types.UIList):
@@ -375,6 +379,119 @@ class BIM_UL_tree(bpy.types.UIList):
                 property = 'elements_tree'
             )
 
+
+# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# Connect Elements
+# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+
+class Panel_Connect_Elements(bpy.types.Panel):
+    
+    bl_label        = "Connect Elements"
+    bl_idname       = "VIEW3D_PT_connect_elements"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"
+    bl_category     = "O&G Tools"
+    bl_options      = {"DEFAULT_CLOSED"}
+    
+    def get_connects(self, object):
+        connects = []
+        element = tool.Ifc.get_entity(object)
+        rels1 = element.ConnectedFrom if hasattr(element, 'ConnectedFrom') else []
+        rels2 = element.ConnectedTo if hasattr(element, 'ConnectedTo') else []
+        rels3 = element.IsConnectionRealization if hasattr(element, 'IsConnectionRealization') else []
+        rels = list(rels1) + list(rels2) + list(rels3)
+        rels= set(rels)
+        for rel in rels:
+            if rel.is_a("IfcRelConnectsElements") or rel.is_a("IfcRelConnectsWithRealizingElements"):                
+                connects.append(
+                    {   
+                        'id': rel.id(),
+                        'Connection Type': rel.is_a(),  
+                        'Relating Element': rel.RelatingElement,
+                        'Related Element': rel.RelatedElement,
+                        'Realizing Elements': getattr(rel, 'RealizingElements', None)
+                    }
+                )
+            else:
+                connects.append(
+                    {
+                        'id': rel.id(),
+                        'Connection Type': rel.is_a(),  
+                        'Relating Port': rel.RelatingPort,
+                        'Related Port': rel.RelatedPort,
+                        'Realizing Element': getattr(rel, 'RealizingElement', None)
+                    }
+                )
+
+        return connects
+    
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='GREASEPENCIL')    
+
+    def draw(self, context):
+        layout = self.layout
+        wm = context.window_manager
+        props = context.scene.og_props
+        row = layout.row()
+        
+        if len(context.selected_objects) > 0:
+            for obj in context.selected_objects:
+                row.label(text=f"Selected: {obj.name}", icon='OBJECT_DATA')                
+                c = 1
+                for connect in self.get_connects(obj):
+                    row = layout.row()
+                    row.label(text=f"connection #{c} - {connect['id']}", icon='LINKED')
+                    row.operator("conn.disconnect", text="", icon='UNLINKED').rel_id = connect['id']
+                    self.draw_connect(layout, connect)
+                    c += 1
+
+        row = layout.row()
+        row.separator()
+        row = layout.row()
+        row.label(text="Select objects to connect before clicking 'Add Connection'", icon='INFO')
+
+        box = layout.box()
+        row = box.row()
+        row.prop(props, "connect_type", text="Connection Type")
+        row = box.row()
+        row.prop(wm, "add_connect_object_a", text="Relating Element A")
+        if wm.add_connect_object_a is None:
+            op= row.operator("conn.select_object", text="", icon='ADD')
+            op.obj_name = "add_connect_object_a"
+        row = box.row()
+        row.prop(wm, "add_connect_object_b", text="Relating Element B")
+        if wm.add_connect_object_b is None:
+            op= row.operator("conn.select_object", text="", icon='ADD')
+            op.obj_name = "add_connect_object_b"
+        
+        if props.connect_type != "IfcRelConnectsElements":
+            row = box.row()
+            row.prop(wm, "add_connect_object_c", text="Realizing Element")
+            if wm.add_connect_object_c is None:
+                op = row.operator("conn.select_object", text="", icon='ADD')
+                op.obj_name = "add_connect_object_c"
+        
+        row = box.row()
+        row.operator("conn.add_connect", text="Add Connection", icon='ADD')
+        
+
+    def draw_connect(self, layout, connect):
+        box = layout.box()
+        for key, value in connect.items():
+            if key == 'id':
+                continue
+            if isinstance(value, (tuple, list)) and value:
+                box.label(text=f"{key}:", icon='LINKED')
+                for v in value:
+                    box.label(text=f"    -{getattr(v, 'Name', str(v))}")                    
+            elif value is not None:
+                box.label(text=f"{key}: {getattr(value, 'Name', str(value))}", icon='LINKED')
+                
+
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
 # O&G Catalog
@@ -427,6 +544,8 @@ class Panel_Catalog(bpy.types.Panel):
             rowb.label(text=f'Description:{description}')
             rowb = box.row()
             rowb.label(text=f'Element Type:{element_type}')
+        
+
             
 
 # Painel de tipos             
@@ -447,10 +566,11 @@ class BIM_UL_products(bpy.types.UIList):
             draw_tree(layout, item,
                 operators = [
                     {"name": "catag.select_type", "icon": 'OBJECT_DATA', "att": [("id", item.id)]},
-                    {"name": "catag.select_elements", "icon": 'RESTRICT_SELECT_OFF', "att": [("id", item.id)]}
+                    {"name": "catag.select_elements", "icon": 'RESTRICT_SELECT_OFF', "att": [("id", item.id)]},
+                    {"name": "catag.show_layers", "icon": 'PHYSICS', "att": [("id", item.id)]}
                 ],
                 #attributes = [(item.tag, 'NONE'), (item.name, 'NONE'), (item.element_type, 'NONE')],  
-                attributes = [(f'[{item.tag}] - {item.name}', icontype)] if item.tag != '' else [(item.name, icontype)],             
+                attributes = [(f'[{item.tag}]-[{item.element_type}] {item.name}', icontype)] if item.tag != '' else [(f'[{item.element_type}] {item.name}', icontype)],             
                 property = 'types',
                 only_children=True
             )
@@ -483,8 +603,8 @@ class Panel_Properties(bpy.types.Panel):
         row = layout.row()   
         # select objects 
         obj = context.active_object  
-         
-        print(obj)
+        
+
         if obj is not None and obj.select_get():#len(context.selected_objects) > 0:   
             model = tool.Ifc.get()     
             row = layout.row()                      
@@ -826,7 +946,7 @@ class Panel_Info(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-        row.label(text="O&G Tools V 0.1.1", icon='MOD_LINEART')
+        row.label(text="O&G Tools V 0.1.2", icon='MOD_LINEART')
         layout.separator()
 
 
