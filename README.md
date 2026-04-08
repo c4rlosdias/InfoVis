@@ -22,7 +22,8 @@ Um add-on para Blender que oferece ferramentas especializadas para modelagem e a
 1. **Execute:**
 
 ```
->_ build_realease.bat
+>_ build_realease.bat (Windows)
+>_ build_realease.sh (Linux)
 ```
 
 ## 🏗️ Estrutura do Projeto
