@@ -39,7 +39,7 @@ class Panel_Connect(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"    
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G-Dictionary"
     bl_order = 0
     bl_options      = {"DEFAULT_CLOSED"}
     
@@ -277,7 +277,7 @@ class Panel_Decompositions(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G-Occurrence"
     bl_options      = {"DEFAULT_CLOSED"}
     
     def draw_header(self, context):
@@ -393,7 +393,7 @@ class Panel_Connect_Elements(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G-Occurrence"
     bl_options      = {"DEFAULT_CLOSED"}
     
     def get_connects(self, object):
@@ -500,12 +500,12 @@ class Panel_Connect_Elements(bpy.types.Panel):
 
 class Panel_Catalog(bpy.types.Panel):
     
-    bl_label        = "Type catalog"
+    bl_label        = "Catalog"
     bl_idname       = "VIEW3D_PT_og_catalog"
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G-Catalog"
     bl_options      = {"DEFAULT_CLOSED"}
     
     def draw_header(self, context):
@@ -534,19 +534,21 @@ class Panel_Catalog(bpy.types.Panel):
                 "active_type_index",
                 rows=10
             )
-            
-            row = layout.row()
-            row.label(text="Product Information:", icon='INFO')
-            description = get_product_attribute(context, props.active_type_index, 'description')
-            element_type = get_product_attribute(context, props.active_type_index, 'element_type')
-            box = layout.box()
-            rowb = box.row()
-            rowb.label(text=f'Description:{description}')
-            rowb = box.row()
-            rowb.label(text=f'Element Type:{element_type}')
         
+        if len(props.layers) > 0:            
+            row = layout.row()
+            row.label(text="Layers:", icon='INFO')
 
-            
+            self.layout.template_list(
+                "BIM_UL_layers",
+                "",
+                props,
+                "layers",
+                props,
+                "active_layer_index",
+                rows=10
+            )
+        
 
 # Painel de tipos             
 class BIM_UL_products(bpy.types.UIList):
@@ -567,15 +569,21 @@ class BIM_UL_products(bpy.types.UIList):
                 operators = [
                     {"name": "catag.select_type", "icon": 'OBJECT_DATA', "att": [("id", item.id)]},
                     {"name": "catag.select_elements", "icon": 'RESTRICT_SELECT_OFF', "att": [("id", item.id)]},
-                    {"name": "catag.show_layers", "icon": 'PHYSICS', "att": [("id", item.id)]}
+                    {"name": "catag.show_layers", "icon": 'INFO_LARGE', "att": [("id", item.id)]}
                 ],
                 #attributes = [(item.tag, 'NONE'), (item.name, 'NONE'), (item.element_type, 'NONE')],  
-                attributes = [(f'[{item.tag}]-[{item.element_type}] {item.name}', icontype)] if item.tag != '' else [(f'[{item.element_type}] {item.name}', icontype)],             
+                attributes = [(f'{item.name}', icontype)] if item.tag != '' else [(f'{item.name}', icontype)],             
                 property = 'types',
                 only_children=True
             )
-
-
+             
+# Painel de layers
+class BIM_UL_layers(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        if item:
+            row = layout.row(align=True)
+            row.label(text=item.name, icon='LAYER_USED')
+            row.operator("catag.select_layer", text="", icon='OBJECT_DATA').id = item.id
 
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
@@ -590,7 +598,7 @@ class Panel_Properties(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G-Occurrence"
     #bl_options      = {"DEFAULT_CLOSED"}
     
     def draw_header(self, context):
@@ -612,52 +620,52 @@ class Panel_Properties(bpy.types.Panel):
 
             # if the element type have some external document associated
             if props.has_document:
-                    row = layout.row() 
-                    row.label(text='Referenced documents:', icon = 'DOCUMENTS') 
-                    if props.docs_expanded:
-                        icon='TRIA_DOWN'
-                    else:
-                        icon='TRIA_RIGHT'
-                    op = row.operator("docs.expand", icon=icon, text="")
-                    op.index = -1
-                    op.type = 'element'
-                    
-                    if props.docs_expanded:
-                        box = layout.box()
-                        for document in props.documents:
-                            row = box.row() 
-                            # operator to save the documento changes
-                            op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
-                            op4.ifc_id = tool.Ifc.get_entity(obj).id()
-                            op4.id = document.identification
-                            op4.name = document.name
-                            op4.location = document.location
+                row = layout.row() 
+                row.label(text='Referenced documents:', icon = 'DOCUMENTS') 
+                if props.docs_expanded:
+                    icon='TRIA_DOWN'
+                else:
+                    icon='TRIA_RIGHT'
+                op = row.operator("docs.expand", icon=icon, text="")
+                op.index = -1
+                op.type = 'element'
+                
+                if props.docs_expanded:
+                    box = layout.box()
+                    for document in props.documents:
+                        row = box.row() 
+                        # operator to save the documento changes
+                        op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                        op4.ifc_id = tool.Ifc.get_entity(obj).id()
+                        op4.id = document.identification
+                        op4.name = document.name
+                        op4.location = document.location
 
-                            row = box.row()
-                            row.prop(document, 'identification')
-                            row = box.row()
-                            row.prop(document, 'name')
-                            row = box.row()
-                            row.prop(document, 'location')
+                        row = box.row()
+                        row.prop(document, 'identification')
+                        row = box.row()
+                        row.prop(document, 'name')
+                        row = box.row()
+                        row.prop(document, 'location')
 
-                            # operator to load external file
-                            op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
-                            op0.index = -1
-                            op0.doc_index = document.index
+                        # operator to load external file
+                        op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                        op0.index = -1
+                        op0.doc_index = document.index
 
-                            # operator to visualize document
-                            op = row.operator("props.open_doc", icon='BORDERMOVE', text="")  
-                            op.location = document.location
+                        # operator to visualize document
+                        op = row.operator("props.open_doc", icon='BORDERMOVE', text="")  
+                        op.location = document.location
 
-                            # operator to plot
-                            if document.location[-3:].upper() == 'CSV':
-                                op3 = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
-                                op3.pset_index = -1
-                                op3.prop_index = -1 
-                                op3.document = document.location
+                        # operator to plot
+                        if document.location[-3:].upper() == 'CSV':
+                            op3 = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                            op3.pset_index = -1
+                            op3.prop_index = -1 
+                            op3.document = document.location
 
 
-            layout.separator()                      
+                layout.separator()                      
             
             if len(props.prop_metadata) > 0:
                 old_is_a = ""
@@ -830,7 +838,7 @@ class Panel_Properties(bpy.types.Panel):
                                         print('ok')
                                         col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
                                     # se a propriedade tem documento associado
-                                    if item.has_document:
+                                    if getattr(item, "has_document", False):
                                         op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
                                         op.pset_index = pset.index
                                         op.prop_index = item.index 
@@ -911,7 +919,7 @@ class Panel_Settings(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G-Info"
     bl_options      = {"DEFAULT_CLOSED"}
     
     def draw_header(self, context):
@@ -936,7 +944,7 @@ class Panel_Info(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G Tools"
+    bl_category     = "O&G-Info"
     bl_options      = {"DEFAULT_CLOSED"}
     
     def draw_header(self, context):

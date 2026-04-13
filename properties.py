@@ -95,7 +95,22 @@ def active_class_prop_changed(self, context):
     self.info_class_prop_loaded = False
 
 def active_product_changed(self, context):
-    #self.classes_shown.clear()
+    type_id = self.types_show[self.active_type_index].id if self.active_type_index < len(self.types_show) else None
+    print(f"Active type ID: {type_id}")
+    if type_id is not None:
+        model = tool.Ifc.get()
+        ifc_type = model.by_id(type_id)
+        
+        nested_elements = ifcopenshell.util.element.get_components(ifc_type) or []
+        print(f"Selected type: {nested_elements}")
+        self.layers.clear()
+
+        for element in nested_elements:            
+            new_layer = self.layers.add()
+            new_layer.id = element.id()
+            new_layer.name = element.Name or f"Element {element.id()}"
+            new_layer.description = element.get_info() or ''
+
     self.product_loaded = False
 
 def active_type_changed(self, context):
@@ -241,7 +256,6 @@ class Layer(PropertyGroup):
     id            : IntProperty(name="id")
     name          : StringProperty(name="name")
     description   : StringProperty(name="description")
-    is_selected   : BoolProperty(name="is selected", default=False)
 
 class OG_Properties(PropertyGroup): 
     
@@ -308,13 +322,13 @@ class OG_Properties(PropertyGroup):
     types_show               : CollectionProperty(name="types", type=Class_type)           
     products_show            : CollectionProperty(name="products", type=Class_info)
     products_loaded          : BoolProperty(name="products loaded", default=False)
-    types_loaded          : BoolProperty(name="products loaded", default=False)
+    types_loaded             : BoolProperty(name="products loaded", default=False)
     active_product_index     : IntProperty(name='product index', default=0, update=active_product_changed)
-    active_type_index     : IntProperty(name='product index', default=0, update=active_product_changed)
+    active_type_index        : IntProperty(name='product index', default=0, update=active_product_changed)
     product_description      : StringProperty(name='product description', default='')
-    layers                    : CollectionProperty(name="layers", type=Container)
+    layers                   : CollectionProperty(name="layers", type=Container)
     active_layer_index       : IntProperty(name='layer index', default=0)
-    active_type_id : IntProperty(name='active type id', default=0)
+    active_type_id          : IntProperty(name='active type id', default=0)
 
     # O&G Properties
     active_pset_index        : IntProperty(name='pset index', default=0)

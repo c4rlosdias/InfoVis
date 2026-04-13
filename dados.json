@@ -1,5 +1,62 @@
 {
-    "IfcPipeFittingType": [
+    "IntermediateBendStiffenerType": [
+        {
+            "id": 7266,
+            "name": "Intermediate Bend Stiffener 6in - Bottom Riser",
+            "tag": "10",
+            "description": "",
+            "element_type": "IntermediateBendStiffenerType"
+        },
+        {
+            "id": 70,
+            "name": "Intermediate Bend Stiffener 6in - Top Riser",
+            "tag": "11",
+            "description": "",
+            "element_type": "IntermediateBendStiffenerType"
+        }
+    ],
+    "TopBendStiffenerType": [
+        {
+            "id": 850,
+            "name": "6in Top Bend Stiffener with Latch Sleeve and Protection",
+            "tag": "8",
+            "description": "",
+            "element_type": "TopBendStiffenerType"
+        }
+    ],
+    "StopperCollarType": [
+        {
+            "id": 1079,
+            "name": "6in Stopper Clamp",
+            "tag": "14",
+            "description": "",
+            "element_type": "StopperCollarType"
+        }
+    ],
+    "AnodeCollarSet": [
+        {
+            "id": 1219,
+            "name": "Anode Collar for Service Life 30 Kg",
+            "tag": "27",
+            "description": "Anode Collar for Service Life 30 Kg (3 per EndFitting, Drawing Number CB-TDXXXXXXX-00-01.16AI) + Neoprene Blanket",
+            "element_type": "AnodeCollarSet"
+        },
+        {
+            "id": 1442,
+            "name": "Anode Collar for Service Life 33 Kg",
+            "tag": "28",
+            "description": "Anode Collar for Service Life 30 Kg (3 per EndFitting, Drawing Number CB-TDXXXXXXX-00-01.16AI) + Neoprene Blanket",
+            "element_type": "AnodeCollarSet"
+        },
+        {
+            "id": 1647,
+            "name": "Anode Collar for Service Life 200 Kg",
+            "tag": "29",
+            "description": "Anode Collar for Service Life 30 Kg (3 per EndFitting, Drawing Number CB-TDXXXXXXX-00-01.16AI) + Neoprene Blanket",
+            "element_type": "AnodeCollarSet"
+        }
+    ],
+    "EndFittingType": [
         {
             "id": 8926,
             "name": "End Fitting 6\" ID Production Bottom Riser 7 1/16\" API 6BX Flange, 10000 psi, BX 156 with N2 Seal Port (MODA)",
@@ -27,55 +84,33 @@
             "tag": "7",
             "description": "",
             "element_type": "EndFittingType"
-        },
+        }
+    ],
+    "AnchoringCollarType": [
         {
-            "id": 850,
-            "name": "6in Top Bend Stiffener with Latch Sleeve and Protection",
-            "tag": "8",
+            "id": 2109,
+            "name": "6in Anchor Collar",
+            "tag": "19",
             "description": "",
-            "element_type": "TopBendStiffenerType"
-        },
+            "element_type": "AnchoringCollarType"
+        }
+    ],
+    "BendRestrictorType": [
         {
             "id": 2981,
             "name": "6in Bend Restrictor 72 degrees",
             "tag": "9",
             "description": "",
             "element_type": "BendRestrictorType"
-        },
-        {
-            "id": 7266,
-            "name": "Intermediate Bend Stiffener 6in - Bottom Riser",
-            "tag": "10",
-            "description": "",
-            "element_type": "IntermediateBendStiffenerType"
-        },
-        {
-            "id": 70,
-            "name": "Intermediate Bend Stiffener 6in - Top Riser",
-            "tag": "11",
-            "description": "",
-            "element_type": "IntermediateBendStiffenerType"
-        },
-        {
-            "id": 6011,
-            "name": "Hang Off Collar 6 in",
-            "tag": "12",
-            "description": "",
-            "element_type": "HangOffCollarType"
-        },
+        }
+    ],
+    "PipePullingHeadType": [
         {
             "id": 5639,
             "name": "Pull In Kit 6in Top Riser",
             "tag": "13",
             "description": "",
             "element_type": "PipePullingHeadType"
-        },
-        {
-            "id": 1079,
-            "name": "6in Stopper Clamp",
-            "tag": "14",
-            "description": "",
-            "element_type": "StopperCollarType"
         },
         {
             "id": 6217,
@@ -104,35 +139,18 @@
             "tag": "18",
             "description": "",
             "element_type": "PipePullingHeadType"
-        },
+        }
+    ],
+    "HangOffCollarType": [
         {
-            "id": 2109,
-            "name": "6in Anchor Collar",
-            "tag": "19",
+            "id": 6011,
+            "name": "Hang Off Collar 6 in",
+            "tag": "12",
             "description": "",
-            "element_type": "AnchoringCollarType"
-        },
-        {
-            "id": 1219,
-            "name": "Anode Collar for Service Life 30 Kg",
-            "tag": "27",
-            "description": "Anode Collar for Service Life 30 Kg (3 per EndFitting, Drawing Number CB-TDXXXXXXX-00-01.16AI) + Neoprene Blanket",
-            "element_type": "AnodeCollarSet"
-        },
-        {
-            "id": 1442,
-            "name": "Anode Collar for Service Life 33 Kg",
-            "tag": "28",
-            "description": "Anode Collar for Service Life 30 Kg (3 per EndFitting, Drawing Number CB-TDXXXXXXX-00-01.16AI) + Neoprene Blanket",
-            "element_type": "AnodeCollarSet"
-        },
-        {
-            "id": 1647,
-            "name": "Anode Collar for Service Life 200 Kg",
-            "tag": "29",
-            "description": "Anode Collar for Service Life 30 Kg (3 per EndFitting, Drawing Number CB-TDXXXXXXX-00-01.16AI) + Neoprene Blanket",
-            "element_type": "AnodeCollarSet"
-        },
+            "element_type": "HangOffCollarType"
+        }
+    ],
+    "AnnodeCollarType": [
         {
             "id": 8439,
             "name": "Abrasion Protection / Anchor Collar Protection - 3 meters with Installation Tool",
@@ -141,26 +159,26 @@
             "element_type": "AnnodeCollarType"
         }
     ],
-    "IfcPipeSegmentType": [
+    "FlexiblePipeStructure": [
         {
             "id": 389,
-            "name": "6in Flexible Top Riser WSI 101.2519-RD-4032-X R1",
+            "name": "Estrutura flexível WSI152.15205-DR-4033-4",
             "tag": "1",
-            "description": "",
+            "description": "Estrutura flexível / flowline / 6\" / 9000 psi /2500m",
             "element_type": "FlexiblePipeStructure"
         },
         {
             "id": 2231,
-            "name": "6in Flexible Bottom Riser",
+            "name": "Estrutura flexível WSI152.15178-DR-4032-2",
             "tag": "2",
-            "description": "",
+            "description": "Estrutura flexível / bottom riser / 6\" / 9000 psi /2500m",
             "element_type": "FlexiblePipeStructure"
         },
         {
             "id": 2235,
-            "name": "6in Flexible Flowline",
+            "name": "Estrutura flexível WSI152.15149-DR-4152-2",
             "tag": "3",
-            "description": "",
+            "description": "Estrutura flexível / flowline / 6\" / 9000 psi /2500m",
             "element_type": "FlexiblePipeStructure"
         }
     ]

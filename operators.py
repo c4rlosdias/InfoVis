@@ -2,11 +2,12 @@
 import bonsai.core.geometry
 import bonsai.core.material
 import bonsai.core.type
-import webbrowser
 import json
 import base64
 from io import BytesIO
 import os
+import platform
+import subprocess
 from pathlib import Path
 import bpy
 from ifctester import ids
@@ -19,7 +20,6 @@ import ifcopenshell.api.material as material
 import ifcopenshell.api.geometry as geometry
 import ifcopenshell.api.style as style
 import ifcopenshell
-import webbrowser
 from .data import *
 import bonsai.core as core
 import bonsai
@@ -33,6 +33,21 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 dynamic_items = []
+
+
+def _open_in_browser(url):
+    """Open a URL or file URI in the default browser. Works inside Blender."""
+    try:
+        if platform.system() == 'Windows':
+            os.startfile(url)
+        elif platform.system() == 'Darwin':
+            subprocess.Popen(['open', url])
+        else:
+            subprocess.Popen(['xdg-open', url])
+    except Exception:
+        import webbrowser
+        webbrowser.open(url)
+
 
 def save_json(dados):
 
@@ -191,7 +206,7 @@ class Operator_uri(bpy.types.Operator):
         return f"Open the URL in your web Browser: '{properties.uri}'"
     
     def execute(self, context):                
-        webbrowser.open(self.uri)        
+        _open_in_browser(self.uri)        
         return {"FINISHED"}
     
 # connect to bSDD and get the classes of Oil & Gas Subsea data dictionary
@@ -598,9 +613,59 @@ class Operator_decomposition_move(bpy.types.Operator):
 # CATALOG
 # ==================================================================================================
 # ==================================================================================================
- 
 # Load catalog products
 class Operator_load_products(bpy.types.Operator):
+    """"""
+    bl_idname  = "catag.load_products"
+    bl_label   = "load products from catalog"
+    bl_options = {"REGISTER", "UNDO"}    
+
+    def execute(self, context): 
+        props = context.scene.og_props               
+        props.types.clear()
+        props.types_loaded = True
+        model = tool.Ifc.get()
+        types = model.by_type('IfcTypeProduct')
+        c = -1
+        result = {}
+        data = Catalog.get_ifc_type()
+        classe_title = {
+            'name': '',
+            'tag': '',
+            'description' : '',
+            'element_type': '',
+            'id' : 0
+        }
+
+        for type in types:
+            dic = {}   
+            dic['id'] = type.id()         
+            dic['name'] = type.Name or  ''
+            dic['tag'] = type.Tag or  ''
+            dic['description'] = type.Description or ''
+            dic['element_type'] = type.ElementType or ''
+
+            if type.ElementType not in result:
+                result[type.ElementType] = []
+            result[type.ElementType].append(dic)
+        save_json(result)
+        
+        for key, values in  result.items():
+                if key in data:
+                    classe_title['name'] = data[key]
+                else:
+                    classe_title['name'] = key
+                new_c = build_products(context, classe_title, c, 1, '', False, True)
+                c += 1
+                print(values)
+                for value in values:
+                    new_c = build_products(context, value, c, 2, '', True, False)
+                    c = new_c
+        refresh_types(context)
+        return {"FINISHED"} 
+    
+# Load catalog products
+class _Operator_load_products(bpy.types.Operator):
     """"""
     bl_idname  = "catag.load_products"
     bl_label   = "load products from catalog"
@@ -635,6 +700,7 @@ class Operator_load_products(bpy.types.Operator):
                 result[type.is_a()] = []
             result[type.is_a()].append(dic)
         save_json(result)
+        
         for key, values in  result.items():
                 if key in data:
                     classe_title['name'] = data[key]
@@ -715,7 +781,7 @@ class Operator_catalog_show_layers(bpy.types.Operator):
 
     def _build_html(self, type_name, type_props, nested_elements):
         import html as html_mod
-        props_rows = ""
+        props_rows = "<tr><td>No properties found</td><td></td></tr>"
         for pset_name, pset_values in type_props.items():
             for prop, value in pset_values.items():
                 props_rows += f"<tr><td>{html_mod.escape(str(prop))}</td><td>{html_mod.escape(str(value))}</td></tr>\n"
@@ -759,42 +825,42 @@ class Operator_catalog_show_layers(bpy.types.Operator):
             layer_rows += f"<tr>{cells}</tr>\n"
 
         return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>{html_mod.escape(type_name)} - Layers</title>
-<style>
-    body {{ font-family: Arial, sans-serif; margin: 20px; background: #1e1e1e; color: #d4d4d4; }}
-    h2 {{ color: #569cd6; }}
-    h3 {{ color: #9cdcfe; margin-top: 24px; }}
-    table {{ border-collapse: collapse; width: 100%; }}
-    th, td {{ border: 1px solid #3c3c3c; padding: 8px 12px; text-align: left; white-space: nowrap; }}
-    th {{ background: #264f78; color: #ffffff; }}
-    th small {{ color: #9cdcfe; font-weight: normal; }}
-    tr:nth-child(even) {{ background: #2d2d2d; }}
-    tr:hover {{ background: #37373d; }}
-    .table-wrapper {{ overflow-x: auto; }}
-</style>
-</head>
-<body>
-<h2>{html_mod.escape(type_name)}</h2>
+            <html lang="en">
+            <head>
+            <meta charset="UTF-8">
+            <title>{html_mod.escape(type_name)} - Layers</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 20px; background: #1e1e1e; color: #d4d4d4; }}
+                h2 {{ color: #569cd6; }}
+                h3 {{ color: #9cdcfe; margin-top: 24px; }}
+                table {{ border-collapse: collapse; width: 100%; }}
+                th, td {{ border: 1px solid #3c3c3c; padding: 8px 12px; text-align: left; white-space: nowrap; }}
+                th {{ background: #264f78; color: #ffffff; }}
+                th small {{ color: #9cdcfe; font-weight: normal; }}
+                tr:nth-child(even) {{ background: #2d2d2d; }}
+                tr:hover {{ background: #37373d; }}
+                .table-wrapper {{ overflow-x: auto; }}
+            </style>
+            </head>
+            <body>
+            <h2>{html_mod.escape(type_name)}</h2>
 
-<h3>Pipe Structure Properties</h3>
-<table>
-    <tr><th>Property</th><th>Value</th></tr>
-    {props_rows}
-</table>
+            <h3>Pipe Structure Properties</h3>
+            <table>
+                <tr><th>Property</th><th>Value</th></tr>
+                {props_rows}
+            </table>
 
-<h3>Layers</h3>
-<div class="table-wrapper">
-<table>
-    <tr>{header_cells}</tr>
-    {layer_rows}
-</table>
-</div>
+            <h3>Layers</h3>
+            <div class="table-wrapper">
+            <table>
+                <tr>{header_cells}</tr>
+                {layer_rows}
+            </table>
+            </div>
 
-</body>
-</html>"""
+            </body>
+            </html>"""
 
     def execute(self, context):                             
         return {"FINISHED"}
@@ -813,7 +879,7 @@ class Operator_catalog_show_layers(bpy.types.Operator):
             html_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "layers.html")
             with open(html_path, "w", encoding="utf-8") as f:
                 f.write(html)
-            webbrowser.open(Path(html_path).as_uri())
+            _open_in_browser(Path(html_path).as_uri())
 
             self.report({'INFO'}, "Layers opened in browser")
             return {"FINISHED"}
@@ -1274,7 +1340,7 @@ class Operator_props_graph(bpy.types.Operator):
         html_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "graphic.html")
         with open(html_path, "w") as f:
             f.write(html)
-        webbrowser.open(Path(html_path).as_uri())
+        _open_in_browser(Path(html_path).as_uri())
         return {"FINISHED"} 
     
 class Operator_props_invert(bpy.types.Operator):
@@ -1351,12 +1417,12 @@ class Operator_document_open(bpy.types.Operator):
         try:
             # Se for URL, abre no navegador
             if location.startswith(('http://', 'https://', 'ftp://')):
-                webbrowser.open(location)
+                _open_in_browser(location)
                 return {"FINISHED"}
             # Se for arquivo local
             abs_path = os.path.abspath(os.path.normpath(location))
             if os.path.exists(abs_path):
-                webbrowser.open(Path(abs_path).as_uri())
+                _open_in_browser(Path(abs_path).as_uri())
                 return {"FINISHED"}
             else:
                 self.report({'ERROR'}, f'FILE NOT FOUND: {abs_path}')

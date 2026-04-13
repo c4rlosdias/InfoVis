@@ -164,7 +164,7 @@ def draw_tree(layout, item, operators, attributes, property, only_children = Fal
     '''
     if not item.is_hidden:
         
-        row = layout.row()
+        row = layout.row(align=True)
         # adiciona os ícones de hierarquia
         for _ in range(0, item.level - 1):
             row.label(text="", icon="BLANK1")

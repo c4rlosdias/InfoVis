@@ -106,6 +106,7 @@ classes = [
     BIM_UL_products,
     BIM_UL_property_class,
     BIM_UL_decomposition,
+    BIM_UL_layers,
     Ifc_properties,
     Enumeration_values,
     Documents,  
