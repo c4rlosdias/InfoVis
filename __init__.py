@@ -17,7 +17,7 @@ bl_info = {
     "author"      : "Carlos Dias",
     "description" : "",
     "blender"     : (5, 0, 0),
-    "version"     : (0, 1, 1),
+    "version"     : (0, 1, 2),
     "location"    : "View3D > Panel > O&G Tools",
     "warning"     : "",
     "category"    : "User"
@@ -52,9 +52,94 @@ from .operators import *
 from .panels import *
 from .properties import *
 from . import data
+from . import auth
 
 
-classes = [     
+# ----- Operadores de autenticação -----
+
+class OG_OT_Login(bpy.types.Operator):
+    bl_idname = "og.login"
+    bl_label = "Login"
+    bl_description = "Autenticar com a senha cadastrada"
+
+    def execute(self, context):
+        prefs = context.preferences.addons[__package__].preferences
+        pw = prefs.auth_password
+        if auth.login(pw):
+            prefs.auth_password = ""
+            self.report({'INFO'}, "Autenticado com sucesso")
+        else:
+            prefs.auth_password = ""
+            self.report({'ERROR'}, "Senha incorreta")
+        return {'FINISHED'}
+
+
+class OG_OT_Logout(bpy.types.Operator):
+    bl_idname = "og.logout"
+    bl_label = "Logout"
+    bl_description = "Encerrar sessão autenticada"
+
+    def execute(self, context):
+        auth.logout()
+        self.report({'INFO'}, "Sessão encerrada")
+        return {'FINISHED'}
+
+
+# ----- Preferências do Addon -----
+
+class OilGasAddonPreferences(bpy.types.AddonPreferences):
+    bl_idname = __package__
+
+    cde_url: bpy.props.StringProperty(
+        name="CDE URL",
+        description="URL base da API do CDE",
+        default="http://localhost:8000",
+    )
+    cde_token: bpy.props.StringProperty(
+        name="CDE Token",
+        description="Token de autenticação para o CDE",
+        default="",
+        subtype='PASSWORD',
+    )
+    debug_mode: bpy.props.BoolProperty(
+        name="Debug Mode",
+        description="Ativar modo de depuração",
+        default=False,
+    )
+    auth_password: bpy.props.StringProperty(
+        name="Senha",
+        description="Senha para autenticação no addon",
+        default="",
+        subtype='PASSWORD',
+    )
+
+    def draw(self, context):
+        layout = self.layout
+
+        # --- Autenticação ---
+        box = layout.box()
+        box.label(text="Autenticação para status de editor", icon='LOCKED')
+
+        if auth.is_authenticated():
+            box.label(text="Status de editor: Autenticado", icon='CHECKMARK')
+            box.operator("og.logout", icon='PANEL_CLOSE')
+        else:
+            box.label(text="Status de editor: Não autenticado", icon='ERROR')
+            box.prop(self, "auth_password")
+            box.operator("og.login", icon='UNLOCKED')
+
+        # # --- Outras configurações ---
+        # box3 = layout.box()
+        # box3.label(text="Configurações", icon='PREFERENCES')
+        # box3.prop(self, "cde_url")
+        # box3.prop(self, "cde_token")
+        # box3.prop(self, "debug_mode")
+
+
+classes = [
+    OilGasAddonPreferences,
+    OG_OT_Login,
+    OG_OT_Logout,
     Operator_get_properties,
     Operator_get_classes,
     Operator_contract_tree,
@@ -91,6 +176,7 @@ classes = [
     Operator_document_open,
     Operator_show_table,
     Operator_decomposition_load,
+    Operator_decomposition_chg_order,
     ErrorMessage,    
     Panel_Connect, 
     Panel_Decompositions,  

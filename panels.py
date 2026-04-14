@@ -1,6 +1,6 @@
 import bpy
 from .operators import *
-
+from . import auth
 import bonsai.tool as tool
 import textwrap
 
@@ -292,8 +292,15 @@ class Panel_Decompositions(bpy.types.Panel):
         row = layout.row()
         row.label(text="Project Composition:", icon='INFO')  
         # Imprime a arvore de decomposicao de elementos 
-        row = layout.row()
+        box = layout.box()
+        row=box.row()
         row.prop(props, "show_ports")
+        if auth.is_authenticated():
+            row = box.row()
+            row.prop(props, "show_agg")
+            row = box.row()
+            row.prop(props, "chg_order")
+
         if len(props.containers_show) > 0:
             self.layout.template_list(
                 "BIM_UL_decomposition",
@@ -350,13 +357,25 @@ class BIM_UL_decomposition(bpy.types.UIList):
             else:
                 icon = 'DOT'
 
-            draw_tree(layout, item,
-                operators = [
+            operators = [
                     {"name": "decomposition.select_element", "icon": 'OBJECT_DATAMODE', "att": [("index", item.index)]},
-                    {"name": "decomposition.select_components", "icon": 'RESTRICT_SELECT_OFF', "att": [("index", item.index)]},
+                    {"name": "decomposition.select_components", "icon": 'RESTRICT_SELECT_OFF', "att": [("index", item.index)]}
+            ]
+
+            if props.show_agg:
+                operators += [
                     {"name": "decomposition.move", "icon": 'LONGDISPLAY', "att": [("index", item.index), ("type", "nests")]},
-                    {"name": "decomposition.move", "icon": 'IMGDISPLAY', "att": [("index", item.index), ("type", "aggregations")]},
-                ],
+                    {"name": "decomposition.move", "icon": 'IMGDISPLAY', "att": [("index", item.index), ("type", "aggregations")]}
+                ]
+            if props.chg_order:
+                operators += [
+                    {"name": "decomposition.chg_order", "icon": 'TRIA_UP', "att": [("index", item.index), ("chg", -1)]},
+                    {"name": "decomposition.chg_order", "icon": 'TRIA_DOWN', "att": [("index", item.index), ("chg", 1)]}
+                ]
+
+
+            draw_tree(layout, item,
+                operators = operators,
                 attributes = [(f'[{item.object_type}] {item.name}', icon)],                
                 property = 'elements_containers'
             )
@@ -445,38 +464,40 @@ class Panel_Connect_Elements(bpy.types.Panel):
                 for connect in self.get_connects(obj):
                     row = layout.row()
                     row.label(text=f"connection #{c} - {connect['id']}", icon='LINKED')
-                    row.operator("conn.disconnect", text="", icon='UNLINKED').rel_id = connect['id']
+                    if auth.is_authenticated():
+                        row.operator("conn.disconnect", text="", icon='UNLINKED').rel_id = connect['id']
                     self.draw_connect(layout, connect)
                     c += 1
 
         row = layout.row()
         row.separator()
         row = layout.row()
-        row.label(text="Select objects to connect before clicking 'Add Connection'", icon='INFO')
 
-        box = layout.box()
-        row = box.row()
-        row.prop(props, "connect_type", text="Connection Type")
-        row = box.row()
-        row.prop(wm, "add_connect_object_a", text="Relating Element A")
-        if wm.add_connect_object_a is None:
-            op= row.operator("conn.select_object", text="", icon='ADD')
-            op.obj_name = "add_connect_object_a"
-        row = box.row()
-        row.prop(wm, "add_connect_object_b", text="Relating Element B")
-        if wm.add_connect_object_b is None:
-            op= row.operator("conn.select_object", text="", icon='ADD')
-            op.obj_name = "add_connect_object_b"
-        
-        if props.connect_type != "IfcRelConnectsElements":
+        if auth.is_authenticated():
+            row.label(text="Select objects to connect before clicking 'Add Connection'", icon='INFO')
+            box = layout.box()
             row = box.row()
-            row.prop(wm, "add_connect_object_c", text="Realizing Element")
-            if wm.add_connect_object_c is None:
-                op = row.operator("conn.select_object", text="", icon='ADD')
-                op.obj_name = "add_connect_object_c"
+            row.prop(props, "connect_type", text="Connection Type")
+            row = box.row()
+            row.prop(wm, "add_connect_object_a", text="Relating Element A")
+            if wm.add_connect_object_a is None:
+                op= row.operator("conn.select_object", text="", icon='ADD')
+                op.obj_name = "add_connect_object_a"
+            row = box.row()
+            row.prop(wm, "add_connect_object_b", text="Relating Element B")
+            if wm.add_connect_object_b is None:
+                op= row.operator("conn.select_object", text="", icon='ADD')
+                op.obj_name = "add_connect_object_b"
         
-        row = box.row()
-        row.operator("conn.add_connect", text="Add Connection", icon='ADD')
+            if props.connect_type != "IfcRelConnectsElements":
+                row = box.row()
+                row.prop(wm, "add_connect_object_c", text="Realizing Element")
+                if wm.add_connect_object_c is None:
+                    op = row.operator("conn.select_object", text="", icon='ADD')
+                    op.obj_name = "add_connect_object_c"
+            
+            row = box.row()
+            row.operator("conn.add_connect", text="Add Connection", icon='ADD')
         
 
     def draw_connect(self, layout, connect):

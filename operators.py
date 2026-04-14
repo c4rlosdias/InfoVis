@@ -34,6 +34,25 @@ from scipy.interpolate import interp1d
 
 dynamic_items = []
 
+def reorder_element(context, index, chg):
+
+    props = context.scene.og_props
+    model = tool.Ifc.get() 
+    element = model.by_id(props.containers_show[index].id)
+    if element is not None:
+        if hasattr(element, "Nests") and element.Nests:
+            parent_rel = element.Nests[0]
+            elements = parent_rel.RelatedObjects
+            element_index = elements.index(element)
+            if chg + element_index < 0 or chg + element_index >= len(elements):
+                return False
+            ifcopenshell.api.nest.reorder_nesting(
+                model,
+                element,
+                old_index=element_index,
+                new_index=element_index + chg
+            )
+    return True        
 
 def _open_in_browser(url):
     """Open a URL or file URI in the default browser. Works inside Blender."""
@@ -480,6 +499,8 @@ class Operator_decomposition_load(bpy.types.Operator):
     bl_label   = "Load element decomposition"
     bl_options = {"REGISTER", "UNDO"}
 
+    all_expanded : bpy.props.BoolProperty(name="all_expanded", default=False)
+
     def execute(self, context):   
         props = context.scene.og_props        
         model = tool.Ifc.get()
@@ -491,8 +512,8 @@ class Operator_decomposition_load(bpy.types.Operator):
             i = 0          
             for element in props.elements_containers:
                 element.index = i
-                element.is_hidden = False if element.level==1 else True
-                element.is_expanded = False if element.level==1 else True  
+                element.is_expanded = self.all_expanded
+                element.is_hidden = not self.all_expanded if element.level!=1 else False                
                 i += 1   
             refresh_container(context)
         return {"FINISHED"} 
@@ -606,6 +627,27 @@ class Operator_decomposition_move(bpy.types.Operator):
        
         refresh_container(context) 
         bpy.ops.elements.decomposition()
+        return {"FINISHED"}
+
+class Operator_decomposition_chg_order(bpy.types.Operator):
+    """"""
+    bl_idname  = "decomposition.chg_order"
+    bl_label   = "Move element"
+    bl_options = {"REGISTER", "UNDO"}    
+    
+    index : bpy.props.IntProperty(name="index")
+    chg   : bpy.props.IntProperty(name="change", default=-1)
+
+    def execute(self, context):      
+        props = context.scene.og_props     
+        id = props.containers_show[self.index].id
+        if reorder_element(context, self.index, self.chg):
+            bpy.ops.decomposition.load(all_expanded=True)
+            for c in props.containers_show:
+                if c.id == id:  
+                    props.active_element_index = c.index
+                    break
+
         return {"FINISHED"}
 
 # ==================================================================================================

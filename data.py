@@ -47,13 +47,8 @@ def load_contained_elements_by_decomposition(container: ifcopenshell.entity_inst
                         break
                 return results
 
-            def add_elements(elements, name_props, level=1):
-                #l_elements = [x for x in elements]
-                for element in elements:                        
-                    # if not props.should_include_children and tool.Root.is_spatial_element(element):
-                    #     continue
-                    # ifc_definition_id = element.id()
-                    print(getattr(props, name_props))
+            def add_elements(elements, name_props, level=1):                
+                for element in elements:                                            
                     new = getattr(props, name_props).add()
                     
                     new.name = element.Name or 'Unnamed'
@@ -79,8 +74,7 @@ def load_contained_elements_by_decomposition(container: ifcopenshell.entity_inst
                         add_elements(children, name_props, level=level + 1)
             
             getattr(props, name_props).clear()
-            elements = get_decomposition(container, is_recursive=False) 
-            #add_elements([container], name_props)
+            elements = get_decomposition(container, is_recursive=False)
             add_elements(elements, name_props)
 
 # Call back para carregar as propriedades ao mudar o objeto ativo
@@ -206,7 +200,7 @@ def refresh_container(context):
             new_item.index = classe.index
             new_item.has_children = classe.has_children
             new_item.is_expanded = classe.is_expanded
-            new_item.is_hidden = classe.is_hidden
+            new_item.is_hidden = classe.is_hidden 
             new_item.type = classe.type  
             new_item.object_type = classe.object_type  
             new_item.is_selected = classe.is_selected  

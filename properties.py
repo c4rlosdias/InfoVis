@@ -291,6 +291,8 @@ class OG_Properties(PropertyGroup):
     elements_tree_show       : CollectionProperty(name='elements tree show', type=Container)
     
     show_ports               : BoolProperty(name="show ports", default=False)
+    show_agg                 : BoolProperty(name="show aggregations / nests", default=False)
+    chg_order                : BoolProperty(name="change order", default=False)
 
 
     add_prop_clicked         : BoolProperty(name="add property clicked", default=False)
