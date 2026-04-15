@@ -33,11 +33,11 @@
 6. **DEVELOPMENT.md** - Guia prático para desenvolvedores
 7. **MAPA_MENTAL.md** - Trilhas de aprendizado
 
-### Documentação de Módulos (Código-Fonte)
-8. **OPERATORS_DOCUMENTATION.md** - operators.py (1551 linhas)
-9. **PANELS_DOCUMENTATION.md** - panels.py (766 linhas)
-10. **PROPERTIES_DOCUMENTATION.md** - properties.py (234 linhas)
-11. **DATA_DOCUMENTATION.md** - data.py (613 linhas)
+### Documentação de Pacotes (Código-Fonte)
+8. **OPERATORS_DOCUMENTATION.md** - operators/ (6 submódulos, ~1,340 linhas)
+9. **PANELS_DOCUMENTATION.md** - panels/ (1 módulo, ~860 linhas)
+10. **PROPERTIES_DOCUMENTATION.md** - properties/ (2 módulos, ~316 linhas)
+11. **DATA_DOCUMENTATION.md** - data/ (5 submódulos, ~1,120 linhas)
 
 ### Referência e Próximos Passos
 12. **GLOSSARY.md** - Glossário, padrões e referência rápida
@@ -49,8 +49,9 @@
 
 | Aspecto | Cobertura |
 |---------|-----------|
-| **Módulos** | 5/5 (100%) |
-| **Linhas de código** | 3,600+ (100%) |
+| **Pacotes** | 4/4 (data, operators, panels, properties) |
+| **Módulos** | 20/20 (100%) |
+| **Linhas de código** | ~3,400 (100%) |
 | **Funcionalidades** | 100% |
 | **Padrões** | 15+ |
 | **Exemplos** | 50+ |

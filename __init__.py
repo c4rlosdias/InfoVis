@@ -52,6 +52,7 @@ from .operators import *
 from .panels import *
 from .properties import *
 from . import data
+from .data import tree as _data_tree
 from . import auth
 
 
@@ -143,8 +144,7 @@ classes = [
     Operator_get_properties,
     Operator_get_classes,
     Operator_contract_tree,
-    Operator_expand_tree,
-    Operator_decomposition_move,
+    Operator_expand_tree,    
     Operator_add_properties,
     Operator_clear_properties,
     Operator_get_prop_info,
@@ -154,10 +154,12 @@ classes = [
     Operator_unassign_all,
     Operator_uri,
     Operator_export_ids,
+    Operator_decomposition_move,
     Operator_decomposition_select_components,
     Operator_decomposition_select_element,
+    Operator_decomposition_load,
+    Operator_decomposition_chg_order,
     Operator_catalog_select_type,
-    Operator_catalog_select_elements,
     Operator_catalog_show_layers,
     Operator_catalog_select_layer,
     Operator_load_products,
@@ -174,9 +176,7 @@ classes = [
     Operator_document_edit,
     Operator_document_load,
     Operator_document_open,
-    Operator_show_table,
-    Operator_decomposition_load,
-    Operator_decomposition_chg_order,
+    Operator_show_table,    
     ErrorMessage,    
     Panel_Connect, 
     Panel_Decompositions,  
@@ -217,7 +217,7 @@ def register():
         key=(bpy.types.LayerObjects, "active"),
         owner=owner,
         args=(),
-        notify=data.call_back 
+        notify=_data_tree.call_back 
     )
     #bpy.app.handlers.depsgraph_update_post.append(data.on_active_object_change)
 

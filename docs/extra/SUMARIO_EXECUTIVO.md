@@ -11,11 +11,13 @@
 | Aspecto | Descrição |
 |---------|-----------|
 | **Nome** | Oil & Gas Tools |
-| **Versão** | 0.1.1 |
+| **Versão** | 0.1.2 |
 | **Compatibilidade** | Blender 5.0+ |
 | **Linguagem** | Python 3.10+ |
 | **Licença** | GNU GPL v3 |
-| **Tamanho** | ~3,600+ linhas de código |
+| **Tamanho** | ~3,400 linhas de código (20 arquivos) |
+| **Arquitetura** | Modular (4 pacotes Python) |
+| **Autenticação** | SHA-256 + salt |
 | **Status** | Em desenvolvimento |
 
 ---
@@ -55,32 +57,37 @@
 ## 🏗️ Arquitetura em Alto Nível
 
 ```
-┌─────────────────────────────────┐
-│     BLENDER (Host)              │
-│                                 │
-│  ┌──────────────────────────┐  │
-│  │ UI Layer (panels.py)     │  │
-│  └─────────┬────────────────┘  │
-│            │                    │
-│  ┌─────────▼────────────────┐  │
-│  │ Properties (properties)  │  │
-│  └─────────┬────────────────┘  │
-│            │                    │
-│  ┌─────────▼────────────────┐  │
-│  │ Operators (operators.py) │  │
-│  └─────────┬────────────────┘  │
-│            │                    │
-│  ┌─────────▼────────────────┐  │
-│  │ Data Layer (data.py)     │  │
-│  └─────────┬────────────────┘  │
-│            │                    │
-└────────────┼────────────────────┘
+┌──────────────────────────────────────┐
+│     BLENDER (Host)                   │
+│                                      │
+│  ┌───────────────────────────────┐  │
+│  │ Auth (auth.py)                │  │
+│  └─────────┬─────────────────────┘  │
+│            │                         │
+│  ┌─────────▼─────────────────────┐  │
+│  │ UI Layer (panels/)            │  │
+│  └─────────┬─────────────────────┘  │
+│            │                         │
+│  ┌─────────▼─────────────────────┐  │
+│  │ Properties (properties/)      │  │
+│  └─────────┬─────────────────────┘  │
+│            │                         │
+│  ┌─────────▼─────────────────────┐  │
+│  │ Operators (operators/)        │  │
+│  └─────────┬─────────────────────┘  │
+│            │                         │
+│  ┌─────────▼─────────────────────┐  │
+│  │ Data Layer (data/)            │  │
+│  └─────────┬─────────────────────┘  │
+│            │                         │
+└────────────┼─────────────────────────┘
              │
     ┌────────▼────────┐
     │ External APIs   │
     ├─────────────────┤
     │ • bSDD/HTTP     │
     │ • ifcopenshell  │
+    │ • CDE (mock)    │
     └─────────────────┘
 ```
 
@@ -88,14 +95,15 @@
 
 ## 📁 Estrutura do Projeto
 
-| Camada | Arquivo | Linhas | Propósito |
-|--------|---------|--------|-----------|
-| **Init** | `__init__.py` | 124 | Registro e inicialização |
-| **Operators** | `operators.py` | 1551 | Lógica principal |
-| **UI** | `panels.py` | 766 | Interface do usuário |
-| **Data** | `properties.py` | 234 | Estrutura de dados |
-| **Integration** | `data.py` | 613 | Eventos e sincronização |
-| **Resources** | `resources/` | - | Dados estáticos (JSON, TTL) |
+| Camada | Pacote/Arquivo | Módulos | Propósito |
+|--------|----------------|---------|-----------|
+| **Init** | `__init__.py` | 1 (~245 linhas) | Registro, preferences, auth operators |
+| **Auth** | `auth.py` | 1 (~30 linhas) | Autenticação SHA-256 |
+| **Operators** | `operators/` | 6 (~1,340 linhas) | Lógica principal de negócio |
+| **UI** | `panels/` | 1 (~860 linhas) | Interface do usuário |
+| **Properties** | `properties/` | 2 (~316 linhas) | Estrutura de dados |
+| **Data** | `data/` | 5 (~1,120 linhas) | Dados, eventos, integração |
+| **Resources** | `resources/` | - | Dados estáticos (JSON) |
 | **Tests** | `files/` | - | Arquivos IFC de teste |
 
 ---

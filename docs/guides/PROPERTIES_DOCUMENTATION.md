@@ -1,93 +1,32 @@
-# Módulo: properties.py
+# Pacote: properties/
 
 ## 📌 Visão Geral
 
-Este módulo define as **Property Groups** customizadas que armazenam dados na cena do Blender. Funcionam como "containers" para dados que precisam persistir e sincronizar com a UI.
+O pacote `properties/` define as **Property Groups** customizadas que armazenam dados na cena do Blender. Funcionam como "containers" para dados que precisam persistir e sincronizar com a UI.
 
-**Linhas de Código**: 234
+| Módulo | Linhas | Responsabilidade |
+|--------|--------|------------------|
+| `types.py` | ~120 | PropertyGroups individuais |
+| `main.py` | ~196 | OG_Properties + callbacks |
 
----
-
-## 🏗️ Estrutura de Property Groups
-
-### O que é uma PropertyGroup?
-
-Em Blender, uma `PropertyGroup` é um conjunto de propriedades que pode ser anexado a objetos da cena. Funciona como uma classe com atributos tipados que Blender gerencia automaticamente.
-
+**`__init__.py`** re-exporta tudo:
 ```python
-class MinhaPropertyGroup(PropertyGroup):
-    nome: StringProperty(name="Nome", default="")
-    valor: IntProperty(name="Valor", default=0)
-    ativo: BoolProperty(name="Ativo", default=True)
+from .types import *
+from .main import *
 ```
 
 ---
 
-## 🔧 Funções de Callback
+## 🏗️ Módulo: types.py
 
-### `get_dictionaries(self, context)`
-**Tipo**: Callback para EnumProperty
-
-```python
-def get_dictionaries(self, context):                
-    if not bSDD.is_loaded:
-        bSDD.load_dictionaries()
-    return bSDD.data_dic
-```
-
-**Propósito**: Carrega dicionários bSDD dinamicamente
-**Retorno**: Lista de tuplas (id, label, description)
-**Gatilho**: Quando propriedade enum é desenhada
-
-### `active_prop_changed(self, context)`
-**Tipo**: Callback update_func
-
-```python
-def active_prop_changed(self, context):
-    self.info_class_prop_loaded = False
-    self.class_info.clear()
-```
-
-**Propósito**: Limpa dados quando propriedade muda
-**Ação**: Reseta flags de carregamento
-
-### `active_class_changed(self, context)`
-```python
-def active_class_changed(self, context):
-    self.class_prop_info.clear()
-    self.classes_loaded = False
-    self.class_prop_info_loaded = False
-```
-
-**Propósito**: Reseta dados ao mudar classe ativa
-**Ação**: Limpa inforamções relacionadas
-
-### `active_product_changed(self, context)`
-```python
-def active_product_changed(self, context):
-    self.product_loaded = False
-```
-
-**Propósito**: Marca dados como não carregados
-
-### `active_type_changed(self, context)`
-```python
-def active_type_changed(self, context):
-    self.types_loaded = False
-```
-
-**Propósito**: Marca tipos como não carregados
-
----
-
-## 📊 Property Groups Principais
+Define todas as PropertyGroups individuais usadas pelo add-on.
 
 ### 1. **Ifc_properties**
 
 Propriedades básicas de um elemento IFC.
 
 ```python
-class Ifc_properties(PropertyGroup):       
+class Ifc_properties(PropertyGroup):
     name        : StringProperty(name='name')
     code        : StringProperty(name='code')
     description : StringProperty(name='description')
@@ -95,47 +34,9 @@ class Ifc_properties(PropertyGroup):
     is_selected : BoolProperty(name="is selected", default=True)
 ```
 
-**Campos:**
-- `name`: StringProperty - Nome do elemento
-- `code`: StringProperty - Código identificador
-- `description`: StringProperty - Descrição textual
-- `uri`: StringProperty - URI/URL único
-- `is_selected`: BoolProperty - Flag de seleção (padrão: True)
-
-**Uso**: Informações básicas de qualquer elemento IFC
-
-**Exemplo:**
-```python
-props = context.scene.og_props
-ifc_prop = props.classes.add()
-ifc_prop.name = "Flexible Pipe"
-ifc_prop.code = "FP-001"
-ifc_prop.uri = "http://bsdd.buildingsmart.org/..."
-```
-
----
-
 ### 2. **Class_info**
 
-Informações de uma classe no bSDD com suporte a hierarquia.
-
-```python
-class Class_info(PropertyGroup):
-    code        : StringProperty(name='code')
-    name        : StringProperty(name='name')
-    description : StringProperty(name='description')
-    uri         : StringProperty(name='uri')    
-    propertyset : StringProperty(name='property set')
-    has_children: BoolProperty(name="has children")    
-    is_hidden   : BoolProperty(name="is Hidded", default=True)
-    is_expanded : BoolProperty(name="Is Expanded", default=True)
-    index       : IntProperty(name="index")
-    parent      : StringProperty(name="parent")
-    level_index : IntProperty(name="level index")
-    type        : StringProperty(name="class type")
-```
-
-**Campos:**
+Informações de uma classe bSDD com suporte a hierarquia.
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
@@ -152,64 +53,165 @@ class Class_info(PropertyGroup):
 | `level_index` | Int | Profundidade hierárquica |
 | `type` | String | Tipo IFC (ex: IfcPipeSegment) |
 
-**Hierarquia de Exemplo:**
-```
-Classes (level_index=1)
-├── Pipes (level_index=2, parent="Classes")
-│   ├── Flexible Pipes (level_index=3, parent="Pipes")
-│   └── Rigid Pipes (level_index=3, parent="Pipes")
-└── Fittings (level_index=2, parent="Classes")
-```
-
----
-
 ### 3. **Class_type**
 
-Similar a Class_info mas para tipos de produtos.
+Tipo de produto IFC.
 
-```python
-class Class_type(PropertyGroup):
-    id          : IntProperty(name='id')
-    name        : StringProperty(name='name')
-    description : StringProperty(name='description')
-    element_type : StringProperty(name='element type')
-    has_children: BoolProperty(name="has children")    
-    is_hidden   : BoolProperty(name="is Hidded", default=True)
-    is_expanded : BoolProperty(name="Is Expanded", default=True)
-    index       : IntProperty(name="index")
-    parent      : StringProperty(name="parent")
-```
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `id` | Int | Identificador numérico |
+| `tag` | String | Tag do elemento |
+| `name` | String | Nome |
+| `description` | String | Descrição |
+| `element_type` | String | Tipo de elemento IFC |
+| `has_children`...`is_hidden` | Bool | Estado de árvore |
+| `index`, `parent` | Int/String | Posição hierárquica |
 
-**Campos Únicos:**
-- `id`: IntProperty - Identificador numérico
-- `element_type`: StringProperty - Tipo de elemento IFC
+### 4. **Enumeration_values**
 
-**Diferenças de Class_info:**
-- Usa `id` inteiro em vez de `code` string
-- Sem `propertyset` e `uri`
-- Sem `type` (substituído por `element_type`)
+Valores enumerados de uma propriedade IFC.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `is_enumerated` | Bool | Se é valor enumerado |
+| `value_str` | String | Valor como string |
+| `value_int` | Int | Valor como inteiro |
+| `value_float` | Float | Valor como float |
+| `value_bool` | Bool | Valor como booleano |
+
+### 5. **Property_info**
+
+Metadados de uma propriedade IFC individual.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `name` | String | Nome da propriedade |
+| `description` | String | Descrição |
+| `value_str/int/float/bool` | Multi-tipo | Valores da propriedade |
+| `unit` | String | Unidade de medida |
+| `enumerations` | Collection[Enumeration_values] | Valores enumerados |
+| `table_rows/table_columns` | Int | Dimensões de tabela |
+
+### 6. **Class_prop_info**
+
+Relacionamento classe-propriedade (metadados do bSDD).
+
+### 7. **Documents**
+
+Referências de documentos IFC.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `identification` | String | ID do documento |
+| `location` | String | Caminho/URL |
+| `name` | String | Nome do documento |
+
+### 8. **Pset_info**
+
+Property set com coleções aninhadas.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `name` | String | Nome do pset |
+| `is_expanded` | Bool | Expandido na UI? |
+| `is_epset` | Bool | É extended pset? |
+| `properties` | Collection[Property_info] | Propriedades do pset |
+| `documents` | Collection[Documents] | Documentos |
+| `is_doc_expanded` | Bool | Docs expandidos? |
+| `graph_*` | String/Bool | Configurações de gráfico |
+
+### 9. **Container**
+
+Elemento espacial/decomposição para exibição em árvore.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `id` | Int | ID do elemento IFC |
+| `name` | String | Nome |
+| `description` | String | Descrição |
+| `type` | String | Tipo de relação |
+| `has_children`...`is_hidden` | Bool | Estado de árvore |
+| `level_index`, `index`, `parent` | Int/String | Hierarquia |
+
+### 10. **Layer**
+
+Camada de um produto.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `id` | Int | ID |
+| `name` | String | Nome |
+| `description` | String | Descrição |
 
 ---
 
-## 🔗 Relação Entre Property Groups
+## 🔧 Módulo: main.py
 
-```python
-# Em uma Scene do Blender:
-scene.og_props
-├── classes: CollectionProperty[Ifc_properties]
-│   ├── [0] = {name, code, description, uri, is_selected}
-│   ├── [1] = {...}
-│   └── [n] = {...}
-│
-├── classes_shown: CollectionProperty[Ifc_properties]
-│   └── (filtradas/visíveis)
-│
-├── types: CollectionProperty[Class_type]
-│   ├── [0] = {id, name, element_type, ...}
-│   └── [n] = {...}
-│
-└── types_show: CollectionProperty[Class_type]
-    └── (filtradas/visíveis)
+### Callbacks de Atualização
+
+| Callback | Descrição |
+|----------|-----------|
+| `update_tree_type(self, context)` | Atualiza tipo de árvore |
+| `get_dictionaries(self, context)` | Carrega dicionários bSDD dinamicamente |
+| `active_prop_changed(self, context)` | Limpa dados ao mudar propriedade |
+| `active_class_changed(self, context)` | Reset ao mudar classe ativa |
+| `active_product_changed(self, context)` | Marca produto como não carregado |
+| `active_type_changed(self, context)` | Marca tipo como não carregado |
+| `active_element_changed(self, context)` | Atualiza ao mudar elemento |
+
+### Classe `OG_Properties`
+
+PropertyGroup principal registrada em `bpy.types.Scene`. Contém ~60+ propriedades organizadas em seções:
+
+**Seção Dictionary:**
+- `dictionaries` — EnumProperty (callback: `get_dictionaries`)
+- `classes`, `classes_shown` — CollectionProperty[Class_info]
+- `active_class_index` — IntProperty (callback: `active_class_changed`)
+- `class_definition` — StringProperty
+- `class_prop_info` — CollectionProperty[Class_prop_info]
+- Flags: `classes_loaded`, `class_info_loaded`, `class_prop_info_loaded`
+
+**Seção Decomposition:**
+- `elements_containers`, `containers_show` — CollectionProperty[Container]
+- Configurações de ícone e tipo de árvore
+
+**Seção Catalog:**
+- `products`, `products_show` — CollectionProperty[Class_type]
+- `types`, `types_show` — CollectionProperty[Class_type]
+- `layers` — CollectionProperty[Layer]
+- Flags de carregamento
+
+**Seção Properties:**
+- `properties` — CollectionProperty[Pset_info]
+- `ifc_properties` — CollectionProperty[Ifc_properties]
+- `graph_columns` — CollectionProperty[Columns]
+
+**Seção Connections:**
+- `connections` — CollectionProperty
+- Seleção de tipo de conexão
+
+---
+
+## 🔗 Relação Entre PropertyGroups
+
+```
+scene.og_props (OG_Properties)
++-- classes: CollectionProperty[Class_info]
++-- classes_shown: CollectionProperty[Class_info]
++-- types: CollectionProperty[Class_type]
++-- types_show: CollectionProperty[Class_type]
++-- products: CollectionProperty[Class_type]
++-- products_show: CollectionProperty[Class_type]
++-- elements_containers: CollectionProperty[Container]
++-- containers_show: CollectionProperty[Container]
++-- properties: CollectionProperty[Pset_info]
+|   +-- [i].properties: CollectionProperty[Property_info]
+|       +-- [j].enumerations: CollectionProperty[Enumeration_values]
+|   +-- [i].documents: CollectionProperty[Documents]
++-- layers: CollectionProperty[Layer]
++-- ifc_properties: CollectionProperty[Ifc_properties]
++-- class_prop_info: CollectionProperty[Class_prop_info]
++-- graph_columns: CollectionProperty[Columns]
 ```
 
 ---
@@ -218,180 +220,60 @@ scene.og_props
 
 ```
 Usuário interage com UI
-        │
-        ▼
-Propriedade muda
-        │
-        ▼
+        |
+        v
+Propriedade muda (ex: active_class_index)
+        |
+        v
 Callback disparado (active_class_changed)
-        │
-        ▼
+        |
+        v
 Flags resetadas (classes_loaded = False)
-        │
-        ▼
-data.refresh() chamado
-        │
-        ▼
-classes_shown repopulada de classes
-        │
-        ▼
+        |
+        v
+tree.refresh_*() chamado
+        |
+        v
+Coleção *_shown repopulada
+        |
+        v
 Panel redesenhado com novos dados
 ```
 
 ---
 
-## 📝 Registrando Property Groups
+## 📝 Registrando PropertyGroups
 
-No `__init__.py`:
+No `__init__.py` (raiz):
 
 ```python
-from .properties import Class_info, Class_type, Ifc_properties
+from .properties import *
+
+# Lista de classes em ordem de dependência
+classes = [
+    Ifc_properties, Class_info, Class_type,
+    Enumeration_values, Property_info, Class_prop_info,
+    Documents, Pset_info, Container, Layer,
+    Columns,  # de operators/common.py
+    OG_Properties,  # deve ser \u00faltimo (depende dos demais)
+]
 
 def register():
-    bpy.utils.register_class(Ifc_properties)
-    bpy.utils.register_class(Class_info)
-    bpy.utils.register_class(Class_type)
-    bpy.utils.register_class(SceneProperties)  # Agregador
-    Scene.og_props = PointerProperty(type=SceneProperties)
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    bpy.types.Scene.og_props = PointerProperty(type=OG_Properties)
 
 def unregister():
-    del Scene.og_props
-    bpy.utils.unregister_class(SceneProperties)
-    bpy.utils.unregister_class(Class_type)
-    bpy.utils.unregister_class(Class_info)
-    bpy.utils.unregister_class(Ifc_properties)
+    del bpy.types.Scene.og_props
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
 ```
 
 ---
 
-## 🎯 Padrões de Uso
+## 🔗 Integração com Outros Pacotes
 
-### Adicionar Item a CollectionProperty
-```python
-props = context.scene.og_props
-novo_item = props.classes.add()
-novo_item.name = "Nova Classe"
-novo_item.code = "NC-001"
-```
-
-### Remover Item
-```python
-props.classes.remove(index)
-```
-
-### Iterar Sobre Items
-```python
-for classe in props.classes:
-    print(f"{classe.name}: {classe.description}")
-```
-
-### Buscar Item Específico
-```python
-for classe in props.classes:
-    if classe.uri == target_uri:
-        return classe
-return None
-```
-
-### Limpar Collection
-```python
-props.classes.clear()
-```
-
----
-
-## 💾 Persistência de Dados
-
-PropertyGroups são **automaticamente salvos** com o arquivo .blend:
-
-```
-arquivo.blend
-├── Scene.og_props
-│   ├── classes (salvo)
-│   ├── types (salvo)
-│   └── states (salvo)
-```
-
-Quando reabrir o arquivo, dados serão restaurados automaticamente.
-
----
-
-## 🔍 Debugging
-
-### Ver Todas as Propriedades
-```python
-props = bpy.context.scene.og_props
-print(dir(props))  # Todas as propriedades
-```
-
-### Imprimir Valores
-```python
-for classe in props.classes:
-    print(f"Nome: {classe.name}")
-    print(f"  - Code: {classe.code}")
-    print(f"  - Level: {classe.level_index}")
-    print(f"  - Hidden: {classe.is_hidden}")
-```
-
-### Verificar Tipo
-```python
-print(type(props.classes[0]))  # <class 'bpy.types.Class_info'>
-```
-
----
-
-## ⚠️ Armadilhas Comuns
-
-### 1. Modificar Items Durante Iteração
-❌ Evite:
-```python
-for classe in props.classes:
-    props.classes.remove(0)  # Altera índices!
-```
-
-✅ Melhor:
-```python
-indices = [i for i, c in enumerate(props.classes) if c.is_hidden]
-for i in reversed(indices):
-    props.classes.remove(i)
-```
-
-### 2. Não Inicializar PropertyGroup
-❌ Evite:
-```python
-props.nome = "Valor"  # Sem definir propriedade antes
-```
-
-✅ Melhor:
-```python
-class MinhaGroup(PropertyGroup):
-    nome: StringProperty(default="")
-
-Scene.meu_grupo = PointerProperty(type=MinhaGroup)
-```
-
-### 3. Callbacks Causando Loops Infinitos
-❌ Evite:
-```python
-def callback(self, context):
-    self.outra_prop = value  # Dispara outro callback!
-```
-
-✅ Melhor:
-```python
-def callback(self, context):
-    if not self.processando:
-        self.processando = True
-        # ... processar ...
-        self.processando = False
-```
-
----
-
-## 🔗 Integração com Outros Módulos
-
-- **operators.py**: Popula as CollectionProperties
-- **panels.py**: Lê e exibe dados das PropertyGroups
-- **data.py**: Gerencia callbacks e sincronização
-- **__init__.py**: Registra as classes
-
+- **`data/`**: Usa PropertyGroups para armazenar dados carregados de IFC/bSDD
+- **`operators/`**: Lê e modifica propriedades durante execução de operadores
+- **`panels/`**: Renderiza PropertyGroups na UI (template_list, labels, etc.)
+- **`__init__.py`**: Registra todas as classes e configura `Scene.og_props`

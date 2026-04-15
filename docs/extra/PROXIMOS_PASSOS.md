@@ -12,17 +12,14 @@ Documentação completa da aplicação **Oil & Gas Tools** foi criada com sucess
 
 ### Documentos Criados
 
-1. **README_DOCUMENTATION.md** - Índice central e guia de navegação
-2. **DOCUMENTATION.md** - Visão geral técnica completa
-3. **ARCHITECTURE.md** - Arquitetura em profundidade
-4. **DEVELOPMENT.md** - Guia prático para desenvolvadores
-5. **OPERATORS_DOCUMENTATION.md** - Documentação de operators.py
-6. **PANELS_DOCUMENTATION.md** - Documentação de panels.py
-7. **PROPERTIES_DOCUMENTATION.md** - Documentação de properties.py
-8. **DATA_DOCUMENTATION.md** - Documentação de data.py
-9. **GLOSSARY.md** - Glossário, referência rápida e padrões
-10. **SUMARIO_EXECUTIVO.md** - Resumo executivo
-11. **MAPA_MENTAL.md** - Mapa mental e trilhas de aprendizado
+1. **ARCHITECTURE.md** - Arquitetura modular em profundidade
+2. **DEVELOPMENT.md** - Guia prático para desenvolvedores
+3. **OPERATORS_DOCUMENTATION.md** - Documentação do pacote operators/
+4. **PANELS_DOCUMENTATION.md** - Documentação do pacote panels/
+5. **PROPERTIES_DOCUMENTATION.md** - Documentação do pacote properties/
+6. **DATA_DOCUMENTATION.md** - Documentação do pacote data/
+7. **GLOSSARY.md** - Glossário, referência rápida e padrões
+8. **SUMARIO_EXECUTIVO.md** - Resumo executivo
 
 ---
 

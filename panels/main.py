@@ -1,0 +1,857 @@
+import bpy
+import textwrap
+
+import ifcopenshell.api.pset
+import ifcopenshell.util.element as element
+import bonsai.tool as tool
+
+from ..data.tree import draw_tree
+from ..data.ifc_utils import get_prop_type
+from .. import auth
+
+
+# Panel helper functions
+
+def _label_multiline(context, text, parent):
+    chars = int(context.region.width / 8)   # 7 pix on 1 character
+    wrapper = textwrap.TextWrapper(width=chars)
+    text_lines = wrapper.wrap(text=text)
+    for text_line in text_lines:
+        parent.label(text=text_line)
+
+
+def get_product_attribute(context, index, attribute):
+    props = context.scene.og_props 
+    products = props.types_show
+    for product in products:
+        if product.index == index:
+            result = getattr(product, attribute)
+            return result
+    
+
+# ---------------------------------------------------------------------
+# O&G Dictionary
+# ---------------------------------------------------------------------
+
+class Panel_Connect(bpy.types.Panel):
+    
+    bl_label        = "Subsea Classes"
+    bl_idname       = "VIEW3D_PT_og_connect"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"    
+    bl_category     = "O&G-Dictionary"
+    bl_order = 0
+    bl_options      = {"DEFAULT_CLOSED"}
+    
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='OUTLINER')
+
+    def draw(self, context):           
+        layout = self.layout
+        props = context.scene.og_props
+        model = tool.Ifc.get()
+
+        row = layout.row()
+        row.operator("bsdd.get_class", text="get classes from bSDD")
+        if len(props.classes_shown) > 0:
+            row = layout.row()
+            row.label(text="Classes Information:", icon='INFO')
+
+            self.layout.template_list(
+                "BIM_UL_classes",
+                "",
+                props,
+                "classes_shown",
+                props,
+                "active_class_index",
+                rows=10
+            )
+
+            active_class = props.classes_shown[props.active_class_index]
+            row = layout.row()                                
+            op = row.operator("bsdd.get_class_info", text="  Get Class Information  ")
+            op.uri = active_class.uri
+                              
+            op2 = row.operator("bsdd.get_class_prop", text="  Get Class Properties  ")
+            op2.uri = active_class.uri
+
+            row = layout.row()
+            row.separator()
+
+            if props.classes_loaded:
+                row = layout.row()
+                row.label(text="Class Information:", icon='INFO')
+                box = layout.box()
+                row = box.row(align=True)                    
+                row.label(text=f'Definition : ', icon='DOT')
+
+                _label_multiline(
+                    context=context,
+                    text=props.class_definition,
+                    parent=box
+                )         
+                                
+                row = box.row()
+                row.label(text=f'Description : {props.class_description}', icon='DOT')
+                row = box.row()
+                row.label(text=f'Version date : {props.class_version}', icon='DOT')
+                row = box.row()
+                row.label(text=f'Class type : {props.class_type}', icon='DOT')
+                if props.class_ifctype != '':
+                    row = box.row()
+                    row.label(text=f'Ifc class : {props.class_ifctype}', icon='DOT') 
+            
+            if props.info_class_prop_loaded:
+                row = layout.row()
+                row.label(text="Class Properties Information:", icon='INFO')
+                if len(props.class_prop_info)>0:
+                    self.layout.template_list(
+                        "BIM_UL_class_prop",
+                        "",
+                        props,
+                        "class_prop_info",
+                        props,
+                        "active_class_prop_index",
+                        rows=10
+                    )
+                else:
+                   row.label(text="Class has no properties", icon='WARNING_LARGE') 
+
+        if len(props.ifc_prop) > 0:
+            row = layout.row()
+            row.operator("object.clear_prop", text="Clear")
+            row.operator("object.assign_all", text="Assing all")
+            row.operator("object.unassign_all", text="Unassign all")
+            row = layout.row()
+            row.label(text="Properties of the selected objects:")                       
+            self.layout.template_list(
+                "BIM_UL_ifc_properties",
+                "",
+                props,
+                "ifc_prop",
+                props,
+                "active_property_index",
+            )
+            
+            active_property = props.ifc_prop[props.active_property_index]
+            row = layout.row()                                
+            op = row.operator("property.get_prop_info", text="  Get Property Information  ")
+            op.uri = active_property.uri
+
+            if props.info_prop_loaded:
+                row = layout.row()
+                row.label(text="Property Information:", icon='INFO')
+                box = layout.box()
+                row = box.row(align=True)                    
+                row.label(text=f'Definition : ', icon='DOT')
+
+                _label_multiline(
+                    context=context,
+                    text=props.prop_definition,
+                    parent=box
+                )
+                
+                row = box.row()
+                row.label(text=f'Description : {props.prop_description}', icon='DOT')
+                row = box.row()
+                row.label(text=f'Data Type : {props.prop_datatype}', icon='DOT')
+                row = box.row()
+                row.label(text=f'Property Type : {props.prop_type}', icon='DOT')
+                row = box.row()
+                row.label(text=f'Units : {props.prop_units}', icon='DOT')
+                row = layout.row()
+                row.label(text="Related classes :", icon='DOT')
+                self.layout.template_list(
+                    "BIM_UL_property_class",
+                    "",
+                    props,
+                    "class_info",
+                    props,
+                    "active_info_prop_index",
+                )
+                
+            row = layout.row(align=True)
+            row = layout.row()
+            row.operator("object.add_prop", text="Add selected properties") 
+            
+        if len(props.classes_shown) > 0:
+            row = layout.row()
+            row.operator("ids.export", text="Export IDS file", icon="EXPORT")
+
+
+class BIM_UL_ifc_properties(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        if item:
+            row = layout.row(align=True)
+            if item.is_selected == True:
+                row.prop(item, "is_selected", text="", icon="RADIOBUT_ON")  
+            else:
+                row.prop(item, "is_selected", text="", icon="RADIOBUT_OFF", ) 
+            row.label(text=item.name, icon="TEXT")            
+            op = row.operator("object.uri", text="", icon="URL")
+            op.uri = item.uri
+
+
+class BIM_UL_property_class(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        if item:
+            row = layout.row()
+            row.label(text=item.description)
+            row.label(text=item.name)
+            row.label(text=f'PSET: [{item.propertyset}]')
+            op = row.operator("object.uri", text="", icon="URL")
+            op.uri = item.uri
+         
+     
+class BIM_UL_classes(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        if item:
+            row = layout.row(align=True)
+            icon_type="COLOR"
+            if item.type == 'Material':
+                icon_type = 'MATERIAL_DATA'
+            else:
+                icon_type = 'COLOR'
+
+            draw_tree(layout, item,
+                operators = [
+                    {"name": "object.uri", "icon": 'URL', "att": [("uri", item.uri)]}
+                ],
+                attributes = [(f'[{item.code}] {item.name}', icon_type)],                
+                property = 'classes'
+            )
+
+
+class BIM_UL_class_prop(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        if item:
+            row = layout.row(align=True)
+            row.label(text= f'{item.description}', icon = 'DOT' )             
+            row.operator("object.uri", text="", icon="URL").uri = item.uri
+
+
+# ---------------------------------------------------------------------
+# O&G Decomposition
+# ---------------------------------------------------------------------
+
+class Panel_Decompositions(bpy.types.Panel):
+    
+    bl_label        = "Decompositions"
+    bl_idname       = "VIEW3D_PT_og_decompositions"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"
+    bl_category     = "O&G-Occurrence"
+    bl_options      = {"DEFAULT_CLOSED"}
+    
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='NODETREE')
+
+    def draw(self, context):   
+        layout = self.layout     
+        props = context.scene.og_props
+        row = layout.row()
+        row.operator("decomposition.load", text="Load decompositions")
+        row = layout.row()
+        row.label(text="Project Composition:", icon='INFO')  
+
+        if auth.is_authenticated():
+            box = layout.box()
+            row = box.row()
+            row.prop(props, "show_agg")
+            row = box.row()
+            row.prop(props, "chg_order")
+
+        if len(props.containers_show) > 0:
+            self.layout.template_list(
+                "BIM_UL_decomposition",
+                "",
+                props,
+                "containers_show",
+                props,
+                "active_element_index",
+                rows=5
+            )
+            row = layout.row()
+
+        row.label(text="Tree decomposition:", icon='INFO')
+        row = layout.row()
+        row.prop(props, "tree_type", expand=True)
+        
+
+        if len(props.elements_tree) > 0:           
+
+            self.layout.template_list(
+                "BIM_UL_tree",
+                "",
+                props,
+                "elements_tree",
+                props,
+                "active_tree_element_index",
+                rows=5
+            )
+            row = layout.row()
+
+
+class BIM_UL_decomposition(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        props = context.scene.og_props
+        if item:
+
+            row = layout.row(align=True)
+            blank = 1
+            if item.type == "IfcProject":
+                icon = 'CURRENT_FILE'
+            elif item.type == "IfcSite":
+                icon = 'OBJECT_HIDDEN'
+            elif item.type == "IfcBuilding":
+                icon = 'STICKY_UVS_LOC'
+            elif item.type == "IfcElementAssembly":
+                icon = 'STICKY_UVS_LOC'
+            elif item.type == "IfcPipeSegment":
+                icon = 'IPO_EASE_OUT'         
+            elif item.type == "IfcCableSegment":
+                icon = 'DOT'  
+            elif item.type == "IfcValve":
+                icon = 'DOT'      
+            else:
+                icon = 'DOT'
+
+            operators = [                    
+                    {"name": "decomposition.select_components", "icon": 'RESTRICT_SELECT_OFF', "att": [("index", item.index)]}
+            ]
+
+            if props.show_agg:
+                operators += [
+                    {"name": "decomposition.move", "icon": 'LONGDISPLAY', "att": [("index", item.index), ("type", "nests")]},
+                    {"name": "decomposition.move", "icon": 'IMGDISPLAY', "att": [("index", item.index), ("type", "aggregations")]}
+                ]
+            if props.chg_order:
+                operators += [
+                    {"name": "decomposition.chg_order", "icon": 'TRIA_UP', "att": [("index", item.index), ("chg", -1)]},
+                    {"name": "decomposition.chg_order", "icon": 'TRIA_DOWN', "att": [("index", item.index), ("chg", 1)]}
+                ]
+
+
+            draw_tree(layout, item,
+                operators = operators,
+                attributes = [(f'[{item.object_type}] {item.name}', icon)],                
+                property = 'elements_containers'
+            )
+
+
+class BIM_UL_tree(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        props = context.scene.og_props
+        if item:
+            row = layout.row(align=True)
+            blank = 1
+            icon = 'NONE'
+
+            draw_tree(layout, item,
+                operators = [
+                    {"name": "decomposition.select_element", "icon": 'OBJECT_DATAMODE', "att": [("index", item.index)]},
+                    {"name": "decomposition.select_components", "icon": 'RESTRICT_SELECT_OFF', "att": [("index", item.index)]}
+                ],
+                attributes = [(f'[{item.object_type}] {item.name}', icon)],                
+                property = 'elements_tree'
+            )
+
+
+# ---------------------------------------------------------------------
+# Connect Elements
+# ---------------------------------------------------------------------
+
+class Panel_Connect_Elements(bpy.types.Panel):
+    
+    bl_label        = "Connect Elements"
+    bl_idname       = "VIEW3D_PT_connect_elements"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"
+    bl_category     = "O&G-Occurrence"
+    bl_options      = {"DEFAULT_CLOSED"}
+    
+    def get_connects(self, object):
+        connects = []
+        element = tool.Ifc.get_entity(object)
+        rels1 = element.ConnectedFrom if hasattr(element, 'ConnectedFrom') else []
+        rels2 = element.ConnectedTo if hasattr(element, 'ConnectedTo') else []
+        rels3 = element.IsConnectionRealization if hasattr(element, 'IsConnectionRealization') else []
+        rels = list(rels1) + list(rels2) + list(rels3)
+        rels= set(rels)
+        for rel in rels:
+            if rel.is_a("IfcRelConnectsElements") or rel.is_a("IfcRelConnectsWithRealizingElements"):                
+                connects.append(
+                    {   
+                        'id': rel.id(),
+                        'Connection Type': rel.is_a(),  
+                        'Relating Element': rel.RelatingElement,
+                        'Related Element': rel.RelatedElement,
+                        'Realizing Elements': getattr(rel, 'RealizingElements', None)
+                    }
+                )
+            else:
+                connects.append(
+                    {
+                        'id': rel.id(),
+                        'Connection Type': rel.is_a(),  
+                        'Relating Port': rel.RelatingPort,
+                        'Related Port': rel.RelatedPort,
+                        'Realizing Element': getattr(rel, 'RealizingElement', None)
+                    }
+                )
+
+        return connects
+    
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='GREASEPENCIL')    
+
+    def draw(self, context):
+        layout = self.layout
+        wm = context.window_manager
+        props = context.scene.og_props
+        row = layout.row()
+        
+        if len(context.selected_objects) > 0:
+            for obj in context.selected_objects:
+                row.label(text=f"Selected: {obj.name}", icon='OBJECT_DATA')                
+                c = 1
+                for connect in self.get_connects(obj):
+                    row = layout.row()
+                    row.label(text=f"connection #{c} - {connect['id']}", icon='LINKED')
+                    if auth.is_authenticated():
+                        row.operator("conn.disconnect", text="", icon='UNLINKED').rel_id = connect['id']
+                    self.draw_connect(layout, connect)
+                    c += 1
+
+        row = layout.row()
+        row.separator()
+        row = layout.row()
+
+        if auth.is_authenticated():
+            row.label(text="Select objects to connect before clicking 'Add Connection'", icon='INFO')
+            box = layout.box()
+            row = box.row()
+            row.prop(props, "connect_type", text="Connection Type")
+            row = box.row()
+            row.prop(wm, "add_connect_object_a", text="Relating Element A")
+            if wm.add_connect_object_a is None:
+                op= row.operator("conn.select_object", text="", icon='ADD')
+                op.obj_name = "add_connect_object_a"
+            row = box.row()
+            row.prop(wm, "add_connect_object_b", text="Relating Element B")
+            if wm.add_connect_object_b is None:
+                op= row.operator("conn.select_object", text="", icon='ADD')
+                op.obj_name = "add_connect_object_b"
+        
+            if props.connect_type != "IfcRelConnectsElements":
+                row = box.row()
+                row.prop(wm, "add_connect_object_c", text="Realizing Element")
+                if wm.add_connect_object_c is None:
+                    op = row.operator("conn.select_object", text="", icon='ADD')
+                    op.obj_name = "add_connect_object_c"
+            
+            row = box.row()
+            row.operator("conn.add_connect", text="Add Connection", icon='ADD')
+        
+
+    def draw_connect(self, layout, connect):
+        box = layout.box()
+        for key, value in connect.items():
+            if key == 'id':
+                continue
+            if isinstance(value, (tuple, list)) and value:
+                box.label(text=f"{key}:", icon='LINKED')
+                for v in value:
+                    box.label(text=f"    -{getattr(v, 'Name', str(v))}")                    
+            elif value is not None:
+                box.label(text=f"{key}: {getattr(value, 'Name', str(value))}", icon='LINKED')
+                
+
+# ---------------------------------------------------------------------
+# O&G Catalog
+# ---------------------------------------------------------------------
+
+class Panel_Catalog(bpy.types.Panel):
+    
+    bl_label        = "Catalog"
+    bl_idname       = "VIEW3D_PT_og_catalog"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"
+    bl_category     = "O&G-Catalog"
+    bl_options      = {"DEFAULT_CLOSED"}
+    
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='GROUP_VCOL')
+
+    def draw(self, context):   
+        props = context.scene.og_props 
+        layout = self.layout       
+        row = layout.row()     
+
+        row.operator("catag.load_products", text="Load type products")   
+
+        if len(props.types) > 0:
+            row = layout.row()
+            row.label(text="Classes Information:", icon='INFO')
+
+            self.layout.template_list(
+                "BIM_UL_products",
+                "",
+                props,
+                "types_show",
+                props,
+                "active_type_index",
+                rows=10
+            )
+        
+        if len(props.layers) > 0:            
+            row = layout.row()
+            row.label(text="Layers:", icon='INFO')
+
+            self.layout.template_list(
+                "BIM_UL_layers",
+                "",
+                props,
+                "layers",
+                props,
+                "active_layer_index",
+                rows=10
+            )
+        
+
+class BIM_UL_products(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        if item:
+            row = layout.row(align=True)
+            icons = {
+                'Pipe Fitting' : 'MOD_SIMPLEDEFORM',
+                'Pipe Segment' : 'IPO_EASE_IN_OUT'
+            }
+            if item.name in icons:
+                icontype = icons[item.name]
+            else:
+                icontype = 'NONE'
+
+            draw_tree(layout, item,
+                operators = [
+                    {"name": "catag.select_type", "icon": 'OBJECT_DATA', "att": [("id", item.id)]},
+                    {"name": "catag.select_elements", "icon": 'RESTRICT_SELECT_OFF', "att": [("id", item.id)]},
+                    {"name": "catag.show_layers", "icon": 'INFO_LARGE', "att": [("id", item.id)]}
+                ],
+                attributes = [(f'{item.name}', icontype)] if item.tag != '' else [(f'{item.name}', icontype)],             
+                property = 'types',
+                only_children=True
+            )
+             
+
+class BIM_UL_layers(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):        
+        if item:
+            row = layout.row(align=True)
+            row.label(text=item.name, icon='LAYER_USED')
+            row.operator("catag.select_layer", text="", icon='OBJECT_DATA').id = item.id
+
+
+# ---------------------------------------------------------------------
+# O&G Properties
+# ---------------------------------------------------------------------
+
+class Panel_Properties(bpy.types.Panel):
+    
+    bl_label        = "Properties"
+    bl_idname       = "VIEW3D_PT_og_properties"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"
+    bl_category     = "O&G-Occurrence"
+    
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='PROPERTIES')
+
+    def draw(self, context):   
+        props = context.scene.og_props 
+        layout = self.layout       
+        row = layout.row()   
+        obj = context.active_object  
+        
+
+        if obj is not None and obj.select_get():
+            model = tool.Ifc.get()     
+            row = layout.row()                      
+            row.operator("props.load_properties", text="Load properties")    
+
+            if props.has_document:
+                row = layout.row() 
+                row.label(text='Referenced documents:', icon = 'DOCUMENTS') 
+                if props.docs_expanded:
+                    icon='TRIA_DOWN'
+                else:
+                    icon='TRIA_RIGHT'
+                op = row.operator("docs.expand", icon=icon, text="")
+                op.index = -1
+                op.type = 'element'
+                
+                if props.docs_expanded:
+                    box = layout.box()
+                    for document in props.documents:
+                        row = box.row() 
+                        op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                        op4.ifc_id = tool.Ifc.get_entity(obj).id()
+                        op4.id = document.identification
+                        op4.name = document.name
+                        op4.location = document.location
+
+                        row = box.row()
+                        row.prop(document, 'identification')
+                        row = box.row()
+                        row.prop(document, 'name')
+                        row = box.row()
+                        row.prop(document, 'location')
+
+                        op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                        op0.index = -1
+                        op0.doc_index = document.index
+
+                        op = row.operator("props.open_doc", icon='BORDERMOVE', text="")  
+                        op.location = document.location
+
+                        if document.location[-3:].upper() == 'CSV':
+                            op3 = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                            op3.pset_index = -1
+                            op3.prop_index = -1 
+                            op3.document = document.location
+
+
+                layout.separator()                      
+            
+            if len(props.prop_metadata) > 0:
+                old_is_a = ""
+                row = layout.row()
+                row.prop(props, "show_description")
+                layout.separator()
+
+                for pset in props.prop_metadata:
+                    row = layout.row()
+                    if old_is_a != pset.is_a:
+                        if pset.is_a == 'instance':
+                            row = layout.row()
+                            row.label(text="Occurence Properties:", icon='HOLDOUT_OFF') 
+                            row = layout.row()
+                        else:
+                            row = layout.row()
+                            row.label(text="Inherited Type Properties:", icon='CON_CHILDOF') 
+                            row = layout.row()
+                            
+                    row = layout.row()
+                    if pset.is_expanded:
+                        icon = 'TRIA_DOWN'
+                    else:
+                        icon = 'TRIA_RIGHT'
+                    row.operator("props.expand", icon=icon, text="").index = pset.index
+                    row.label(text=pset.name, icon='COPY_ID')                   
+                         
+
+                    layout.separator()
+
+                    if pset.is_expanded:                        
+                        if pset.has_document:                               
+                            ifc_pset = ifcopenshell.api.pset.add_pset(model, product=model.by_id(pset.id_obj), name=pset.name)  
+                            row = layout.row()
+                            row.label(text='Referenced documents:', icon='DOCUMENTS')
+
+                            if pset.docs_expanded:
+                                icon2='TRIA_DOWN'
+                            else:
+                                icon2='TRIA_RIGHT'
+                            op = row.operator("docs.expand", icon=icon2, text="")
+                            op.index = pset.index
+                            op.type = 'property'    
+
+                            if pset.docs_expanded:
+                                box = layout.box()  
+                                for document in pset.documents:                                
+                                    row = box.row()
+                                    op = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                                    op.ifc_id = ifc_pset.id()
+                                    op.id = document.identification   
+                                    op.name = document.name 
+                                    op.location = document.location                                  
+
+                                    row = box.row()
+                                    row.prop(document, 'identification')
+                                    row = box.row()
+                                    row.prop(document, 'name')
+                                    row = box.row()
+                                    row.prop(document, 'location')
+                                    op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                                    op.index = pset.index 
+
+                                    op = row.operator("props.open_doc", icon='BORDERMOVE', text="") 
+                                    op.location = document.location                           
+                                    
+                                    if document.location[-3:].upper() == 'CSV':
+                                        op = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
+                                        op.pset_index = -1
+                                        op.prop_index = -1
+                                        op.document = document.location
+                            
+                        row = layout.row()
+                        row.label(text="Properties:")
+                        box = layout.box()
+                        old_title="" 
+                        old_name_prop = ""                        
+                        titulos = '' 
+                        i = 1
+                        
+                        for item in pset.props:   
+                                                             
+                            if 'Table' in  item.name:
+                                names = item.name.split('_')
+                                description = item.description
+                                title = names[0]
+                                if props.show_description:
+                                    name_prop = item.description
+                                else:
+                                    name_prop = names[1]
+                                
+                                if title != old_title:
+                                    rowb = box.row(align=True)
+                                    rowb.scale_y =0.8                                    
+                                    rowb.label(text=f' {title}', icon='VIEW_ORTHO')
+
+                                    if 'Crushing' in pset.name:                                                                               
+                                       op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="plot") 
+                                       op.pset_index = pset.index
+                                       op.prop_index = item.index
+
+                                       print(pset.index)
+                                       print(item.index)
+                                       
+
+                                    rowb = box.row() 
+                                    rowb = box.row(align=True)
+                                    col = rowb.column(align=True)
+                                    col.scale_x = 0.7
+                                    
+                                    i = 1
+
+                                if i==1:
+                                    col = rowb.column(align=True)                                
+                                
+                                if item.name not in titulos:
+                                    if props.show_description:
+                                        name_prop = f"{item.description} {item.datatype}"
+                                    else:
+                                        name_prop = f"{item.name.split('_')[1]} {item.datatype}"
+                                    
+                                    col.label(text=name_prop)                                        
+                                    titulos = titulos + item.name  
+
+                                act_prop = f"value{item.type_value}"                                                                                              
+                                col.prop(item, act_prop, text='')                                
+                                if i%item.n_rows == 0:
+                                    col = rowb.column(align=True)   
+
+                                old_title =title
+                                old_name_prop = name_prop
+  
+                            else:    
+                                if item.name != old_name_prop:
+                                    rowb = box.row(align=True)
+                                    op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
+                                    op.pset_index = pset.index
+                                    op.prop_index = item.index  
+                                    prop_name =  f' {item.description}' if props.show_description else  f' {item.name}'                          
+                                    rowb.label(text=prop_name)
+                                    
+
+                                if item.type_prop == 'IfcPropertyEnumeratedValue':
+                                    rowb = box.row(align=True)   
+                                    col = rowb.column(align=True)
+                                    col.prop(item, "enumerated", text='')
+                                    col = rowb.column(align=True)
+                                    for enum in item.enumerations:
+                                        print('ok')
+                                        col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
+                                    if getattr(item, "has_document", False):
+                                        op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
+                                        op.pset_index = pset.index
+                                        op.prop_index = item.index 
+                                    old_name_prop = item.name   
+
+                                else:
+                                    col = rowb.column()
+                                    col.alignment = 'RIGHT'
+                                    act_prop = f"value{item.type_value}"                                
+                                    col.prop(item, act_prop, text='')
+                                    col = rowb.column()
+                                    col.scale_x =0.4
+                                    col.label(text=item.datatype)
+                                    old_name_prop = item.name 
+
+                            i += 1
+
+                    old_is_a = pset.is_a
+        for area in context.screen.areas:
+            area.tag_redraw()
+
+
+# ---------------------------------------------------------------------
+# Settings
+# ---------------------------------------------------------------------
+
+class Panel_Settings(bpy.types.Panel):
+    
+    bl_label        = "Settings"
+    bl_idname       = "VIEW3D_PT_og_settings"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"
+    bl_category     = "O&G-Info"
+    bl_options      = {"DEFAULT_CLOSED"}
+    
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='PREFERENCES')
+
+    def draw(self, context):
+        layout = self.layout
+        props = context.scene.og_props
+        row = layout.row()
+        row.label(text='Choose a bSDD dictionary:')
+        row = layout.row()
+        row.prop(props, 'dictionary')
+
+
+# ---------------------------------------------------------------------
+# Info
+# ---------------------------------------------------------------------
+
+class Panel_Info(bpy.types.Panel):
+    
+    bl_label        = "Info"
+    bl_idname       = "VIEW3D_PT_og_info"
+    bl_space_type   = 'VIEW_3D'
+    bl_region_type  = 'UI'
+    bl_context      = "objectmode"
+    bl_category     = "O&G-Info"
+    bl_options      = {"DEFAULT_CLOSED"}
+    
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='INFO_LARGE')
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.label(text="O&G Tools V 0.1.2", icon='MOD_LINEART')
+        layout.separator()

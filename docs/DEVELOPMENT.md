@@ -34,19 +34,49 @@ cp -r . ~/.config/blender/5.0/scripts/addons/oil-gas-addon
 
 ## Estrutura de Módulos
 
-| Arquivo | Responsabilidade | Linhas |
-|---------|------------------|--------|
-| `operators.py` | Lógica principal e operações | 1551 |
-| `panels.py` | Interface do usuário | 766 |
-| `properties.py` | Estrutura de dados | 234 |
-| `data.py` | Sincronização e callbacks | 613 |
-| `__init__.py` | Registro do add-on | - |
+O projeto utiliza uma estrutura modular em pacotes Python:
+
+### Raiz
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `__init__.py` | Registro do add-on, preferences, auth operators |
+| `auth.py` | Autenticação por senha (SHA-256) |
+
+### Pacote `data/`
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `bsdd.py` | Cliente REST bSDD |
+| `catalog.py` | Import IFC, Catalog, PropTempl |
+| `cde.py` | API CDE (mock) |
+| `tree.py` | Árvore, refresh, callbacks |
+| `ifc_utils.py` | Utilidades IFC, propriedades, conexões |
+
+### Pacote `properties/`
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `types.py` | PropertyGroups individuais (Ifc_properties, Class_info, etc.) |
+| `main.py` | OG_Properties + callbacks de atualização |
+
+### Pacote `operators/`
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `common.py` | Utilitários compartilhados (tree expand/contract, save_json, etc.) |
+| `dictionary.py` | Operadores bSDD (get classes, properties, export IDS) |
+| `decomposition.py` | Decomposição IFC (load, select, move, reorder) |
+| `catalog.py` | Catálogo de tipos (load products, layers, select) |
+| `connections.py` | Conexões IFC (disconnect, add connect) |
+| `properties.py` | Propriedades e gráficos (edit, load, graph) |
+
+### Pacote `panels/`
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `main.py` | Todos os painéis e UILists |
 
 ## Adicionando Funcionalidades
 
 ### Novo Operador
 
-**1. Crie em `operators.py`:**
+**1. Crie no submódulo apropriado em `operators/` (ex: `operators/dictionary.py`):**
 ```python
 class Operator_meu_novo(bpy.types.Operator):
     """Tooltip"""
@@ -59,7 +89,12 @@ class Operator_meu_novo(bpy.types.Operator):
         return {'FINISHED'}
 ```
 
-**2. Registre em `__init__.py`:**
+**2. Exporte no `operators/__init__.py`:**
+```python
+from .dictionary import Operator_meu_novo
+```
+
+**3. Registre em `__init__.py` (raiz):**
 ```python
 classes = [
     # ... classes existentes ...
@@ -67,14 +102,14 @@ classes = [
 ]
 ```
 
-**3. Adicione botão em `panels.py`:**
+**4. Adicione botão em `panels/main.py`:**
 ```python
 layout.operator("og.meu_novo", text="Clique Aqui")
 ```
 
 ### Novo Painel
 
-**Em `panels.py`:**
+**Em `panels/main.py`:**
 ```python
 class Panel_meu_painel(bpy.types.Panel):
     bl_label = "Meu Painel"
@@ -90,14 +125,14 @@ class Panel_meu_painel(bpy.types.Panel):
 
 ### Novo PropertyGroup
 
-**Em `properties.py`:**
+**Tipos simples em `properties/types.py`, propriedades principais em `properties/main.py`:**
 ```python
+# properties/types.py
 class MinhaPropertyGroup(PropertyGroup):
     meu_campo: StringProperty(name="Campo")
-    
-    def update_funcao(self, context):
-        # Chamado quando valor muda
-        pass
+
+# properties/main.py — adicione ao OG_Properties:
+minha_prop: PointerProperty(type=MinhaPropertyGroup)
 ```
 
 ## Testando Mudanças
@@ -114,7 +149,7 @@ class MinhaPropertyGroup(PropertyGroup):
 ```python
 # Teste imports
 import bpy
-from oil_gas_addon import operators
+from oil_gas_addon import operators, data, properties, auth
 
 # Veja operadores disponíveis
 print([x for x in dir(operators) if 'Operator' in x])
@@ -122,6 +157,13 @@ print([x for x in dir(operators) if 'Operator' in x])
 # Acesse propriedades
 props = bpy.context.scene.og_props
 print(f"Classes carregadas: {len(props.classes)}")
+
+# Verifique autenticação
+print(f"Autenticado: {auth.is_authenticated()}")
+
+# Acesse preferências do addon
+prefs = bpy.context.preferences.addons['oil_gas_addon'].preferences
+print(f"CDE URL: {prefs.cde_url}")
 ```
 
 ## Padrões do Projeto
@@ -134,9 +176,9 @@ print(f"Classes carregadas: {len(props.classes)}")
 ## Documentação Detalhada
 
 - **[Arquitetura](ARCHITECTURE.md)** - Estrutura técnica
-- **[operators.py](guides/OPERATORS_DOCUMENTATION.md)** - Todas as operações
-- **[panels.py](guides/PANELS_DOCUMENTATION.md)** - Interface
-- **[properties.py](guides/PROPERTIES_DOCUMENTATION.md)** - Dados
-- **[data.py](guides/DATA_DOCUMENTATION.md)** - Sincronização
+- **[operators/](guides/OPERATORS_DOCUMENTATION.md)** - Todas as operações
+- **[panels/](guides/PANELS_DOCUMENTATION.md)** - Interface
+- **[properties/](guides/PROPERTIES_DOCUMENTATION.md)** - Dados
+- **[data/](guides/DATA_DOCUMENTATION.md)** - Sincronização e dados
 - **[Glossário](reference/GLOSSARY.md)** - Termos e FAQ
 

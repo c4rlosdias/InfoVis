@@ -1,203 +1,198 @@
-# Módulo: panels.py
+# Pacote: panels/
 
 ## 📌 Visão Geral
 
-Este módulo implementa a interface do usuário (UI) do add-on dentro do Blender. Contém painéis (Panels), listas (List UI Items) e layouts para visualizar e interagir com dados IFC.
+O pacote `panels/` implementa a interface do usuário (UI) do add-on dentro do Blender. Contém painéis (Panels), listas (UIList) e layouts para visualizar e interagir com dados IFC.
 
-**Linhas de Código**: 766
+| Módulo | Linhas | Responsabilidade |
+|--------|--------|------------------|
+| `main.py` | ~860 | Todos os painéis e UILists |
+
+**`__init__.py`** re-exporta tudo:
+```python
+from .main import *
+```
 
 ---
 
-## 🎨 Componentes da UI
+## 🎨 Funções Auxiliares
 
-### 1. Funções Auxiliares
-
-#### `_label_multiline(context, text, parent)`
+### `_label_multiline(context, text, parent)`
 Quebra texto longo em múltiplas linhas na interface.
 
 ```python
 def _label_multiline(context, text, parent):
-    chars = int(context.region.width / 8)   # 7 pixels por caractere
+    chars = int(context.region.width / 8)
     wrapper = textwrap.TextWrapper(width=chars)
     text_lines = wrapper.wrap(text=text)
     for text_line in text_lines:
         parent.label(text=text_line)
 ```
 
-**Propósito**: Evitar que texto longo ultrapasse os limites do painel
-**Uso**: Descrições longas, definições, informações detalhadas
-
-#### `get_properties(ifc_obj)`
-Extrai propriedades de um objeto IFC.
-
-```python
-def get_properties(ifc_obj):
-    result = []
-    result.append()  # [INCOMPLETO - precisa implementação]
-```
-
-**Status**: Função em desenvolvimento
-
-#### `get_product_attribute(context, index, attribute)`
+### `get_product_attribute(context, index, attribute)`
 Obtém um atributo específico de um produto por índice.
 
+---
+
+## 🖼️ Painéis
+
+### Categorias
+
+Os painéis estão organizados em **4 categorias** na sidebar do Blender:
+
+| Categoria | Painéis |
+|-----------|---------|
+| `O&G-Dictionary` | Panel_Connect, Panel_Settings |
+| `O&G-Occurrence` | Panel_Decompositions, Panel_Connect_Elements, Panel_Properties |
+| `O&G-Catalog` | Panel_Catalog |
+| `O&G-Info` | Panel_Info |
+
+### 🔐 Autenticação
+
+Todos os painéis verificam `auth.is_authenticated()` antes de desenhar conteúdo editor:
+
 ```python
-def get_product_attribute(context, index, attribute):
-    props = context.scene.og_props 
-    products = props.types_show
-    for product in products:
-        if product.index == index:
-            result = getattr(product, attribute)
-            return result
+from ..auth import is_authenticated
+
+class Panel_Connect(bpy.types.Panel):
+    def draw(self, context):
+        layout = self.layout
+        if not is_authenticated():
+            layout.label(text="Login necess\u00e1rio")
+            return
+        # ... conte\u00fado normal
 ```
-
-**Parâmetros:**
-- `index`: Índice do produto na lista
-- `attribute`: Nome do atributo (string)
-
-**Retorno**: Valor do atributo ou None
 
 ---
 
-## 🖼️ Painéis Principais
+### Panel_Connect — Subsea Classes
 
-### Panel_Connect - Subsea Classes
-
-**Informações:**
-- **Nome**: "Subsea Classes"
-- **ID**: `VIEW3D_PT_og_connect`
-- **Tipo**: bpy.types.Panel
-- **Localização**: View 3D > Sidebar > O&G Tools
-- **Ordem**: 0 (primeiro painel)
-- **Modo**: Object Mode
-- **Padrão**: Fechado
-
-**Layout:**
-
-```
-┌─────────────────────────────────────────┐
-│ ⊕ Subsea Classes                   [+]  │
-├─────────────────────────────────────────┤
-│ [ Get classes from bSDD ]               │
-│                                         │
-│ Classes Information:              [info]│
-│                                         │
-│ ┌──────────────────────────────────┐   │
-│ │ • Class 1                        │   │
-│ │ • Class 2 (expandível)           │   │
-│ │   • SubClass 2.1                 │   │
-│ │ • Class 3                        │   │
-│ └──────────────────────────────────┘   │
-│                                         │
-│ [Get Class Information] [Get Properties]│
-│                                         │
-│ Active Class Name      [Index: 0]       │
-│                                         │
-│ Class Information:              [info]  │
-│ ┌──────────────────────────────────┐   │
-│ │ • Definition : Lorem ipsum...    │   │
-│ │                                  │   │
-│ └──────────────────────────────────┘   │
-└─────────────────────────────────────────┘
-```
-
-**Código:**
-```python
-class Panel_Connect(bpy.types.Panel):
-    bl_label        = "Subsea Classes"
-    bl_idname       = "VIEW3D_PT_og_connect"
-    bl_space_type   = 'VIEW_3D'
-    bl_region_type  = 'UI'
-    bl_context      = "objectmode"    
-    bl_category     = "O&G Tools"
-    bl_order = 0
-    bl_options      = {"DEFAULT_CLOSED"}
-```
+| Propriedade | Valor |
+|-------------|-------|
+| **bl_idname** | `VIEW3D_PT_og_connect` |
+| **bl_category** | `O&G-Dictionary` |
+| **bl_order** | 0 |
+| **Modo** | Object Mode |
+| **Padrão** | Fechado |
 
 **Funcionalidades:**
-
-1. **Botão "get classes from bSDD"**
-   - Conecta ao bSDD (buildingSMART Data Dictionary)
-   - Carrega classes disponíveis
-   - Popula `props.classes`
-
-2. **Lista de Classes**
-   - Template: `BIM_UL_classes`
-   - Fonte: `props.classes_shown`
-   - Índice ativo: `props.active_class_index`
-   - 10 linhas visíveis
-
-3. **Botões de Ação**
-   - **Get Class Information**: Carrega definição da classe
-   - **Get Class Properties**: Extrai propriedades bSDD
-
-4. **Informações da Classe Ativa**
-   - Nome da classe
-   - Índice na lista
-   - Definição completa com quebra de linhas
+1. Botão "get classes from bSDD" → operador `bsdd.get_class`
+2. Lista de classes com `BIM_UL_classes`
+3. Botões "Get Class Information" / "Get Class Properties"
+4. Informações da classe ativa (definição, propriedades)
+5. Botão "Add Properties" para criar pset templates
+6. Export IDS
 
 ---
 
-## 📋 List UI Items (Templates)
+### Panel_Decompositions — Decomposição do Projeto
 
-### BIM_UL_classes
-Renderiza itens da lista de classes.
+| Propriedade | Valor |
+|-------------|-------|
+| **bl_idname** | `VIEW3D_PT_og_decompositions` |
+| **bl_category** | `O&G-Occurrence` |
+| **bl_order** | 0 |
 
-**Propriedades Exibidas:**
-- `name`: Nome da classe
-- `level_index`: Nível hierárquico (indentação)
-- `has_children`: Ícone de expansão
-- `is_expanded`: Estado expandido/contraído
-- `is_hidden`: Visibilidade
-
-**Ações:**
-- Click: Seleciona classe
-- Shift+Click: Seleciona múltiplas
-- Expand/Collapse: Mostra/oculta filhos
+**Funcionalidades:**
+1. Carrega decomposição IFC do projeto
+2. Árvore hierárquica desenhada via `tree.draw_tree()`
+3. Seleção de elementos individuais ou com filhos
+4. Move elementos entre containers (nest/aggregate)
+5. Reordenação de elementos
 
 ---
 
-## 🔌 Operadores Conectados
+### Panel_Connect_Elements — Conexões
 
-### bsdd.get_class
-**Label**: "get classes from bSDD"
-**Ação**: Dispara carregamento de classes
+| Propriedade | Valor |
+|-------------|-------|
+| **bl_idname** | `VIEW3D_PT_connect_elements` |
+| **bl_category** | `O&G-Occurrence` |
 
-### bsdd.get_class_info
-**Label**: "Get Class Information"
-**Parâmetro**: `uri` (URI da classe selecionada)
-**Ação**: Carrega definição e propriedades
-
-### bsdd.get_class_prop
-**Label**: "Get Class Properties"
-**Parâmetro**: `uri` (URI da classe selecionada)
-**Ação**: Extrai lista de propriedades aplicáveis
+**Funcionalidades:**
+1. Lista de conexões do objeto ativo
+2. Seleção de objetos para conectar (eyedropper)
+3. Criar/remover conexões IFC
 
 ---
 
-## 🎛️ Propriedades Usadas
+### Panel_Catalog — Catálogo de Tipos
 
-### De `context.scene.og_props`
+| Propriedade | Valor |
+|-------------|-------|
+| **bl_idname** | `VIEW3D_PT_og_catalog` |
+| **bl_category** | `O&G-Catalog` |
+
+**Funcionalidades:**
+1. Lista de tipos de produtos IFC (`BIM_UL_products`)
+2. Seleção de tipo / instâncias
+3. Visualização de camadas (`BIM_UL_layers`)
+4. Relatório HTML de camadas
+
+---
+
+### Panel_Properties — Propriedades
+
+| Propriedade | Valor |
+|-------------|-------|
+| **bl_idname** | `VIEW3D_PT_og_properties` |
+| **bl_category** | `O&G-Occurrence` |
+
+**Funcionalidades:**
+1. Exibe property sets do objeto ativo
+2. Edição de valores (single, list, enum, table)
+3. Seção de documentos IFC com edição
+4. Geração de gráficos matplotlib
+5. Toggle tabela / inversão de eixos
+
+---
+
+### Panel_Settings — Configurações de Dicionário
+
+| Propriedade | Valor |
+|-------------|-------|
+| **bl_idname** | `VIEW3D_PT_og_settings` |
+| **bl_category** | `O&G-Info` |
+
+**Funcionalidades:**
+1. Seleção de dicionário bSDD
+2. Configurações de endpoint
+
+---
+
+### Panel_Info — Informações
+
+| Propriedade | Valor |
+|-------------|-------|
+| **bl_idname** | `VIEW3D_PT_og_info` |
+| **bl_category** | `O&G-Info` |
+
+**Funcionalidades:**
+1. Versão do add-on
+2. Informações gerais
+
+---
+
+## 📋 UIList Classes
+
+| Classe | Uso |
+|--------|-----|
+| `BIM_UL_ifc_properties` | Propriedades IFC |
+| `BIM_UL_property_class` | Classes de propriedade |
+| `BIM_UL_classes` | Classes bSDD (com indentação hierárquica) |
+| `BIM_UL_class_prop` | Propriedades de classe |
+| `BIM_UL_decomposition` | Decomposição IFC |
+| `BIM_UL_tree` | Árvore genérica |
+| `BIM_UL_products` | Produtos/tipos |
+| `BIM_UL_layers` | Camadas de produto |
+
+### Padrão de UIList
 ```python
-props = context.scene.og_props
-
-# Listas de dados
-props.classes           # Todas as classes
-props.classes_shown     # Classes visíveis (filtradas)
-props.products          # Todos os produtos
-props.products_show     # Produtos visíveis
-props.types             # Todos os tipos
-props.types_show        # Tipos visíveis
-
-# Estados
-props.active_class_index        # Classe selecionada
-props.active_product_index      # Produto selecionado
-props.classes_loaded            # Flag: classes carregadas?
-props.class_info_loaded         # Flag: info carregada?
-
-# Dados da classe ativa
-props.class_definition          # Definição atual
-props.class_prop_info           # Lista de propriedades
+class BIM_UL_classes(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        # Indenta\u00e7\u00e3o baseada em level_index
+        # \u00cdcone de expans\u00e3o se has_children
+        # Nome do item
 ```
 
 ---
@@ -206,42 +201,24 @@ props.class_prop_info           # Lista de propriedades
 
 ```
 Usuário clica "get classes from bSDD"
-        │
-        ▼
+        |
+        v
 Operador "bsdd.get_class" executado
-        │
-        ▼
+        |
+        v
 Conecta ao servidor bSDD
-        │
-        ▼
-Carrega classes em props.classes
-        │
-        ▼
-build_classes() reconstrói hierarquia
-        │
-        ▼
-refresh() filtra para classes_shown
-        │
-        ▼
+        |
+        v
+ifc_utils.build_classes() constrói hierarquia
+        |
+        v
+tree.refresh_classes() filtra para classes_shown
+        |
+        v
 Panel redesenhado (draw())
-        │
-        ▼
-Lista atualizada na UI
-        │
-        ▼
-Usuário seleciona classe
-        │
-        ▼
-active_class_changed() callback
-        │
-        ▼
-Clica "Get Class Information"
-        │
-        ▼
-props.class_definition preenchido
-        │
-        ▼
-Panel redesenhado com definição
+        |
+        v
+Lista atualizada via BIM_UL_classes
 ```
 
 ---
@@ -252,78 +229,34 @@ Panel redesenhado com definição
 ```python
 box = layout.box()
 row = box.row(align=True)
-row.label(text="Título", icon='INFO')
-# Conteúdo dentro da box
-```
-
-### Criar Linha com Múltiplas Colunas
-```python
-row = layout.row()
-row.label(text="Esquerda")
-row.label(text="Centro")
-row.label(text="Direita")
+row.label(text="T\u00edtulo", icon='INFO')
 ```
 
 ### Template List
 ```python
 self.layout.template_list(
-    "UI_UL_list_id",        # Template ID
-    "",                     # Desenho ID
-    source_object,          # Objeto com lista
-    "list_property_name",   # Nome da propriedade de lista
-    source_object,          # Objeto com índice ativo
-    "active_index_name",    # Nome do índice ativo
-    rows=10                 # Linhas visíveis
+    "BIM_UL_classes",
+    "",
+    props,
+    "classes_shown",
+    props,
+    "active_class_index",
+    rows=10
 )
 ```
 
 ### Operador com Propriedade
 ```python
-op = row.operator("operator.id", text="Botão")
-op.propriedade_do_operador = valor
+op = row.operator("bsdd.get_class_info", text="Info")
+op.uri = active_class.uri
 ```
 
 ---
 
-## 🎯 Boas Práticas
+## 🔗 Integração com Outros Pacotes
 
-1. **Use multi-line labels** para textos longos
-2. **Agrupe com boxes** seções relacionadas
-3. **Forneça feedback visual** (ícones, cores)
-4. **Use tooltips** em botões complexos
-5. **Mantenha hierarquia visual** clara
-6. **Teste responsividade** com janelas pequenas
-
----
-
-## 🐛 Debugging de UI
-
-### Verificar Propriedades
-```python
-# No console Blender
-props = bpy.context.scene.og_props
-print(len(props.classes))  # Número de classes
-print(props.active_class_index)  # Classe selecionada
-```
-
-### Forçar Redesenho
-```python
-for area in bpy.context.screen.areas:
-    if area.type == 'VIEW_3D':
-        area.tag_redraw()
-```
-
-### Verificar Espaço Disponível
-```python
-width = context.region.width  # Largura disponível
-print(f"Caracteres disponíveis: {width // 8}")
-```
-
----
-
-## 🔗 Integração com Outros Módulos
-
-- **properties.py**: Define `og_props` e propriedades usadas
-- **operators.py**: Implementa ações dos botões
-- **data.py**: Fornece funções `refresh()`, `refresh_products()`, etc.
-
+- **`properties/`**: Define `og_props` e propriedades usadas nos painéis
+- **`operators/`**: Implementa ações dos botões
+- **`data/tree`**: Fornece `draw_tree()`, `refresh_*()` para árvores
+- **`data/ifc_utils`**: Funções de utilidade IFC
+- **`auth`**: Verifica autenticação antes de exibir conteúdo protegido
