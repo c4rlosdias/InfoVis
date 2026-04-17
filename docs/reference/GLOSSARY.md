@@ -50,25 +50,26 @@
 
 **IDS (Information Delivery Specification)**
 - Especificação de requisitos de informação em XML
-- Exportado via operador `ids.export` em `operators/dictionary.py`
+- Exportado via operador `ids.export` em `modules/dictionary/operators.py`
 
 ### Termos da Aplicação
 
 **PropertyGroup**
 - Classe que define estrutura de dados Blender
-- Definidas em `properties/types.py` e `properties/main.py`
+- Distribuídas em `modules/*/properties.py` (por domínio)
+- Agregador central: `modules/og_properties.py`
 
 **Operador**
 - Ação executável pelo usuário via botão/menu
-- Organizados em `operators/` (6 submódulos)
+- Organizados em `modules/*/operators.py` (por domínio)
 
 **Panel**
 - Painel de UI na viewport
-- Todos definidos em `panels/main.py`
+- Distribuídos em `modules/*/panels.py` (por domínio)
 
 **Callback**
 - Função disparada quando propriedade muda
-- Definidos em `properties/main.py`
+- Definidos em `modules/og_properties.py`
 
 **Collection**
 - Lista de items do mesmo tipo (CollectionProperty)
@@ -243,7 +244,8 @@ set_hide_class()
 ```python
 # Imports
 import bpy
-from oil_gas_addon import operators, data, properties, auth
+from oil_gas_addon import data, auth
+from oil_gas_addon.modules.dictionary import operators as dict_ops
 
 # Propriedades
 props = bpy.context.scene.og_props
@@ -256,7 +258,6 @@ print(f"Autenticado: {auth.is_authenticated()}")
 import importlib
 from oil_gas_addon.data import bsdd
 importlib.reload(bsdd)
-```
 
 ---
 
@@ -272,12 +273,11 @@ importlib.reload(bsdd)
 - Função chamada fora de contexto Blender
 
 **"Operador não aparece no menu"**
-- Não exportado no `operators/__init__.py`
-- Não registrado na lista `classes` do `__init__.py` raiz
+- Não registrado na lista `classes` retornada por `modules/__init__.py get_classes()`
 
 **"PropertyGroup não persiste"**
 - Não registrada com `register_class()`
-- Não exportada no `properties/__init__.py`
+- Não incluída em `get_classes()` no `modules/__init__.py`
 
 ---
 

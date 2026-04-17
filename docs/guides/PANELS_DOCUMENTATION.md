@@ -1,17 +1,17 @@
-# Pacote: panels/
+# Painéis — modules/*/panels.py
 
 ## 📌 Visão Geral
 
-O pacote `panels/` implementa a interface do usuário (UI) do add-on dentro do Blender. Contém painéis (Panels), listas (UIList) e layouts para visualizar e interagir com dados IFC.
+Os painéis de interface (UI) do add-on estão distribuídos nos módulos de domínio dentro de `modules/`. Cada módulo contém seu próprio `panels.py` com os painéis, UILists e layouts relevantes àquele domínio.
 
-| Módulo | Linhas | Responsabilidade |
-|--------|--------|------------------|
-| `main.py` | ~860 | Todos os painéis e UILists |
-
-**`__init__.py`** re-exporta tudo:
-```python
-from .main import *
-```
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `modules/dictionary/panels.py` | Painel bSDD + UILists de classes |
+| `modules/decomposition/panels.py` | Painel de decomposição + UILists |
+| `modules/catalog/panels.py` | Painel de catálogo + UILists |
+| `modules/connections/panels.py` | Painel de conexões |
+| `modules/props/panels.py` | Painel de propriedades |
+| `modules/settings/panels.py` | Painéis de configurações e informações |
 
 ---
 
@@ -52,12 +52,12 @@ Os painéis estão organizados em **4 categorias** na sidebar do Blender:
 Todos os painéis verificam `auth.is_authenticated()` antes de desenhar conteúdo editor:
 
 ```python
-from ..auth import is_authenticated
+from ... import auth
 
 class Panel_Connect(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
-        if not is_authenticated():
+        if not auth.is_authenticated():
             layout.label(text="Login necess\u00e1rio")
             return
         # ... conte\u00fado normal
@@ -65,7 +65,7 @@ class Panel_Connect(bpy.types.Panel):
 
 ---
 
-### Panel_Connect — Subsea Classes
+### Panel_Connect — Subsea Classes (`modules/dictionary/panels.py`)
 
 | Propriedade | Valor |
 |-------------|-------|
@@ -85,7 +85,7 @@ class Panel_Connect(bpy.types.Panel):
 
 ---
 
-### Panel_Decompositions — Decomposição do Projeto
+### Panel_Decompositions — Decomposição do Projeto (`modules/decomposition/panels.py`)
 
 | Propriedade | Valor |
 |-------------|-------|
@@ -102,7 +102,7 @@ class Panel_Connect(bpy.types.Panel):
 
 ---
 
-### Panel_Connect_Elements — Conexões
+### Panel_Connect_Elements — Conexões (`modules/connections/panels.py`)
 
 | Propriedade | Valor |
 |-------------|-------|
@@ -116,7 +116,7 @@ class Panel_Connect(bpy.types.Panel):
 
 ---
 
-### Panel_Catalog — Catálogo de Tipos
+### Panel_Catalog — Catálogo de Tipos (`modules/catalog/panels.py`)
 
 | Propriedade | Valor |
 |-------------|-------|
@@ -131,7 +131,7 @@ class Panel_Connect(bpy.types.Panel):
 
 ---
 
-### Panel_Properties — Propriedades
+### Panel_Properties — Propriedades (`modules/props/panels.py`)
 
 | Propriedade | Valor |
 |-------------|-------|
@@ -147,7 +147,7 @@ class Panel_Connect(bpy.types.Panel):
 
 ---
 
-### Panel_Settings — Configurações de Dicionário
+### Panel_Settings — Configurações de Dicionário (`modules/settings/panels.py`)
 
 | Propriedade | Valor |
 |-------------|-------|
@@ -160,7 +160,7 @@ class Panel_Connect(bpy.types.Panel):
 
 ---
 
-### Panel_Info — Informações
+### Panel_Info — Informações (`modules/settings/panels.py`)
 
 | Propriedade | Valor |
 |-------------|-------|
@@ -253,10 +253,11 @@ op.uri = active_class.uri
 
 ---
 
-## 🔗 Integração com Outros Pacotes
+## 🔗 Integração com Outros Módulos
 
-- **`properties/`**: Define `og_props` e propriedades usadas nos painéis
-- **`operators/`**: Implementa ações dos botões
+- **`modules/og_properties.py`**: Define `OG_Properties` (og_props) e callbacks usados nos painéis
+- **`modules/*/properties.py`**: PropertyGroups de domínio referenciadas pelas UILists
+- **`modules/*/operators.py`**: Operadores chamados pelos botões dos painéis (mesmo domínio)
 - **`data/tree`**: Fornece `draw_tree()`, `refresh_*()` para árvores
 - **`data/ifc_utils`**: Funções de utilidade IFC
 - **`auth`**: Verifica autenticação antes de exibir conteúdo protegido

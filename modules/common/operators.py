@@ -3,7 +3,7 @@ import platform
 import subprocess
 import bpy
 
-from ..data.tree import refresh_tree
+from ...data.tree import refresh_tree
 
 
 dynamic_items = []

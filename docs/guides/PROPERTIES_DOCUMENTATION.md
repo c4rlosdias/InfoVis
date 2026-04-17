@@ -1,25 +1,22 @@
-# Pacote: properties/
+﻿# Propriedades — modules/*/properties.py + modules/og_properties.py
 
 ## 📌 Visão Geral
 
-O pacote `properties/` define as **Property Groups** customizadas que armazenam dados na cena do Blender. Funcionam como "containers" para dados que precisam persistir e sincronizar com a UI.
+As **Property Groups** customizadas estão distribuídas nos módulos de domínio dentro de `modules/`. Cada módulo define suas próprias PropertyGroups em `properties.py`, e o agregador central `OG_Properties` fica em `modules/og_properties.py`.
 
-| Módulo | Linhas | Responsabilidade |
-|--------|--------|------------------|
-| `types.py` | ~120 | PropertyGroups individuais |
-| `main.py` | ~196 | OG_Properties + callbacks |
-
-**`__init__.py`** re-exporta tudo:
-```python
-from .types import *
-from .main import *
-```
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `modules/dictionary/properties.py` | Ifc_properties, Class_info, Class_prop_info |
+| `modules/decomposition/properties.py` | Container |
+| `modules/catalog/properties.py` | Class_type, Layer |
+| `modules/props/properties.py` | Enumeration_values, Property_info, Documents, Pset_info |
+| `modules/og_properties.py` | OG_Properties + callbacks |
 
 ---
 
-## 🏗️ Módulo: types.py
+## 🏗️ Módulo: modules/dictionary/properties.py
 
-Define todas as PropertyGroups individuais usadas pelo add-on.
+Define as PropertyGroups relacionadas ao dicionário bSDD.
 
 ### 1. **Ifc_properties**
 
@@ -53,7 +50,7 @@ Informações de uma classe bSDD com suporte a hierarquia.
 | `level_index` | Int | Profundidade hierárquica |
 | `type` | String | Tipo IFC (ex: IfcPipeSegment) |
 
-### 3. **Class_type**
+### 3. **Class_type** (`modules/catalog/properties.py`)
 
 Tipo de produto IFC.
 
@@ -67,7 +64,7 @@ Tipo de produto IFC.
 | `has_children`...`is_hidden` | Bool | Estado de árvore |
 | `index`, `parent` | Int/String | Posição hierárquica |
 
-### 4. **Enumeration_values**
+### 4. **Enumeration_values** (`modules/props/properties.py`)
 
 Valores enumerados de uma propriedade IFC.
 
@@ -79,7 +76,7 @@ Valores enumerados de uma propriedade IFC.
 | `value_float` | Float | Valor como float |
 | `value_bool` | Bool | Valor como booleano |
 
-### 5. **Property_info**
+### 5. **Property_info** (`modules/props/properties.py`)
 
 Metadados de uma propriedade IFC individual.
 
@@ -92,11 +89,11 @@ Metadados de uma propriedade IFC individual.
 | `enumerations` | Collection[Enumeration_values] | Valores enumerados |
 | `table_rows/table_columns` | Int | Dimensões de tabela |
 
-### 6. **Class_prop_info**
+### 6. **Class_prop_info** (`modules/dictionary/properties.py`)
 
 Relacionamento classe-propriedade (metadados do bSDD).
 
-### 7. **Documents**
+### 7. **Documents** (`modules/props/properties.py`)
 
 Referências de documentos IFC.
 
@@ -106,7 +103,7 @@ Referências de documentos IFC.
 | `location` | String | Caminho/URL |
 | `name` | String | Nome do documento |
 
-### 8. **Pset_info**
+### 8. **Pset_info** (`modules/props/properties.py`)
 
 Property set com coleções aninhadas.
 
@@ -120,7 +117,7 @@ Property set com coleções aninhadas.
 | `is_doc_expanded` | Bool | Docs expandidos? |
 | `graph_*` | String/Bool | Configurações de gráfico |
 
-### 9. **Container**
+### 9. **Container** (`modules/decomposition/properties.py`)
 
 Elemento espacial/decomposição para exibição em árvore.
 
@@ -133,7 +130,7 @@ Elemento espacial/decomposição para exibição em árvore.
 | `has_children`...`is_hidden` | Bool | Estado de árvore |
 | `level_index`, `index`, `parent` | Int/String | Hierarquia |
 
-### 10. **Layer**
+### 10. **Layer** (`modules/catalog/properties.py`)
 
 Camada de um produto.
 
@@ -145,7 +142,7 @@ Camada de um produto.
 
 ---
 
-## 🔧 Módulo: main.py
+## 🔧 Módulo: modules/og_properties.py
 
 ### Callbacks de Atualização
 
@@ -244,19 +241,13 @@ Panel redesenhado com novos dados
 
 ## 📝 Registrando PropertyGroups
 
-No `__init__.py` (raiz):
+No `modules/__init__.py`, a função `get_classes()` retorna todas as classes na ordem correta de dependência. No `__init__.py` (raiz):
 
 ```python
-from .properties import *
+from .modules import get_classes
+from .modules.og_properties import OG_Properties
 
-# Lista de classes em ordem de dependência
-classes = [
-    Ifc_properties, Class_info, Class_type,
-    Enumeration_values, Property_info, Class_prop_info,
-    Documents, Pset_info, Container, Layer,
-    Columns,  # de operators/common.py
-    OG_Properties,  # deve ser \u00faltimo (depende dos demais)
-]
+classes = [Prefs, Login, Logout] + get_classes()
 
 def register():
     for cls in classes:
@@ -271,9 +262,10 @@ def unregister():
 
 ---
 
-## 🔗 Integração com Outros Pacotes
+## 🔗 Integração com Outros Módulos
 
 - **`data/`**: Usa PropertyGroups para armazenar dados carregados de IFC/bSDD
-- **`operators/`**: Lê e modifica propriedades durante execução de operadores
-- **`panels/`**: Renderiza PropertyGroups na UI (template_list, labels, etc.)
+- **`modules/*/operators.py`**: Lê e modifica propriedades durante execução de operadores (mesmo domínio)
+- **`modules/*/panels.py`**: Renderiza PropertyGroups na UI (template_list, labels, etc.)
+- **`modules/__init__.py`**: `get_classes()` retorna todas as classes na ordem correta
 - **`__init__.py`**: Registra todas as classes e configura `Scene.og_props`

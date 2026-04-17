@@ -2,12 +2,12 @@ import bpy
 import ifcopenshell
 import bonsai.tool as tool
 
-from ..data.tree import (
+from ...data.tree import (
     load_contained_elements_by_decomposition,
     refresh_container,
     move_to_assembly,
 )
-from .common import reorder_element
+from ..common.operators import reorder_element
 
 
 class Operator_decomposition_load(bpy.types.Operator):
@@ -124,26 +124,27 @@ class Operator_decomposition_move(bpy.types.Operator):
     bl_label   = "Move object to selected parent"
     bl_options = {"REGISTER", "UNDO"}    
     index : bpy.props.IntProperty(name="index")
-    type  : bpy.props.StringProperty(name="type", default="nest")
+    type  : bpy.props.StringProperty(name="type", default="Nests")
 
     def execute(self, context):   
         props = context.scene.og_props       
         model = tool.Ifc.get() 
-        item =  props.elements_containers[self.index]   
-        entity_children = model.by_id(item.id)
-        parent = props.containers_show[props.active_element_index]  
-        entity_parent = model.by_id(parent.id)  
+        parent_id =  props.elements_containers[self.index].id           
+        entity_parent = model.by_id(parent_id) 
+        children_id = props.containers_show[props.active_element_index].id        
+        entity_children =  model.by_id(children_id)        
 
-             
-        print(f'entity_parent: {entity_parent}')
-        print(f'entity_children: {entity_children}')
-        move_to_assembly(entity_parent, entity_children, self.type)
-        self.report({'OPERATOR'}, 'Moved successfully!')
-
-       
-        refresh_container(context) 
-        bpy.ops.decomposition.load(all_expanded=True)
-        return {"FINISHED"}
+        if entity_parent != entity_children:     
+            print(f'entity_parent: {entity_parent}')
+            print(f'entity_children: {entity_children}')
+            move_to_assembly(entity_parent, entity_children, self.type)
+            self.report({'OPERATOR'}, 'Moved successfully!')       
+            refresh_container(context) 
+            bpy.ops.decomposition.load(all_expanded=True)
+            return {"FINISHED"}
+        else:
+            self.report({'ERROR'}, 'Cannot move element to itself or its children!')
+            return {"CANCELLED"}
 
 
 class Operator_decomposition_chg_order(bpy.types.Operator):
@@ -166,4 +167,3 @@ class Operator_decomposition_chg_order(bpy.types.Operator):
                     break
 
         return {"FINISHED"}
-

@@ -1,33 +1,23 @@
-# Pacote: operators/
+# Operadores - modules/*/operators.py
 
 ## 📌 Visão Geral
 
-O pacote `operators/` contém a lógica principal de negócio da aplicação. Implementa operadores Blender que manipulam dados IFC, realizam análises e gerenciam a decomposição de projetos de óleo e gás.
+Os operadores estão distribuídos por domínio funcional dentro de `modules/`. Cada domínio possui seu próprio `operators.py` com a lógica de negócio específica.
 
-O pacote é dividido em **6 submódulos**:
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `modules/common/operators.py` | Utilitários compartilhados |
+| `modules/dictionary/operators.py` | Operadores bSDD |
+| `modules/decomposition/operators.py` | Decomposição IFC |
+| `modules/catalog/operators.py` | Catálogo de tipos |
+| `modules/connections/operators.py` | Conexões IFC |
+| `modules/props/operators.py` | Propriedades e gráficos |
 
-| Módulo | Linhas | Responsabilidade |
-|--------|--------|------------------|
-| `common.py` | ~140 | Utilitários compartilhados |
-| `dictionary.py` | ~310 | Operadores bSDD |
-| `decomposition.py` | ~175 | Decomposição IFC |
-| `catalog.py` | ~295 | Catálogo de tipos |
-| `connections.py` | ~68 | Conexões IFC |
-| `properties.py` | ~350 | Propriedades e gráficos |
-
-**`__init__.py`** re-exporta tudo:
-```python
-from .common import *
-from .dictionary import *
-from .decomposition import *
-from .catalog import *
-from .connections import *
-from .properties import *
-```
+Todas as classes são registradas centralmente em `modules/__init__.py` via `get_classes()`.
 
 ---
 
-## 🔧 Módulo: common.py
+## 🔧 Módulo: modules/common/operators.py
 
 Funções e operadores utilitários compartilhados por todos os módulos.
 
@@ -37,7 +27,6 @@ Funções e operadores utilitários compartilhados por todos os módulos.
 |--------|-----------|
 | `reorder_element(context, index, chg)` | Reordena elementos IFC aninhados |
 | `_open_in_browser(url)` | Abre URL no navegador (cross-platform) |
-| `save_json(dados)` | Salva dados ordenados em `dados.json` |
 | `get_options(self, context)` | Callback para `dynamic_items` em EnumProperty |
 
 ### Operadores
@@ -54,7 +43,7 @@ Funções e operadores utilitários compartilhados por todos os módulos.
 
 ---
 
-## 🌐 Módulo: dictionary.py
+## 🌐 Módulo: modules/dictionary/operators.py
 
 Operadores de integração com o bSDD (buildingSMART Data Dictionary).
 
@@ -83,7 +72,7 @@ Operadores de integração com o bSDD (buildingSMART Data Dictionary).
 
 ---
 
-## 🏗️ Módulo: decomposition.py
+## 🏗️ Módulo: modules/decomposition/operators.py
 
 Operadores para decomposição de projetos IFC.
 
@@ -102,7 +91,7 @@ Operadores para decomposição de projetos IFC.
 
 ---
 
-## 📦 Módulo: catalog.py
+## 📦 Módulo: modules/catalog/operators.py
 
 Operadores para o catálogo de tipos de produtos IFC.
 
@@ -129,7 +118,7 @@ Operadores para o catálogo de tipos de produtos IFC.
 
 ---
 
-## 🔌 Módulo: connections.py
+## 🔌 Módulo: modules/connections/operators.py
 
 Operadores para gerenciamento de conexões IFC.
 
@@ -146,7 +135,7 @@ Usa `WindowManager` pointer properties para seleção de objetos.
 
 ---
 
-## 📊 Módulo: properties.py
+## 📊 Módulo: modules/props/operators.py
 
 Operadores para edição de propriedades IFC e geração de gráficos.
 
@@ -191,11 +180,9 @@ Usa `invoke_props_dialog` para configuração de gráficos com seleção de colu
    |
 6. Constrói hierarquias com ifc_utils.build_classes/build_products
    |
-7. Atualiza propriedades (properties/)
+7. Atualiza propriedades (modules/og_properties.py)
    |
-8. Renderiza na UI (panels/)
-   |
-9. Salva dados em dados.json se necessário
+8. Renderiza na UI (modules/*/panels.py)
 ```
 
 ---

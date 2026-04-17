@@ -13,8 +13,8 @@ from matplotlib.ticker import MultipleLocator
 import numpy as np
 from scipy.interpolate import interp1d
 
-from ..data.ifc_utils import get_prop_type, refresh_props
-from .common import _open_in_browser, get_options, dynamic_items, Columns
+from ...data.ifc_utils import get_prop_type, refresh_props
+from ..common.operators import _open_in_browser, get_options, dynamic_items, Columns
 
 
 class Operator_props_edit(bpy.types.Operator):
@@ -358,7 +358,7 @@ class Operator_props_graph(bpy.types.Operator):
         """
 
         # Salvar HTML e abrir no navegador
-        html_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "graphic.html")
+        html_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "graphic.html")
         with open(html_path, "w") as f:
             f.write(html)
         _open_in_browser(Path(html_path).as_uri())

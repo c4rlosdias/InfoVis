@@ -3,9 +3,15 @@ from bpy.types import PropertyGroup
 from bpy.props import *
 import bonsai.tool as tool
 import ifcopenshell
-import ifcopenshell.util.selector as selector
-import requests
-from .data import *
+import ifcopenshell.util.element
+
+from ..data.bsdd import bSDD
+from ..data.cde import CDE_Api
+from .dictionary.properties import Ifc_properties, Class_info, Class_prop_info
+from .catalog.properties import Class_type, Layer
+from .props.properties import Enumeration_values, Property_info, Documents, Pset_info
+from .decomposition.properties import Container
+
 
 # update function for the decomposition tree 
 def update_tree_type(self, context):
@@ -44,36 +50,9 @@ def update_tree_type(self, context):
         if 'objects' in element and len(element['objects']) > 0:
             add_elements(element['objects'], level=1)
 
-
-
-
-
         new.is_hidden = False if new.has_children else True
         i += 1
 
-    # self.elements_containers.clear()
-    # model = tool.Ifc.get()
-     
-    # # dependendo do tipo de decomposição selecionada, busca os elementos raiz para montar a árvore
-    # if self.tree_type == 'assets':
-    #     elements = selector.filter_elements(model, "IfcGroup, ObjectType=SubseaAsset")
-    # elif self.tree_type == 'contracts':
-    #     elements = selector.filter_elements(model, "IfcGroup, ObjectType=SubseaContract")
-    # elif self.tree_type == 'inventory':
-    #     elements = selector.filter_elements(model, "IfcGroup, ObjectType=SubseaInventory")
-    # else:
-    #     elements = []
-
-    # if len(elements) > 0:
-    #     for element in elements: 
-    #         load_contained_elements_by_decomposition(element, 'elements_tree', context)  
-    #     i = 0          
-    #     for element in self.elements_containers:
-    #         element.index = i
-    #         element.is_hidden = False if element.level==1 else True
-    #         element.is_expanded = False if element.level==1 else True  
-    #         i += 1   
-    #     refresh_container(context)
 
 def get_dictionaries(self, context):                
     if not bSDD.is_loaded:
@@ -91,10 +70,10 @@ def active_class_changed(self, context):
     self.class_prop_info_loaded = False
 
 def active_class_prop_changed(self, context):
-    #self.classes_shown.clear()
     self.info_class_prop_loaded = False
 
 def active_product_changed(self, context):
+    global _updating_element
     type_id = self.types_show[self.active_type_index].id if self.active_type_index < len(self.types_show) else None
     print(f"Active type ID: {type_id}")
     if type_id is not None:
@@ -111,21 +90,37 @@ def active_product_changed(self, context):
             new_layer.name = element.Name or f"Element {element.id()}"
             new_layer.description = element.get_info() or ''
 
+        obj = tool.Ifc.get_object(ifc_type)
+        if obj:
+            bpy.ops.object.select_all(action='DESELECT')
+            if obj.hide_get():
+                obj.hide_set(False)
+            obj.select_set(True)
+            context.view_layer.objects.active = obj
+            bpy.ops.props.load_properties()
+
     self.product_loaded = False
 
 def active_type_changed(self, context):
-    #self.classes_shown.clear()
     self.types_loaded = False
 
 def active_element_changed(self, context):
+    from ..data import tree as _data_tree
+    if _data_tree._syncing_tree:
+        return
     model = tool.Ifc.get()
     print(f"Active element index: {self.active_element_index}")
-    for element in self.containers_show:
-        if element.index == self.active_element_index:
-            o = tool.Ifc.get_entity(model.by_id(element.id))
-            print(f"Selected element: {o}")
-        else:
-            element.is_selected = False
+    ifc_id = self.containers_show[self.active_element_index].id if self.active_element_index < len(self.containers_show) else None
+    if ifc_id is None:
+        return
+    ifc_element = model.by_id(ifc_id)
+    obj = tool.Ifc.get_object(ifc_element)
+    if obj is None:
+        return
+    bpy.ops.object.select_all(action='DESELECT')
+    obj.select_set(True)
+    context.view_layer.objects.active = obj
+
 
 
 def load_products(self, context):   
@@ -141,121 +136,6 @@ def load_products(self, context):
         products = [] 
     return products
 
-class Ifc_properties(PropertyGroup):       
-    name        : StringProperty(name='name')
-    code        : StringProperty(name='code')
-    description : StringProperty(name='description')
-    uri         : StringProperty(name="uri")
-    is_selected : BoolProperty(name="is selected", default=True)
-
-class Class_info(PropertyGroup):
-    code        : StringProperty(name='code')
-    name        : StringProperty(name='name')
-    description : StringProperty(name='description')
-    uri         : StringProperty(name='uri')    
-    propertyset : StringProperty(name='property set')
-    has_children: BoolProperty(name="has children")    
-    is_hidden   : BoolProperty(name="is Hidded", default=True)
-    is_expanded : BoolProperty(name="Is Expanded", default=True)
-    index       : IntProperty(name="index")
-    parent      : StringProperty(name="parent")
-    level       : IntProperty(name="level")
-    type        : StringProperty(name="class type")
-
-class Class_type(PropertyGroup):
-    id          : IntProperty(name='id')
-    tag         : StringProperty(name='tag')
-    name        : StringProperty(name='name')
-    description : StringProperty(name='description')
-    element_type : StringProperty(name='element type')
-    has_children: BoolProperty(name="has children")    
-    is_hidden   : BoolProperty(name="is Hidded", default=True)
-    is_expanded : BoolProperty(name="Is Expanded", default=True)
-    index       : IntProperty(name="index")
-    parent      : StringProperty(name="parent")
-    level       : IntProperty(name="level index")
-
-
-class Enumeration_values(PropertyGroup):        
-    enumerated  : BoolProperty(name="enumerated", default=False)
-    valuestr    : StringProperty(name="value str")
-    valueint    : IntProperty(name='value int')
-    valuefloat  : FloatProperty(name='value float')
-    valuebool   : BoolProperty(name="value bool")
-    datatype    : StringProperty(name='data type', default='')
-    type_value  : StringProperty(name="type value")
-
-class Property_info(PropertyGroup):    
-    
-    index        : IntProperty(name='prop index')
-    name         : StringProperty(name='property name')
-    description  : StringProperty(name='property description')
-    valuestr     : StringProperty(name='value str')
-    valueint     : IntProperty(name='value int')
-    valuefloat   : FloatProperty(name='value float')
-    valuebool    : BoolProperty(name="value bool")
-    type_value   : StringProperty(name="type value")
-    type_prop    : StringProperty(name='typr prop')
-    n_columns    : IntProperty(name='n columns', default=1)
-    n_rows       : IntProperty(name='n columns', default=1)
-    datatype     : StringProperty(name='data type', default='')
-    enumerations : CollectionProperty(name="enumerated", type=Enumeration_values)
-    
-
-class Class_prop_info(PropertyGroup):
-    name          : StringProperty(name='class property name')
-    uri           : StringProperty(name='class property uri')
-    datatype      : StringProperty(name='class property data type')
-    units         : StringProperty(name='class property units')
-    propertyset   : StringProperty(name='class property set')
-    description   : StringProperty(name='class property description')
-    definition    : StringProperty(name='class property definition')
-
-class Documents(PropertyGroup):    
-    index          : IntProperty(name="index")
-    identification : StringProperty(name="ID")
-    location       : StringProperty(name="Location")   
-    name           : StringProperty(name="Name") 
-    
-
-class Pset_info(PropertyGroup):    
-    name          : StringProperty(name='pset name')
-    is_a          : StringProperty(name= "is a")
-    id_obj        : IntProperty(name="id object")       
-    index         : IntProperty(name='index')
-    props         : CollectionProperty(name="properties", type=Property_info)
-    is_expanded   : BoolProperty(name="Is Expanded", default=False)
-    min_x         : FloatProperty(name='min X', default=0)
-    max_x         : FloatProperty(name='max X', default=0)
-    min_y         : FloatProperty(name='min Y', default=0)
-    max_y         : FloatProperty(name='max Y', default=0)
-    mult_x        : IntProperty(name='interval X', default=0)
-    mult_y        : IntProperty(name='interval Y', default=0)
-    interpoled    : BoolProperty(name="Is Interpolated", default=False)
-    has_document  : BoolProperty(name='Has documentation', default=False)
-    docs_expanded : BoolProperty(name='is expanded', default=True)
-    document      : StringProperty(name='document')
-    documents     : CollectionProperty(name='documents', type=Documents)
-    
-
-class Container(PropertyGroup):
-    has_children  : BoolProperty(name="has children")    
-    is_hidden     : BoolProperty(name="is Hidded", default=True)
-    is_expanded   : BoolProperty(name="Is Expanded", default=True)
-    is_selected   : BoolProperty(name="Is Selected")
-    index         : IntProperty(name="index")
-    id            : IntProperty(name="id")
-    parent        : StringProperty(name="parent")
-    level         : IntProperty(name="level")
-    type          : StringProperty(name="element type")   
-    name          : StringProperty(name="name") 
-    object_type   : StringProperty(name="object_type")
-    is_nested     : BoolProperty(name="is nested", default=False)
-
-class Layer(PropertyGroup):
-    id            : IntProperty(name="id")
-    name          : StringProperty(name="name")
-    description   : StringProperty(name="description")
 
 class OG_Properties(PropertyGroup): 
     
@@ -290,9 +170,15 @@ class OG_Properties(PropertyGroup):
     elements_tree            : CollectionProperty(name='elements tree', type=Container)
     elements_tree_show       : CollectionProperty(name='elements tree show', type=Container)
     
-    show_ports               : BoolProperty(name="show ports", default=False)
-    show_agg                 : BoolProperty(name="show aggregations / nests", default=False)
+    show_agg                 : BoolProperty(name="change aggregations", default=False)
     chg_order                : BoolProperty(name="change order", default=False)
+    agg_type                 : EnumProperty (
+                                    name="aggregation type",
+                                    items=[     
+                                        ("nests", "Nests", ""),
+                                        ("aggregations", "Aggregations", "")
+                                    ]
+                             )
 
 
     add_prop_clicked         : BoolProperty(name="add property clicked", default=False)
@@ -360,6 +246,3 @@ class OG_Properties(PropertyGroup):
                                     ],                                
                                     default="IfcRelConnectsElements"
                                 )
-
-
-

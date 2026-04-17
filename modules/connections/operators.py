@@ -1,7 +1,7 @@
 import bpy
 import bonsai.tool as tool
 
-from ..data.ifc_utils import add_connections
+from ...data.ifc_utils import add_connections
 
 
 class Operator_disconnect(bpy.types.Operator):

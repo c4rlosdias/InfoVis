@@ -48,9 +48,8 @@ else:
     if _missing:
         subprocess.check_call([sys.executable, "-m", "pip", "install", *_missing])
 
-from .operators import *
-from .panels import *
-from .properties import *
+from .modules import get_classes
+from .modules.og_properties import OG_Properties
 from . import data
 from .data import tree as _data_tree
 from . import auth
@@ -141,70 +140,7 @@ classes = [
     OilGasAddonPreferences,
     OG_OT_Login,
     OG_OT_Logout,
-    Operator_get_properties,
-    Operator_get_classes,
-    Operator_contract_tree,
-    Operator_expand_tree,    
-    Operator_add_properties,
-    Operator_clear_properties,
-    Operator_get_prop_info,
-    Operator_get_class_info,
-    Operator_get_class_prop,
-    Operator_assign_all,
-    Operator_unassign_all,
-    Operator_uri,
-    Operator_export_ids,
-    Operator_decomposition_move,
-    Operator_decomposition_select_components,
-    Operator_decomposition_select_element,
-    Operator_decomposition_load,
-    Operator_decomposition_chg_order,
-    Operator_catalog_select_type,
-    Operator_catalog_show_layers,
-    Operator_catalog_select_layer,
-    Operator_load_products,
-    Operator_props_load,
-    Operator_props_expand,
-    Operator_docs_expand,
-    Operator_props_edit,
-    Operator_disconnect,
-    Operator_select_object,
-    Operator_add_connect,    
-    Columns,
-    Operator_props_graph,
-    Operator_props_invert,
-    Operator_document_edit,
-    Operator_document_load,
-    Operator_document_open,
-    Operator_show_table,    
-    ErrorMessage,    
-    Panel_Connect, 
-    Panel_Decompositions,  
-    Panel_Connect_Elements,
-    Panel_Catalog, 
-    Panel_Properties,
-    Panel_Settings,
-    Panel_Info,
-    BIM_UL_tree,
-    BIM_UL_ifc_properties,
-    BIM_UL_classes,
-    BIM_UL_class_prop,
-    BIM_UL_products,
-    BIM_UL_property_class,
-    BIM_UL_decomposition,
-    BIM_UL_layers,
-    Ifc_properties,
-    Enumeration_values,
-    Documents,  
-    Class_info,
-    Class_type,
-    Class_prop_info,
-    Layer,
-    Property_info,
-    Pset_info,
-    Container,
-    OG_Properties,
-]
+] + get_classes()
 owner = object()
 def register():
     for c in classes:

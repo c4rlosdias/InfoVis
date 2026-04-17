@@ -10,6 +10,7 @@ last_active = None
 # Call back para carregar as propriedades ao mudar o objeto ativo
 def call_back():
     bpy.ops.props.load_properties()
+    refresh_tree_containers(bpy.context)
 
 # Handler para carregar as propriedades ao mudar o objeto ativo
 def on_active_object_change(scene):
@@ -120,7 +121,7 @@ def draw_tree(layout, item, operators, attributes, property, only_children = Fal
         # se não for para mostrar apenas os filhos ou se o item não tiver filhos, mostra os operadores
         if not only_children or not item.has_children:
             for opt in operators:
-                op = row.operator(opt['name'], text="", icon=opt['icon'])
+                op = row.operator(opt['name'], text=opt['text'] if 'text' in opt else "", icon=opt['icon'])
                 for att, value in opt['att']:
                     setattr(op, att, value)
 
@@ -210,15 +211,15 @@ def refresh_tree(context, property):
 
 def move_to_assembly(parent, children, type):
     model = tool.Ifc.get()
-    if type == 'nests':
-        if children.Nests:
+    if type == 'Nests':
+        if getattr(children, 'Nests', None):
             ifcopenshell.api.nest.change_nest(
                 model,
                 item=children,
                 new_parent=parent
             )
         else:
-            if children.ContainedInStructure:
+            if getattr(children, 'ContainedInStructure', None):
                 ifcopenshell.api.spatial.unassign_container(model, products=[children])
             ifcopenshell.api.nest.assign_object(
                 model,
@@ -227,7 +228,7 @@ def move_to_assembly(parent, children, type):
             )
 
     else:
-        if children.Decomposes:
+        if getattr(children, 'Decomposes', None):
             ifcopenshell.api.aggregate.unassign_object(
                 model,
                 products=[children]
@@ -239,3 +240,21 @@ def move_to_assembly(parent, children, type):
             products=[children],
             relating_object=parent
         )
+
+_syncing_tree = False
+
+def refresh_tree_containers(context):
+    global _syncing_tree
+    obj = context.active_object
+    if obj is None:
+        return
+    ifc_id = obj.BIMObjectProperties.ifc_definition_id
+    props = context.scene.og_props
+    _syncing_tree = True
+    try:
+        for i, item in enumerate(props.containers_show):
+            if item.id == ifc_id:
+                props.active_element_index = i
+                break
+    finally:
+        _syncing_tree = False

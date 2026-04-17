@@ -34,13 +34,26 @@ cp -r . ~/.config/blender/5.0/scripts/addons/oil-gas-addon
 
 ## Estrutura de Módulos
 
-O projeto utiliza uma estrutura modular em pacotes Python:
+O projeto utiliza uma **estrutura modular organizada por domínio funcional**. Cada domínio agrupa seus operadores, painéis e propriedades dentro de `modules/`:
 
 ### Raiz
 | Arquivo | Responsabilidade |
 |---------|------------------|
 | `__init__.py` | Registro do add-on, preferences, auth operators |
 | `auth.py` | Autenticação por senha (SHA-256) |
+
+### Pacote `modules/`
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `__init__.py` | `get_classes()` — registro centralizado de todas as classes |
+| `og_properties.py` | OG_Properties (PropertyGroup central) + callbacks |
+| `common/operators.py` | Utilitários compartilhados (tree expand/contract, Columns, ErrorMessage) |
+| `dictionary/` | Integração bSDD (operators, panels, properties) |
+| `decomposition/` | Decomposição IFC (operators, panels, properties) |
+| `catalog/` | Catálogo de tipos (operators, panels, properties) |
+| `connections/` | Conexões entre elementos (operators, panels) |
+| `props/` | Propriedades do objeto (operators, panels, properties) |
+| `settings/` | Configurações e informações (panels) |
 
 ### Pacote `data/`
 | Módulo | Responsabilidade |
@@ -51,33 +64,13 @@ O projeto utiliza uma estrutura modular em pacotes Python:
 | `tree.py` | Árvore, refresh, callbacks |
 | `ifc_utils.py` | Utilidades IFC, propriedades, conexões |
 
-### Pacote `properties/`
-| Módulo | Responsabilidade |
-|--------|------------------|
-| `types.py` | PropertyGroups individuais (Ifc_properties, Class_info, etc.) |
-| `main.py` | OG_Properties + callbacks de atualização |
-
-### Pacote `operators/`
-| Módulo | Responsabilidade |
-|--------|------------------|
-| `common.py` | Utilitários compartilhados (tree expand/contract, save_json, etc.) |
-| `dictionary.py` | Operadores bSDD (get classes, properties, export IDS) |
-| `decomposition.py` | Decomposição IFC (load, select, move, reorder) |
-| `catalog.py` | Catálogo de tipos (load products, layers, select) |
-| `connections.py` | Conexões IFC (disconnect, add connect) |
-| `properties.py` | Propriedades e gráficos (edit, load, graph) |
-
-### Pacote `panels/`
-| Módulo | Responsabilidade |
-|--------|------------------|
-| `main.py` | Todos os painéis e UILists |
-
 ## Adicionando Funcionalidades
 
 ### Novo Operador
 
-**1. Crie no submódulo apropriado em `operators/` (ex: `operators/dictionary.py`):**
+**1. Crie no submódulo apropriado em `modules/<domínio>/operators.py`:**
 ```python
+# modules/dictionary/operators.py
 class Operator_meu_novo(bpy.types.Operator):
     """Tooltip"""
     bl_idname = "og.meu_novo"
@@ -89,27 +82,23 @@ class Operator_meu_novo(bpy.types.Operator):
         return {'FINISHED'}
 ```
 
-**2. Exporte no `operators/__init__.py`:**
+**2. Registre em `modules/__init__.py` na função `get_classes()`:**
 ```python
-from .dictionary import Operator_meu_novo
+def get_classes():
+    return [
+        # ... classes existentes ...
+        _dict_ops.Operator_meu_novo,  # <- Adicione na seção correta
+    ]
 ```
 
-**3. Registre em `__init__.py` (raiz):**
-```python
-classes = [
-    # ... classes existentes ...
-    Operator_meu_novo,  # <- Adicione
-]
-```
-
-**4. Adicione botão em `panels/main.py`:**
+**3. Adicione botão no painel do domínio (`modules/<domínio>/panels.py`):**
 ```python
 layout.operator("og.meu_novo", text="Clique Aqui")
 ```
 
 ### Novo Painel
 
-**Em `panels/main.py`:**
+**Em `modules/<domínio>/panels.py`:**
 ```python
 class Panel_meu_painel(bpy.types.Panel):
     bl_label = "Meu Painel"
@@ -125,15 +114,24 @@ class Panel_meu_painel(bpy.types.Panel):
 
 ### Novo PropertyGroup
 
-**Tipos simples em `properties/types.py`, propriedades principais em `properties/main.py`:**
+**Crie em `modules/<domínio>/properties.py` e adicione ao OG_Properties:**
 ```python
-# properties/types.py
+# modules/<domínio>/properties.py
 class MinhaPropertyGroup(PropertyGroup):
     meu_campo: StringProperty(name="Campo")
 
-# properties/main.py — adicione ao OG_Properties:
-minha_prop: PointerProperty(type=MinhaPropertyGroup)
+# modules/og_properties.py — adicione ao OG_Properties:
+minha_prop: CollectionProperty(type=MinhaPropertyGroup)
 ```
+
+### Novo Módulo de Domínio
+
+Para adicionar uma funcionalidade completamente nova:
+
+1. Crie a pasta `modules/<novo_dominio>/`
+2. Crie `__init__.py`, `operators.py`, `panels.py`, `properties.py`
+3. Importe os submódulos em `modules/__init__.py`
+4. Adicione as classes na função `get_classes()`
 
 ## Testando Mudanças
 
@@ -149,10 +147,7 @@ minha_prop: PointerProperty(type=MinhaPropertyGroup)
 ```python
 # Teste imports
 import bpy
-from oil_gas_addon import operators, data, properties, auth
-
-# Veja operadores disponíveis
-print([x for x in dir(operators) if 'Operator' in x])
+from oil_gas_addon import modules, data, auth
 
 # Acesse propriedades
 props = bpy.context.scene.og_props
@@ -164,6 +159,10 @@ print(f"Autenticado: {auth.is_authenticated()}")
 # Acesse preferências do addon
 prefs = bpy.context.preferences.addons['oil_gas_addon'].preferences
 print(f"CDE URL: {prefs.cde_url}")
+
+# Veja todas as classes registradas
+from oil_gas_addon.modules import get_classes
+print(f"Total de classes: {len(get_classes())}")
 ```
 
 ## Padrões do Projeto

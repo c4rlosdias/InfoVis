@@ -7,10 +7,10 @@ from pathlib import Path
 
 import bonsai.tool as tool
 
-from ..data.catalog import Catalog
-from ..data.ifc_utils import build_products
-from ..data.tree import refresh_types
-from .common import _open_in_browser
+from ...data.catalog import Catalog
+from ...data.ifc_utils import build_products
+from ...data.tree import refresh_types
+from ..common.operators import _open_in_browser
 
 
 class Operator_load_products(bpy.types.Operator):
@@ -61,83 +61,7 @@ class Operator_load_products(bpy.types.Operator):
                     c = new_c
         refresh_types(context)
         return {"FINISHED"} 
-    
 
-class _Operator_load_products(bpy.types.Operator):
-    """"""
-    bl_idname  = "catag.load_products"
-    bl_label   = "load products from catalog"
-    bl_options = {"REGISTER", "UNDO"}    
-
-    def execute(self, context): 
-        props = context.scene.og_props               
-        props.types.clear()
-        props.types_loaded = True
-        model = tool.Ifc.get()
-        types = model.by_type('IfcTypeProduct')
-        c = -1
-        result = {}
-        data = Catalog.get_ifc_type()
-        classe_title = {
-            'name': '',
-            'tag': '',
-            'description' : '',
-            'element_type': '',
-            'id' : 0
-        }
-
-        for type in types:
-            dic = {}   
-            dic['id'] = type.id()         
-            dic['name'] = type.Name or  ''
-            dic['tag'] = type.Tag or  ''
-            dic['description'] = type.Description or ''
-            dic['element_type'] = type.ElementType or ''
-
-            if type.is_a() not in result:
-                result[type.is_a()] = []
-            result[type.is_a()].append(dic)
-        
-        for key, values in  result.items():
-                if key in data:
-                    classe_title['name'] = data[key]
-                else:
-                    classe_title['name'] = key
-                new_c = build_products(context, classe_title, c, 1, '', False, True)
-                c += 1
-                print(values)
-                for value in values:
-                    new_c = build_products(context, value, c, 2, '', True, False)
-                    c = new_c
-        refresh_types(context)
-        return {"FINISHED"} 
-        
-
-class Operator_catalog_select_type(bpy.types.Operator):
-    """"""
-    bl_idname  = "catag.select_type"
-    bl_label   = "export element in json"
-    bl_options = {"REGISTER", "UNDO"}  
-
-    id : bpy.props.IntProperty(name="id")
-
-            
-    def execute(self, context): 
-            props = context.scene.og_props                     
-            model = tool.Ifc.get()        
-            type = model.by_id(self.id)           
-
-            if type is not None:
-                obj = tool.Ifc.get_object(type)
-
-                if obj:
-                    if obj.hide_get():
-                        obj.hide_set(False)
-                    obj.select_set(True)
-                    context.view_layer.objects.active = obj
-
-                self.report({'OPERATOR'}, 'Done!')
-                return {"FINISHED"} 
 
 
 
@@ -243,7 +167,7 @@ class Operator_catalog_show_layers(bpy.types.Operator):
             print(nested_elements)
 
             html = self._build_html(type_name, type_props, nested_elements)
-            html_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "layers.html")
+            html_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "layers.html")
             with open(html_path, "w", encoding="utf-8") as f:
                 f.write(html)
             _open_in_browser(Path(html_path).as_uri())
@@ -280,7 +204,39 @@ class Operator_catalog_select_layer(bpy.types.Operator):
                 self.report({'ERROR'}, f"No layer found for id {self.id}")
                 return {"CANCELLED"}        
 
+class Operator_catalog_select_elements(bpy.types.Operator):
+    """"""
+    bl_idname  = "catag.select_elements"
+    bl_label   = "select elements of the type"
+    bl_options = {"REGISTER", "UNDO"}  
 
+    id : bpy.props.IntProperty(name="id")
+
+            
+    def execute(self, context): 
+            props = context.scene.og_props                     
+            model = tool.Ifc.get()        
+            type = model.by_id(self.id)           
+
+            if type is not None:
+                if getattr(type, "Types", None):
+                    rels = [e for e in type.Types]
+                    elements=[]
+                    for rel in rels:
+                        elements.extend(rel.RelatedObjects)
+
+                for element in elements:
+                    obj_blender = tool.Ifc.get_object(element)
+                    if obj_blender:
+                        obj_blender.select_set(True)
+                        context.view_layer.objects.active = obj_blender
+
+                self.report({'OPERATOR'}, 'Done!')
+                return {"FINISHED"}    
+            else:
+                self.report({'ERROR'}, f"No type found for id {self.id}")
+                return {"CANCELLED"}
+            
 def update_predefined_types():
     model = tool.Ifc.get()
     for entity in model.by_type('IfcElement'):

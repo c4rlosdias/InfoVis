@@ -16,7 +16,7 @@
 | **Linguagem** | Python 3.10+ |
 | **Licença** | GNU GPL v3 |
 | **Tamanho** | ~3,400 linhas de código (20 arquivos) |
-| **Arquitetura** | Modular (4 pacotes Python) |
+| **Arquitetura** | Modular (domínios em modules/) |
 | **Autenticação** | SHA-256 + salt |
 | **Status** | Em desenvolvimento |
 
@@ -65,15 +65,11 @@
 │  └─────────┬─────────────────────┘  │
 │            │                         │
 │  ┌─────────▼─────────────────────┐  │
-│  │ UI Layer (panels/)            │  │
-│  └─────────┬─────────────────────┘  │
-│            │                         │
-│  ┌─────────▼─────────────────────┐  │
-│  │ Properties (properties/)      │  │
-│  └─────────┬─────────────────────┘  │
-│            │                         │
-│  ┌─────────▼─────────────────────┐  │
-│  │ Operators (operators/)        │  │
+│  │ Modules (modules/)            │  │
+│  │  dictionary/ decomposition/   │  │
+│  │  catalog/ connections/        │  │
+│  │  props/ settings/ common/     │  │
+│  │  og_properties.py             │  │
 │  └─────────┬─────────────────────┘  │
 │            │                         │
 │  ┌─────────▼─────────────────────┐  │
@@ -95,16 +91,22 @@
 
 ## 📁 Estrutura do Projeto
 
-| Camada | Pacote/Arquivo | Módulos | Propósito |
-|--------|----------------|---------|-----------|
-| **Init** | `__init__.py` | 1 (~245 linhas) | Registro, preferences, auth operators |
-| **Auth** | `auth.py` | 1 (~30 linhas) | Autenticação SHA-256 |
-| **Operators** | `operators/` | 6 (~1,340 linhas) | Lógica principal de negócio |
-| **UI** | `panels/` | 1 (~860 linhas) | Interface do usuário |
-| **Properties** | `properties/` | 2 (~316 linhas) | Estrutura de dados |
-| **Data** | `data/` | 5 (~1,120 linhas) | Dados, eventos, integração |
-| **Resources** | `resources/` | - | Dados estáticos (JSON) |
-| **Tests** | `files/` | - | Arquivos IFC de teste |
+| Camada | Pacote/Arquivo | Propósito |
+|--------|----------------|-----------||
+| **Init** | `__init__.py` | Registro, preferences, auth operators |
+| **Auth** | `auth.py` | Autenticação SHA-256 |
+| **Modules** | `modules/` | Domínios de funcionalidade |
+| ↳ Common | `modules/common/` | Utilitários compartilhados |
+| ↳ Dictionary | `modules/dictionary/` | Operadores, painéis e propriedades bSDD |
+| ↳ Decomposition | `modules/decomposition/` | Decomposição IFC |
+| ↳ Catalog | `modules/catalog/` | Catálogo de tipos |
+| ↳ Connections | `modules/connections/` | Conexões IFC |
+| ↳ Props | `modules/props/` | Propriedades e gráficos |
+| ↳ Settings | `modules/settings/` | Painéis informativos |
+| ↳ OG Properties | `modules/og_properties.py` | PropertyGroup central + callbacks |
+| **Data** | `data/` | Dados, eventos, integração |
+| **Resources** | `resources/` | Dados estáticos (JSON) |
+| **Tests** | `files/` | Arquivos IFC de teste |
 
 ---
 
@@ -178,10 +180,10 @@
 | Métrica | Valor |
 |---------|-------|
 | Total de linhas | ~3,600+ |
-| Módulos principais | 5 |
-| Classes PropertyGroup | 3+ |
-| Operadores | 15+ |
-| Painéis | 5+ |
+| Módulos de domínio | 7 (common, dictionary, decomposition, catalog, connections, props, settings) |
+| Classes PropertyGroup | 10+ |
+| Operadores | 30+ |
+| Painéis | 7+ |
 | Funções de processamento | 30+ |
 | Documentação | 7 arquivos |
 
@@ -222,9 +224,9 @@
 | **DOCUMENTATION.md** | Visão geral completa |
 | **ARCHITECTURE.md** | Arquitetura técnica |
 | **DEVELOPMENT.md** | Guia de desenvolvimento |
-| **OPERATORS_DOCUMENTATION.md** | Documentação de operators.py |
-| **PANELS_DOCUMENTATION.md** | Documentação de panels.py |
-| **PROPERTIES_DOCUMENTATION.md** | Documentação de properties.py |
+| **OPERATORS_DOCUMENTATION.md** | Documentação de operadores (modules/*/operators.py) |
+| **PANELS_DOCUMENTATION.md** | Documentação de painéis (modules/*/panels.py) |
+| **PROPERTIES_DOCUMENTATION.md** | Documentação de propriedades (modules/*/properties.py) |
 | **DATA_DOCUMENTATION.md** | Documentação de data.py |
 | **GLOSSARY.md** | Glossário e referência rápida |
 | **SUMÁRIO_EXECUTIVO.md** | Este documento |

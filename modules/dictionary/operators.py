@@ -7,11 +7,11 @@ import ifcopenshell
 import ifcopenshell.util.selector as selector
 import bonsai.tool as tool
 
-from ..data.bsdd import bSDD
-from ..data.catalog import PropTempl
-from ..data.ifc_utils import build_classes, get_prop_type
-from ..data.tree import refresh_classes
-from .common import _open_in_browser
+from ...data.bsdd import bSDD
+from ...data.catalog import PropTempl
+from ...data.ifc_utils import build_classes, get_prop_type
+from ...data.tree import refresh_classes
+from ..common.operators import _open_in_browser
 
 
 class Operator_clear_properties(bpy.types.Operator):
@@ -250,7 +250,7 @@ class Operator_export_ids(bpy.types.Operator):
     filte_glob : bpy.props.StringProperty(default='*.ids', options={'HIDDEN'})
     
     def get_data_type(self, units):
-        with open(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "resources", "units.json"), 'r', encoding='utf-8') as file:
+        with open(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "resources", "units.json"), 'r', encoding='utf-8') as file:
             units_data = json.load(file)
         data_type = units_data[units] if units in units_data else 'IfcLabel'
         return data_type
