@@ -39,6 +39,7 @@ class Documents(PropertyGroup):
 
 class Pset_info(PropertyGroup):    
     name          : StringProperty(name='pset name')
+    description   : StringProperty(name='pset description')
     is_a          : StringProperty(name= "is a")
     id_obj        : IntProperty(name="id object")       
     index         : IntProperty(name='index')

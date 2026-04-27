@@ -63,8 +63,6 @@ class Operator_load_products(bpy.types.Operator):
         return {"FINISHED"} 
 
 
-
-
 class Operator_catalog_show_layers(bpy.types.Operator):
     """"""
     bl_idname  = "catag.show_layers"
@@ -115,7 +113,7 @@ class Operator_catalog_show_layers(bpy.types.Operator):
                 cells += f"<td>{html_mod.escape(str(val))}</td>"
             layer_rows += f"<tr>{cells}</tr>\n"
 
-        return f"""<!DOCTYPE html>
+        report = f"""<!DOCTYPE html>
             <html lang="en">
             <head>
             <meta charset="UTF-8">
@@ -140,9 +138,9 @@ class Operator_catalog_show_layers(bpy.types.Operator):
             <table>
                 <tr><th>Property</th><th>Value</th></tr>
                 {props_rows}
-            </table>
+            </table>"""
 
-            <h3>Layers</h3>
+        layers = f"""<h3>Layers</h3>
             <div class="table-wrapper">
             <table>
                 <tr>{header_cells}</tr>
@@ -152,7 +150,11 @@ class Operator_catalog_show_layers(bpy.types.Operator):
 
             </body>
             </html>"""
+        
+        if len(layers_data) > 0:
+            report += layers
 
+        return report
     def execute(self, context):                             
         return {"FINISHED"}
 
@@ -217,11 +219,10 @@ class Operator_catalog_select_elements(bpy.types.Operator):
             props = context.scene.og_props                     
             model = tool.Ifc.get()        
             type = model.by_id(self.id)           
-
+            elements=[]
             if type is not None:
                 if getattr(type, "Types", None):
-                    rels = [e for e in type.Types]
-                    elements=[]
+                    rels = [e for e in type.Types]                    
                     for rel in rels:
                         elements.extend(rel.RelatedObjects)
 

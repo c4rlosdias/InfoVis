@@ -30,6 +30,6 @@ def logout() -> None:
 
 
 def is_authenticated() -> bool:
-    #return _authenticated
-    return True
+    return _authenticated
+    #return True
 

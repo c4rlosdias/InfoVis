@@ -34,15 +34,22 @@ from bpy.types import Scene
 from bpy.utils import register_class, unregister_class
 
 if platform.system() == "Windows":
-    sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs", "site", "packages"))
+        
+    if sys.version_info >= (3, 13):
+        # On Windows with Python 3.13+, we can use the bundled libs directly.
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs313", "site-packages"))  
+    else:
+        # On Windows with Python 3.11+, we can use the bundled libs directly.
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs311", "site", "packages")) 
 else:
     # On Linux/macOS the bundled libs contain Windows-only binaries (.pyd),
     # so we install the required packages into Blender's Python instead.
-    _required = ["matplotlib", "scipy", "tqdm", "rdflib", "kiwisolver", "cycler"]
+    _required = ["matplotlib", "scipy", "tqdm", "kiwisolver", "cycler"]
     _missing = []
     for _pkg in _required:
         try:
             __import__(_pkg)
+        
         except ImportError:
             _missing.append(_pkg)
     if _missing:

@@ -85,14 +85,14 @@ def set_properties(props, ifc_obj, is_a, i):
     if ifc_obj is None:
         return i
     id = ifc_obj.id()
-    psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)    
-    print(psets)
+    psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)        
     for pset, _props in psets.items():             
         _pset = get_pset(ifc_obj, pset)        
         table = {}    
 
         new_item = props.prop_metadata.add()            
         new_item.name = pset  
+        new_item.description = _pset.Description
         new_item.is_a = is_a 
         new_item.id_obj = id          
         new_item.index = i     
@@ -105,14 +105,16 @@ def set_properties(props, ifc_obj, is_a, i):
                 newdocument = new_item.documents.add()
                 newdocument.name = document.Name
                 newdocument.identification = document.Identification
-                newdocument.location = document.Location.wrappedValue 
+                newdocument.location = document.Location.wrappedValue if document.Location is not None else ''
                 newdocument.index = c
                 c += 1
                    
         j = 0   
            
-        for prop, value in _props.items():           
+        for prop, value in _props.items():  
+                
             if prop != 'id':  
+                
                 if 'Table' in prop:
                     _prop = get_property(ifc_obj, pset, prop)
                     table[f'{prop}||{_prop.Description}']=value
@@ -132,8 +134,8 @@ def set_properties(props, ifc_obj, is_a, i):
                                 new_prop.description = _prop.Description if _prop.Description is not None else ''
                                 new_prop.datatype = get_unit(ifc_obj, pset, prop)
                                 new_prop.index = j      
-                                new_prop.type_prop = type_prop     
-                                set_prop_type(new_prop, item_prop)
+                                new_prop.type_prop = type_prop                                     
+                                set_prop_type(new_prop, item_prop)                               
 
                         if type_prop == 'IfcPropertyEnumeratedValue':  
                             new_prop = new_item.props.add()                             
@@ -152,7 +154,6 @@ def set_properties(props, ifc_obj, is_a, i):
                                 set_prop_type(new_value, enumval.wrappedValue) 
                     else:
                         _prop = get_property(ifc_obj, pset, prop)
-
                         new_prop = new_item.props.add()  
                         new_prop.name = prop
                         new_prop.description = _prop.Description if _prop.Description is not None else ''
@@ -198,10 +199,10 @@ def refresh_props(context):
             return
         ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
         if getattr(ifc_obj_type, 'HasAssociations', None):
-            associations = ifc_obj_type.HasAssociations
-            props.has_document = True
+            associations = ifc_obj_type.HasAssociations            
             for association in associations:
                 if association.is_a('IfcRelAssociatesDocument'):
+                    props.has_document = True
                     document = association.RelatingDocument
                     newdocument = props.documents.add()
                     newdocument.name = document.Name
@@ -246,16 +247,16 @@ def build_products(context, classe, c, level, parent, hide, children):
     c += 1 
     props = context.scene.og_props
     new_product = props.types.add()
-    new_product.id        = classe["id"]                 
-    new_product.name        = classe["name"]
-    new_product.tag        = classe["tag"]
-    new_product.description = classe['description']   
-    new_product.element_type         = classe["element_type"] 
-    new_product.index       =   c  
-    new_product.level = level
-    new_product.parent = parent
-    new_product.is_expanded = False
-    new_product.is_hidden = hide
+    new_product.id           = classe["id"]                 
+    new_product.name         = classe["name"]
+    new_product.tag          = classe["tag"]
+    new_product.description  = classe['description']   
+    new_product.element_type = classe["element_type"] 
+    new_product.index        =   c  
+    new_product.level        = level
+    new_product.parent       = parent
+    new_product.is_expanded  = False
+    new_product.is_hidden    = hide
     new_product.has_children = children
     return c
 

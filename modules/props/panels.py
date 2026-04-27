@@ -33,7 +33,7 @@ class Panel_Properties(bpy.types.Panel):
             row = layout.row()                      
             row.operator("props.load_properties", text="Load properties")    
 
-            if props.has_document:
+            if props.has_document and len(props.documents) > 0:
                 row = layout.row() 
                 row.label(text='Referenced documents:', icon = 'DOCUMENTS') 
                 if props.docs_expanded:
@@ -61,9 +61,10 @@ class Panel_Properties(bpy.types.Panel):
                         row = box.row()
                         row.prop(document, 'location')
 
-                        op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
-                        op0.index = -1
-                        op0.doc_index = document.index
+                        if auth.is_authenticated():
+                            op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                            op0.index = -1
+                            op0.doc_index = document.index
 
                         op = row.operator("props.open_doc", icon='BORDERMOVE', text="")  
                         op.location = document.location
@@ -101,7 +102,10 @@ class Panel_Properties(bpy.types.Panel):
                     else:
                         icon = 'TRIA_RIGHT'
                     row.operator("props.expand", icon=icon, text="").index = pset.index
-                    row.label(text=pset.name, icon='COPY_ID')                   
+                    if props.show_description:
+                        row.label(text=pset.description, icon='COPY_ID') 
+                    else:
+                        row.label(text=pset.name, icon='COPY_ID')                   
                          
 
                     layout.separator()
@@ -131,16 +135,29 @@ class Panel_Properties(bpy.types.Panel):
                                     op.location = document.location                                  
 
                                     row = box.row()
-                                    row.prop(document, 'identification')
+                                    if auth.is_authenticated():
+                                        row.prop(document, 'identification')
+                                    else:
+                                        row.label(text=f'Identification : {document.identification}')
+                                    
                                     row = box.row()
-                                    row.prop(document, 'name')
+                                    if auth.is_authenticated():
+                                        row.prop(document, 'name')
+                                    else:
+                                        row.label(text=f'Name : {document.name}')
+                                    
                                     row = box.row()
-                                    row.prop(document, 'location')
-                                    op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
-                                    op.index = pset.index 
+                                    if auth.is_authenticated():
+                                        row.prop(document, 'location')
+                                    else:
+                                        row.label(text=f'Location : {document.location}')
+                                    
+                                    if document.location != '':
+                                        op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                                        op.index = pset.index 
 
-                                    op = row.operator("props.open_doc", icon='BORDERMOVE', text="") 
-                                    op.location = document.location                           
+                                        op = row.operator("props.open_doc", icon='BORDERMOVE', text="") 
+                                        op.location = document.location                           
                                     
                                     if document.location[-3:].upper() == 'CSV':
                                         op = row.operator("props.graph", icon='NORMALIZE_FCURVES', text="") 
@@ -160,7 +177,7 @@ class Panel_Properties(bpy.types.Panel):
                                                              
                             if 'Table' in  item.name:
                                 names = item.name.split('_')
-                                description = item.description
+
                                 title = names[0]
                                 if props.show_description:
                                     name_prop = item.description
@@ -176,9 +193,6 @@ class Panel_Properties(bpy.types.Panel):
                                        op = rowb.operator("props.graph", icon='NORMALIZE_FCURVES', text="plot") 
                                        op.pset_index = pset.index
                                        op.prop_index = item.index
-
-                                       print(pset.index)
-                                       print(item.index)
                                        
 
                                     rowb = box.row() 
@@ -193,15 +207,19 @@ class Panel_Properties(bpy.types.Panel):
                                 
                                 if item.name not in titulos:
                                     if props.show_description:
-                                        name_prop = f"{item.description} {item.datatype}"
+                                        name_prop = f"{item.description} {item.datatype}" if item.description != '' else f"No description {item.datatype}"
                                     else:
                                         name_prop = f"{item.name.split('_')[1]} {item.datatype}"
                                     
                                     col.label(text=name_prop)                                        
                                     titulos = titulos + item.name  
 
-                                act_prop = f"value{item.type_value}"                                                                                              
-                                col.prop(item, act_prop, text='')                                
+                                act_prop = f"value{item.type_value}"  
+                                if auth.is_authenticated():                                                                                            
+                                    col.prop(item, act_prop, text='')                                
+                                else:
+                                    val= str(getattr(item, act_prop))
+                                    col.label(text=f'|{val}|')
                                 if i%item.n_rows == 0:
                                     col = rowb.column(align=True)   
 
@@ -211,32 +229,46 @@ class Panel_Properties(bpy.types.Panel):
                             else:    
                                 if item.name != old_name_prop:
                                     rowb = box.row(align=True)
-                                    op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
-                                    op.pset_index = pset.index
-                                    op.prop_index = item.index  
-                                    prop_name =  f' {item.description}' if props.show_description else  f' {item.name}'                          
+                                    if auth.is_authenticated():
+                                        op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
+                                        op.pset_index = pset.index
+                                        op.prop_index = item.index  
+                                    if props.show_description:
+                                        prop_name =  f' {item.description}' if item.description != '' else " No description"
+                                        icon = 'BLANK'
+                                    else:
+                                        prop_name = f' {item.name}'   
+                                        icon = 'BLANK'
+
                                     rowb.label(text=prop_name)
                                     
 
                                 if item.type_prop == 'IfcPropertyEnumeratedValue':
                                     rowb = box.row(align=True)   
                                     col = rowb.column(align=True)
-                                    col.prop(item, "enumerated", text='')
-                                    col = rowb.column(align=True)
+                                    if not auth.is_authenticated():
+                                        col.prop(item, "enumerated", text='')
+                                    else:
+                                        val=getattr(item, "enbumerated")
+                                        col.label(text=str(val))
+                                    col = rowb.column(align=False)
                                     for enum in item.enumerations:
-                                        print('ok')
                                         col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
-                                    if getattr(item, "has_document", False):
+                                    if getattr(item, "has_document", False) and auth.is_authenticated():
                                         op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
                                         op.pset_index = pset.index
                                         op.prop_index = item.index 
                                     old_name_prop = item.name   
 
                                 else:
-                                    col = rowb.column()
+                                    col = rowb.column(align=True)
                                     col.alignment = 'RIGHT'
-                                    act_prop = f"value{item.type_value}"                                
-                                    col.prop(item, act_prop, text='')
+                                    act_prop = f"value{item.type_value}"  
+                                    if auth.is_authenticated():                              
+                                        col.prop(item, act_prop, text='')                                  
+                                    else:
+                                        val = getattr(item, act_prop)                                    
+                                        col.label(text=str(val))                                                 
                                     col = rowb.column()
                                     col.scale_x =0.4
                                     col.label(text=item.datatype)
