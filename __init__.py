@@ -13,12 +13,12 @@
 
 
 bl_info = {
-    "name"        : "Oil&Gas Tools",
+    "name"        : "InfoVis - alpha - v0.1.2",
     "author"      : "Carlos Dias",
     "description" : "",
     "blender"     : (5, 0, 0),
     "version"     : (0, 1, 2),
-    "location"    : "View3D > Panel > O&G Tools",
+    "location"    : "View3D > Panel > InfoVis",
     "warning"     : "",
     "category"    : "User"
 }
@@ -149,6 +149,20 @@ classes = [
     OG_OT_Logout,
 ] + get_classes()
 owner = object()
+
+def _subscribe_msgbus():
+    bpy.msgbus.clear_by_owner(owner)
+    bpy.msgbus.subscribe_rna(
+        key=(bpy.types.LayerObjects, "active"),
+        owner=owner,
+        args=(),
+        notify=_data_tree.call_back
+    )
+
+@bpy.app.handlers.persistent
+def _on_load_post(*args):
+    _subscribe_msgbus()
+
 def register():
     for c in classes:
         register_class(c)
@@ -156,18 +170,14 @@ def register():
     bpy.types.WindowManager.add_connect_object_a = PointerProperty(type=bpy.types.Object, name="Object A")
     bpy.types.WindowManager.add_connect_object_b = PointerProperty(type=bpy.types.Object, name="Object B")
     bpy.types.WindowManager.add_connect_object_c = PointerProperty(type=bpy.types.Object, name="Object C")
-    bpy.msgbus.subscribe_rna( 
-        key=(bpy.types.LayerObjects, "active"),
-        owner=owner,
-        args=(),
-        notify=_data_tree.call_back 
-    )
-    #bpy.app.handlers.depsgraph_update_post.append(data.on_active_object_change)
+    _subscribe_msgbus()
+    bpy.app.handlers.load_post.append(_on_load_post)
 
 
 
 def unregister():
-    #bpy.app.handlers.depsgraph_update_post.remove(data.on_active_object_change)
+    if _on_load_post in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(_on_load_post)
     bpy.msgbus.clear_by_owner(owner)
     if hasattr(bpy.types.WindowManager, "add_connect_object_c"):
         del bpy.types.WindowManager.add_connect_object_c

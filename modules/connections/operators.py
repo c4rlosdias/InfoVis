@@ -63,3 +63,4 @@ class Operator_add_connect(bpy.types.Operator):
         else:
             self.report({'ERROR'}, "Failed to add connection. Check console for details.")
             return {'CANCELLED'}
+

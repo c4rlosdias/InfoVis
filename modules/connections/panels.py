@@ -2,6 +2,7 @@ import bpy
 import bonsai.tool as tool
 
 from ... import auth
+from ..common.operators import Select_object
 
 
 class Panel_Connect_Elements(bpy.types.Panel):
@@ -11,7 +12,7 @@ class Panel_Connect_Elements(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G-Occurrence"
+    bl_category     = "InfoVis-Occurrence"
     bl_options      = {"DEFAULT_CLOSED"}
     
     def get_connects(self, object):
@@ -28,8 +29,8 @@ class Panel_Connect_Elements(bpy.types.Panel):
                     {   
                         'id': rel.id(),
                         'Connection Type': rel.is_a(),  
-                        'Relating Element': rel.RelatingElement,
                         'Related Element': rel.RelatedElement,
+                        'Relating Element': rel.RelatingElement,                        
                         'Realizing Elements': getattr(rel, 'RealizingElements', None)
                     }
                 )
@@ -38,8 +39,8 @@ class Panel_Connect_Elements(bpy.types.Panel):
                     {
                         'id': rel.id(),
                         'Connection Type': rel.is_a(),  
-                        'Relating Port': rel.RelatingPort,
                         'Related Port': rel.RelatedPort,
+                        'Relating Port': rel.RelatingPort,                        
                         'Realizing Element': getattr(rel, 'RealizingElement', None)
                     }
                 )
@@ -90,7 +91,7 @@ class Panel_Connect_Elements(bpy.types.Panel):
         
             if props.connect_type != "IfcRelConnectsElements":
                 row = box.row()
-                row.prop(wm, "add_connect_object_c", text="Realizing Element")
+                row.prop(wm, "add_connect_object_c", text="Realizing Element")                
                 if wm.add_connect_object_c is None:
                     op = row.operator("conn.select_object", text="", icon='ADD')
                     op.obj_name = "add_connect_object_c"
@@ -105,8 +106,17 @@ class Panel_Connect_Elements(bpy.types.Panel):
             if key == 'id':
                 continue
             if isinstance(value, (tuple, list)) and value:
-                box.label(text=f"{key}:", icon='LINKED')
+                row = box.row()
+                row.label(text=f"{key}:", icon='LINKED')
                 for v in value:
-                    box.label(text=f"    -{getattr(v, 'Name', str(v))}")                    
+                    row = box.row(align=True)
+                    row.label(text=f"     {getattr(v, 'Name', str(v))}", icon='DOT') 
+                    if type(v) != str and hasattr(v, 'id') and (v.is_a("IfcElement") or v.is_a("IfcPort")):
+                        row.operator("element.select_object", text="", icon='RESTRICT_SELECT_OFF').id = v.id()                   
             elif value is not None:
-                box.label(text=f"{key}: {getattr(value, 'Name', str(value))}", icon='LINKED')
+                row = box.row()
+                row.label(text=f"{key}: {getattr(value, 'Name', str(value))}", icon='LINKED')
+                if type(value) != str and hasattr(value, 'id') and (value.is_a("IfcElement") or value.is_a("IfcPort")):
+                    row.operator("element.select_object", text="", icon='RESTRICT_SELECT_OFF').id = value.id()
+
+                

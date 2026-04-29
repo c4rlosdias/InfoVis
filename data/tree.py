@@ -3,14 +3,21 @@ import ifcopenshell
 import ifcopenshell.util.element
 import bonsai.tool as tool
 
+from .ifc_utils import refresh_props
 
 last_active = None
 
 
 # Call back para carregar as propriedades ao mudar o objeto ativo
 def call_back():
-    bpy.ops.props.load_properties()
-    refresh_tree_containers(bpy.context)
+    try:
+        bpy.ops.props.load_properties()
+    except Exception as e:
+        print(f"[call_back] error: {e}")
+    try:
+        refresh_tree_containers(bpy.context)
+    except Exception as e:
+        print(f"[call_back] refresh_tree error: {e}")
 
 # Handler para carregar as propriedades ao mudar o objeto ativo
 def on_active_object_change(scene):

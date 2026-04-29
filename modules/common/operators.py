@@ -2,6 +2,7 @@ import os
 import platform
 import subprocess
 import bpy
+import bonsai.tool as tool
 
 from ...data.tree import refresh_tree
 
@@ -126,3 +127,23 @@ class ErrorMessage(bpy.types.Operator):
 
         row = layout.row()
         row.label(text=self.message, icon='ERROR')
+
+class Select_object(bpy.types.Operator):
+    bl_idname = "element.select_object"
+    bl_label = "Select Object"
+
+    id: bpy.props.IntProperty()
+
+    def execute(self, context):
+        if self.id is None:
+            self.report({'WARNING'}, "No object ID provided.")
+            return {'CANCELLED'}
+        obj = tool.Ifc.get_object_by_identifier(self.id)
+        if obj:
+            context.selected_objects.clear()
+            context.view_layer.objects.active = obj
+            obj.select_set(True)
+            return {'FINISHED'}
+        else:
+            self.report({'WARNING'}, f"Object '{self.obj_name}' not found.")
+            return {'CANCELLED'}

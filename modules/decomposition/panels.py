@@ -12,7 +12,7 @@ class Panel_Decompositions(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G-Occurrence"
+    bl_category     = "InfoVis-Occurrence"
     bl_options      = {"DEFAULT_CLOSED"}
     
     def draw_header(self, context):

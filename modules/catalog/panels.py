@@ -10,7 +10,7 @@ class Panel_Catalog(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G-Catalog"
+    bl_category     = "InfoVis-Catalog"
     bl_options      = {"DEFAULT_CLOSED"}
     
     def draw_header(self, context):

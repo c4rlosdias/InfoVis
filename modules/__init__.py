@@ -24,6 +24,7 @@ def get_classes():
         # --- Common ---
         _common_ops.Operator_expand_tree,
         _common_ops.Operator_contract_tree,
+        _common_ops.Select_object,
         _common_ops.Columns,
         _common_ops.ErrorMessage,
         # --- PropertyGroups (must register before OG_Properties) ---
@@ -92,7 +93,6 @@ def get_classes():
         _props_panels.Panel_Properties,
         #- --- Types ---
         _types_panels.Panel_Types,
-        # --- Settings ---
-        _settings_panels.Panel_Settings,
+        # --- Settings ---        
         _settings_panels.Panel_Info,
     ]

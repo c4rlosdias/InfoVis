@@ -3,21 +3,22 @@
 ZIP=$1
 
 # criar pasta
-mkdir -p ./releases/OG_Tools
+mkdir -p ./releases/InfoVis
 
 # copiar arquivos
-cp ./__init__.py ./releases/OG_Tools/
-cp ./auth.py ./releases/OG_Tools/
+cp ./__init__.py ./releases/InfoVis/
+cp ./auth.py ./releases/InfoVis/
 
 # copiar pastas
-cp -r ./modules ./releases/OG_Tools/
-cp -r ./data ./releases/OG_Tools/
-cp -r ./libs ./releases/OG_Tools/
-cp -r ./resources ./releases/OG_Tools/
+cp -r ./modules ./releases/InfoVis/
+cp -r ./data ./releases/InfoVis/
+cp -r ./libs311 ./releases/InfoVis/
+cp -r ./libs313 ./releases/InfoVis/
+cp -r ./resources ./releases/InfoVis/
 
 # criar zip
 cd ./releases || exit
-zip -r "${ZIP}.zip" OG_Tools
+zip -r "${ZIP}.zip" InfoVis
 
 echo "ZIP criado com sucesso!"
 read -p "Pressione Enter para continuar"

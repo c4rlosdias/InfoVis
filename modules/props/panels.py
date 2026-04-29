@@ -4,7 +4,7 @@ import ifcopenshell.api.pset
 import ifcopenshell.util.element as element
 import bonsai.tool as tool
 
-from ...data.ifc_utils import get_prop_type
+from ...data.ifc_utils import get_prop_type, refresh_props
 from ... import auth
 
 
@@ -15,7 +15,7 @@ class Panel_Properties(bpy.types.Panel):
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
-    bl_category     = "O&G-Occurrence"
+    bl_category     = "InfoVis-Occurrence"
     
     def draw_header(self, context):
         layout = self.layout
@@ -26,9 +26,8 @@ class Panel_Properties(bpy.types.Panel):
         layout = self.layout       
         row = layout.row()   
         obj = context.active_object  
-        
 
-        if obj is not None and obj.select_get():
+        if obj is not None:
             model = tool.Ifc.get()     
             row = layout.row()                      
             row.operator("props.load_properties", text="Load properties")    

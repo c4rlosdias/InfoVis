@@ -2,17 +2,18 @@
 
 set "ZIP=%1"
 
-mkdir ".\releases\OG_Tools"
+mkdir ".\releases\InfoVis"
 
-copy ".\__init__.py" ".\releases\OG_Tools"
-copy ".\auth.py" ".\releases\OG_Tools"
+copy ".\__init__.py" ".\releases\InfoVis"
+copy ".\auth.py" ".\releases\InfoVis"
 
-xcopy ".\modules" ".\releases\OG_Tools\modules" /E /I /Y
-xcopy ".\data" ".\releases\OG_Tools\data" /E /I /Y
-xcopy ".\libs" ".\releases\OG_Tools\libs" /E /I /Y
-xcopy ".\resources" ".\releases\OG_Tools\resources" /E /I /Y
+xcopy ".\modules" ".\releases\InfoVis\modules" /E /I /Y
+xcopy ".\data" ".\releases\InfoVis\data" /E /I /Y
+xcopy ".\libs" ".\releases\InfoVis\libs311" /E /I /Y
+xcopy ".\libs" ".\releases\InfoVis\libs313" /E /I /Y
+xcopy ".\resources" ".\releases\InfoVis\resources" /E /I /Y
 
-powershell -command "Compress-Archive -Path '.\releases\OG_Tools' -DestinationPath '.\releases\%ZIP%.zip' -Force"
+powershell -command "Compress-Archive -Path '.\releases\InfoVis' -DestinationPath '.\releases\%ZIP%.zip' -Force"
 
 echo ZIP criado com sucesso!
 pause
