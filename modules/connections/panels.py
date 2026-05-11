@@ -59,11 +59,14 @@ class Panel_Connect_Elements(bpy.types.Panel):
         
         if len(context.selected_objects) > 0:
             for obj in context.selected_objects:
+                row=layout.row()
+                row.separator()
+                row=layout.row()
                 row.label(text=f"Selected: {obj.name}", icon='OBJECT_DATA')                
                 c = 1
                 for connect in self.get_connects(obj):
                     row = layout.row()
-                    row.label(text=f"connection #{c} - {connect['id']}", icon='LINKED')
+                    row.label(text=f"connection #{c}", icon='LINKED')
                     if auth.is_authenticated():
                         row.operator("conn.disconnect", text="", icon='UNLINKED').rel_id = connect['id']
                     self.draw_connect(layout, connect)
@@ -102,6 +105,30 @@ class Panel_Connect_Elements(bpy.types.Panel):
 
     def draw_connect(self, layout, connect):
         box = layout.box()
+
+        row=box.row()
+        col1 = row.column()
+        col2 = row.column()
+        col3 = row.column()
+        row=col1.row()
+        
+        row.operator("element.select_object", text="", icon='RESTRICT_SELECT_OFF').id = connect['Related Element'].id() 
+        row.label(text=connect['Related Element'].Name if connect['Related Element'] else "None") 
+        row=col2.row()
+        row.label(text="<-->")      
+        row=col3.row()
+        row.label(text=connect['Relating Element'].Name if connect['Relating Element'] else "None")
+        row.operator("element.select_object", text="", icon='RESTRICT_SELECT_OFF').id = connect['Relating Element'].id()
+        if 'Realizing Elements' in connect:
+            for value in connect['Realizing Elements']:
+                row = box.row()
+
+                row.label(text=f"{value.Name}:", icon='DOT')
+
+                row.operator("element.select_object", text="", icon='RESTRICT_SELECT_OFF').id = value.id()                   
+
+    def _draw_connect(self, layout, connect):
+        box = layout.box()
         for key, value in connect.items():
             if key == 'id':
                 continue
@@ -117,6 +144,4 @@ class Panel_Connect_Elements(bpy.types.Panel):
                 row = box.row()
                 row.label(text=f"{key}: {getattr(value, 'Name', str(value))}", icon='LINKED')
                 if type(value) != str and hasattr(value, 'id') and (value.is_a("IfcElement") or value.is_a("IfcPort")):
-                    row.operator("element.select_object", text="", icon='RESTRICT_SELECT_OFF').id = value.id()
-
-                
+                    row.operator("element.select_object", text="", icon='RESTRICT_SELECT_OFF').id = value.id()           

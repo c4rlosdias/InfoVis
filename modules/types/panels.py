@@ -50,6 +50,20 @@ class Panel_Types(bpy.types.Panel):
         row.separator()
         row = layout.row()
 
+        if len(props.layers) > 0 and type.is_a("IfcPipeSegmentType"):            
+            row = layout.row()
+            row.label(text="Layers:", icon='INFO')
+
+            self.layout.template_list(
+                "BIM_UL_layers",
+                "",
+                props,
+                "layers",
+                props,
+                "active_layer_index",
+                rows=10
+            )
+
 
         
 

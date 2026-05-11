@@ -33,6 +33,15 @@ from bpy.props import PointerProperty
 from bpy.types import Scene
 from bpy.utils import register_class, unregister_class
 
+_BUNDLED_PKGS = [
+    "matplotlib", "scipy", "tqdm", "kiwisolver", "cycler",
+    "contourpy", "fonttools", "PIL", "pillow",
+    "pyparsing", "dateutil", "python_dateutil",
+]
+for _key in list(sys.modules.keys()):
+    if any(_key == p or _key.startswith(p + ".") for p in _BUNDLED_PKGS):
+        del sys.modules[_key]
+
 if platform.system() == "Windows":
         
     if sys.version_info >= (3, 13):
