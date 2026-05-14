@@ -14,8 +14,11 @@ class bSDD:
     response = ''
     is_loaded = False
     endpoint = 'https://api.bsdd.buildingsmart.org/api/'
-    uri = 'https://identifier.buildingsmart.org/uri/bimcerti/subsea-flexible-pipes'
-        
+    uri = None    
+
+    @classmethod
+    def set_uri(cls, uri):
+        cls.uri = uri
 
     @classmethod
     def load_dictionaries(cls):
@@ -31,12 +34,10 @@ class bSDD:
 
         
     @classmethod
-    def load_classes(cls, version : str, use_nested : bool) -> bool:  
-
-        
+    def load_classes(cls, use_nested : bool) -> bool: 
            
         params = {
-            'uri' : f'{cls.uri}/{version}',
+            'uri' : f'{cls.uri}',
             'UseNestedClasses' : use_nested
         }
 
@@ -50,8 +51,8 @@ class bSDD:
 
            
     @classmethod
-    def load_properties(cls, version : str) -> bool:        
-        params = {'uri' : f'{cls.uri}/{version}'}
+    def load_properties(cls) -> bool:        
+        params = {'uri' : f'{cls.uri}'}
         response = requests.get(f'{cls.endpoint}Dictionary/v1/Properties', params=params)        
         if response.status_code == 200:            
             cls.data_prop = response.json()['properties']

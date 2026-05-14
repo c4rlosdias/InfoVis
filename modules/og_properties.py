@@ -53,16 +53,21 @@ def update_tree_type(self, context):
         new.is_hidden = False if new.has_children else True
         i += 1
 
-
-def get_dictionaries(self, context):                
+def _get_dictionaries(self, context):                
     if not bSDD.is_loaded:
         bSDD.load_dictionaries()
     return bSDD.data_dic
         
+def get_dictionaries(self, context):                
+    dictionaries = [
+       ('https://identifier.buildingsmart.org/uri/bs-energy/subsea-flexible-pipes/2.1', 'Subsea Flexible Pipes v2.1', '2.1'),
+       ('https://identifier.buildingsmart.org/uri/bs-energy/subsea-rigid-pipelines/1.0', 'Subsea Rigid Pipelines v1.0', '1.0')
+    ]
+    return dictionaries
+
 def active_prop_changed(self, context):
     self.info_class_prop_loaded = False
     self.class_info.clear()
-
 
 def active_class_changed(self, context):
     self.class_prop_info.clear()
@@ -108,6 +113,7 @@ def active_element_changed(self, context):
     from ..data import tree as _data_tree
     if _data_tree._syncing_tree:
         return
+    
     model = tool.Ifc.get()
     print(f"Active element index: {self.active_element_index}")
     ifc_id = self.containers_show[self.active_element_index].id if self.active_element_index < len(self.containers_show) else None
@@ -121,7 +127,22 @@ def active_element_changed(self, context):
     obj.select_set(True)
     context.view_layer.objects.active = obj
 
+    # view type layers
+    type_id = ifcopenshell.util.element.get_type(ifc_element).id() if ifc_element is not None else None
+    print(f"Active type ID: {type_id}")
+    if type_id is not None:
+        model = tool.Ifc.get()
+        ifc_type = model.by_id(type_id)
+        print(f"Selected type: {ifc_type}")
+        nested_elements = ifcopenshell.util.element.get_components(ifc_type) or []
+        print(f"Selected type: {nested_elements}")
+        self.layers.clear()
 
+        for element in nested_elements:            
+            new_layer = self.layers.add()
+            new_layer.id = element.id()
+            new_layer.name = element.Name or f"Element {element.id()}"
+            new_layer.description = element.get_info() or ''
 
 def load_products(self, context):   
     props = context.scene.my_props
@@ -141,7 +162,8 @@ class OG_Properties(PropertyGroup):
     
     # O&G Dictionary
 
-    dictionary                 : EnumProperty(items=get_dictionaries, name='',  description='Get Dictionaries')  
+    dictionary                 : EnumProperty(items=get_dictionaries, name='',  description='Get Dictionaries')
+    #dictionary                 : EnumProperty(items=get_dictionaries, name='',  description='Get Dictionaries')  
     active_property_index      : IntProperty(name='property index', default=0, update=active_prop_changed)
     ifc_prop                   : CollectionProperty(name='properties', type=Ifc_properties) 
     active_info_prop_index     : IntProperty(name='object index', default=0)

@@ -105,7 +105,14 @@ def set_properties(props, ifc_obj, is_a, i):
                 newdocument = new_item.documents.add()
                 newdocument.name = document.Name
                 newdocument.identification = document.Identification
-                newdocument.location = document.Location.wrappedValue if document.Location is not None else ''
+
+                if type(document.Location) == str:
+                    newdocument.location = document.Location
+                elif document.Location is not None:
+                    newdocument.location = document.Location.wrappedValue
+                else:
+                    newdocument.location = ''
+
                 newdocument.index = c
                 c += 1
                    
@@ -163,7 +170,8 @@ def set_properties(props, ifc_obj, is_a, i):
             j += 1
 
         if len(table) > 0:
-            df = pd.DataFrame(table)
+            #df = pd.DataFrame(table)
+            df = pd.DataFrame({k: pd.Series(v) for k,v in table.items()})
             dft = df.transpose()
             columns = df.columns.tolist()    
             nc = len(columns)  

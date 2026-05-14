@@ -8,6 +8,29 @@ from .ifc_utils import refresh_props
 last_active = None
 
 
+def refresh_layers(context):
+    obj = context.view_layer.objects.active
+    if obj is None:
+        return
+    model = tool.Ifc.get()
+    if model is None:
+        return
+    entity = tool.Ifc.get_entity(obj)
+    if entity is None:
+        return
+    ifc_type = ifcopenshell.util.element.get_type(entity)
+    if ifc_type is None:
+        return
+    nested_elements = ifcopenshell.util.element.get_components(ifc_type) or []
+    props = context.scene.og_props
+    props.layers.clear()
+    for element in nested_elements:
+        new_layer = props.layers.add()
+        new_layer.id = element.id()
+        new_layer.name = element.Name or f"Element {element.id()}"
+        new_layer.description = element.get_info() or ''
+
+
 # Call back para carregar as propriedades ao mudar o objeto ativo
 def call_back():
     try:
@@ -18,6 +41,10 @@ def call_back():
         refresh_tree_containers(bpy.context)
     except Exception as e:
         print(f"[call_back] refresh_tree error: {e}")
+    try:
+        refresh_layers(bpy.context)
+    except Exception as e:
+        print(f"[call_back] refresh_layers error: {e}")
 
 # Handler para carregar as propriedades ao mudar o objeto ativo
 def on_active_object_change(scene):

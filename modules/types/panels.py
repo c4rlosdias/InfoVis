@@ -22,6 +22,7 @@ class Panel_Types(bpy.types.Panel):
 
     def draw(self, context):
         model = tool.Ifc.get()
+        type = None
         layout = self.layout        
         props = context.scene.og_props
         row = layout.row()
@@ -39,18 +40,18 @@ class Panel_Types(bpy.types.Panel):
                     row.label(text=f" Name           : {type.Name}", icon='DOT')
                     row = layout.row()
                     row.label(text=f" Description :  {type.Description}", icon = 'DOT')
-
                 else:
                     row.label(text="Type: None", icon='ERROR')
             else:
                 row.label(text="Type: None", icon='ERROR')
+                
 
 
         row = layout.row()
         row.separator()
         row = layout.row()
 
-        if len(props.layers) > 0 and type.is_a("IfcPipeSegmentType"):            
+        if len(props.layers) > 0 and type is not None and type.is_a("IfcPipeSegmentType"):            
             row = layout.row()
             row.label(text="Layers:", icon='INFO')
 

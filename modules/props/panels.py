@@ -26,6 +26,14 @@ class Panel_Properties(bpy.types.Panel):
         layout = self.layout       
         row = layout.row()   
         obj = context.active_object  
+        if obj is not None and obj.select_get():
+            entity = tool.Ifc.get_entity(obj)
+            row = layout.row()
+            row.label(text=f"Name: {entity.Name}", icon='INFO')
+            row = layout.row()
+            row.label(text=f"Description: {entity.Description}", icon='INFO')
+            row= layout.row()
+            row.separator()
 
         if obj is not None:
             model = tool.Ifc.get()     
@@ -46,12 +54,13 @@ class Panel_Properties(bpy.types.Panel):
                 if props.docs_expanded:
                     box = layout.box()
                     for document in props.documents:
-                        row = box.row() 
-                        op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
-                        op4.ifc_id = tool.Ifc.get_entity(obj).id()
-                        op4.id = document.identification
-                        op4.name = document.name
-                        op4.location = document.location
+                        if auth.is_authenticated():
+                            row = box.row() 
+                            op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                            op4.ifc_id = tool.Ifc.get_entity(obj).id()
+                            op4.id = document.identification
+                            op4.name = document.name
+                            op4.location = document.location
 
                         row = box.row()
                         row.prop(document, 'identification')
@@ -60,7 +69,7 @@ class Panel_Properties(bpy.types.Panel):
                         row = box.row()
                         row.prop(document, 'location')
 
-                        if auth.is_authenticated():
+                        if auth.is_authenticated() and document.location != '':
                             op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
                             op0.index = -1
                             op0.doc_index = document.index
@@ -125,35 +134,28 @@ class Panel_Properties(bpy.types.Panel):
 
                             if pset.docs_expanded:
                                 box = layout.box()  
-                                for document in pset.documents:                                
-                                    row = box.row()
-                                    op = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
-                                    op.ifc_id = ifc_pset.id()
-                                    op.id = document.identification   
-                                    op.name = document.name 
-                                    op.location = document.location                                  
+                                for document in pset.documents:   
+                                    if auth.is_authenticated():                             
+                                        row = box.row()
+                                        op = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                                        op.ifc_id = ifc_pset.id()
+                                        op.id = document.identification   
+                                        op.name = document.name 
+                                        op.location = document.location                                  
 
                                     row = box.row()
-                                    if auth.is_authenticated():
-                                        row.prop(document, 'identification')
-                                    else:
-                                        row.label(text=f'Identification : {document.identification}')
+                                    row.prop(document, 'identification')
                                     
                                     row = box.row()
-                                    if auth.is_authenticated():
-                                        row.prop(document, 'name')
-                                    else:
-                                        row.label(text=f'Name : {document.name}')
-                                    
+                                    row.prop(document, 'name')
+
                                     row = box.row()
-                                    if auth.is_authenticated():
-                                        row.prop(document, 'location')
-                                    else:
-                                        row.label(text=f'Location : {document.location}')
+                                    row.prop(document, 'location')
                                     
-                                    if document.location != '':
-                                        op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
-                                        op.index = pset.index 
+                                    if document.location != '' :
+                                        if auth.is_authenticated():
+                                            op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                                            op.index = pset.index 
 
                                         op = row.operator("props.open_doc", icon='BORDERMOVE', text="") 
                                         op.location = document.location                           
@@ -213,12 +215,8 @@ class Panel_Properties(bpy.types.Panel):
                                     col.label(text=name_prop)                                        
                                     titulos = titulos + item.name  
 
-                                act_prop = f"value{item.type_value}"  
-                                if auth.is_authenticated():                                                                                            
-                                    col.prop(item, act_prop, text='')                                
-                                else:
-                                    val= str(getattr(item, act_prop))
-                                    col.label(text=f'|{val}|')
+                                act_prop = f"value{item.type_value}"                                                                                                                            
+                                col.prop(item, act_prop, text='')                                
                                 if i%item.n_rows == 0:
                                     col = rowb.column(align=True)   
 
@@ -262,12 +260,8 @@ class Panel_Properties(bpy.types.Panel):
                                 else:
                                     col = rowb.column(align=True)
                                     col.alignment = 'RIGHT'
-                                    act_prop = f"value{item.type_value}"  
-                                    if auth.is_authenticated():                              
-                                        col.prop(item, act_prop, text='')                                  
-                                    else:
-                                        val = getattr(item, act_prop)                                    
-                                        col.label(text=str(val))                                                 
+                                    act_prop = f"value{item.type_value}"                           
+                                    col.prop(item, act_prop, text='')
                                     col = rowb.column()
                                     col.scale_x =0.4
                                     col.label(text=item.datatype)

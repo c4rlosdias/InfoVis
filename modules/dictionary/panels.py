@@ -32,6 +32,7 @@ class Panel_Connect(bpy.types.Panel):
         props = context.scene.og_props
 
         row = layout.row()
+        row.prop(props, "dictionary", text="Select Dictionary")
         row.operator("bsdd.get_class", text="get classes from bSDD")
         if len(props.classes_shown) > 0:
             row = layout.row()

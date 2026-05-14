@@ -62,7 +62,6 @@ class Operator_load_products(bpy.types.Operator):
         refresh_types(context)
         return {"FINISHED"} 
 
-
 class Operator_catalog_show_layers(bpy.types.Operator):
     """"""
     bl_idname  = "catag.show_layers"
@@ -155,6 +154,7 @@ class Operator_catalog_show_layers(bpy.types.Operator):
             report += layers
 
         return report
+    
     def execute(self, context):                             
         return {"FINISHED"}
 
@@ -179,7 +179,6 @@ class Operator_catalog_show_layers(bpy.types.Operator):
         else:
             self.report({'ERROR'}, f"No type found for id {self.id}")
             return {"CANCELLED"}
-
 
 class Operator_catalog_select_layer(bpy.types.Operator):
     """"""

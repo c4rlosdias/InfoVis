@@ -107,24 +107,23 @@ class Panel_Connect_Elements(bpy.types.Panel):
         box = layout.box()
 
         row=box.row()
-        col1 = row.column()
-        col2 = row.column()
-        col3 = row.column()
-        row=col1.row()
-        
+        col1 = row.column(align=True)
+        col2 = row.column(align=True)
+        col3 = row.column(align=True)
+
+        row=col1.row(align=True)        
         row.operator("element.select_object", text="", icon='RESTRICT_SELECT_OFF').id = connect['Related Element'].id() 
         row.label(text=connect['Related Element'].Name if connect['Related Element'] else "None") 
-        row=col2.row()
-        row.label(text="<-->")      
-        row=col3.row()
+        row=col2.row(align=True)
+        row.label(text= '', icon='ARROW_LEFTRIGHT')      
+        row=col3.row(align=True)
         row.label(text=connect['Relating Element'].Name if connect['Relating Element'] else "None")
         row.operator("element.select_object", text="", icon='RESTRICT_SELECT_OFF').id = connect['Relating Element'].id()
+        
         if 'Realizing Elements' in connect:
             for value in connect['Realizing Elements']:
                 row = box.row()
-
                 row.label(text=f"{value.Name}:", icon='DOT')
-
                 row.operator("element.select_object", text="", icon='RESTRICT_SELECT_OFF').id = value.id()                   
 
     def _draw_connect(self, layout, connect):

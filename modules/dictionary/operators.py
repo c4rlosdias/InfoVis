@@ -103,7 +103,8 @@ class Operator_get_classes(bpy.types.Operator):
         props.classes.clear()
         props.classes_loaded = False
         c = -1
-        result = bSDD.load_classes(props.dictionary, True)
+        bSDD.set_uri(props.dictionary)
+        result = bSDD.load_classes(True)        
         if result:
             for classe in bSDD.data_class:  
                 new_c = build_classes(context, classe, c, 1, '', False)
@@ -126,7 +127,8 @@ class Operator_add_properties(bpy.types.Operator):
         try:
             for prop in tqdm(props.ifc_prop, total= len(props.ifc_prop), desc='Processing properties'):
                 if prop.is_selected == True:
-                    result = bSDD.get_property(prop.uri)
+                    bSDD.set_uri(props.dictionary)
+                    result = bSDD.get_property()
                     bSDD.data_info_prop
                     if result:
                         flag = PropTempl.add_pset_template(bSDD.data_info_prop)
