@@ -13,6 +13,11 @@ from .props.properties import Enumeration_values, Property_info, Documents, Pset
 from .decomposition.properties import Container
 
 
+class IFC_Label_Attribute(PropertyGroup):
+    """Um atributo IFC a ser exibido na viewport overlay."""
+    attr_name : StringProperty(name='Attribute', default='Name')
+
+
 # update function for the decomposition tree 
 def update_tree_type(self, context):
     def add_elements(elements,level=0):
@@ -257,6 +262,13 @@ class OG_Properties(PropertyGroup):
     documents                : CollectionProperty(name='documents', type=Documents)
 
     show_table               : BoolProperty(name='Show table', default=False)
+
+    # Viewport overlays
+    show_ifc_label              : BoolProperty(name='Show IFC label', description='Mostrar nome do elemento IFC na viewport ao selecionar', default=True)
+    ifc_label_attributes        : CollectionProperty(name='IFC label attributes', type=IFC_Label_Attribute)
+    active_ifc_label_attr_index : IntProperty(name='active attribute index', default=0)
+    label_offset_x              : FloatProperty(name='Offset X', description='Deslocamento horizontal do label em relação ao objeto (px)', default=80.0, min=-500.0, max=500.0)
+    label_offset_y              : FloatProperty(name='Offset Y', description='Deslocamento vertical do label em relação ao objeto (px)', default=80.0, min=-500.0, max=500.0)
 
     # Element Connections
     connect_type             : EnumProperty(

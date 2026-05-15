@@ -15,7 +15,8 @@ from .props import operators as _props_ops
 from .props import panels as _props_panels
 from .props import properties as _props_props
 from .settings import panels as _settings_panels
-from .og_properties import OG_Properties
+from .settings import operators as _settings_ops
+from .og_properties import OG_Properties, IFC_Label_Attribute
 
 
 def get_classes():
@@ -38,6 +39,7 @@ def get_classes():
         _props_props.Property_info,
         _props_props.Pset_info,
         _decomp_props.Container,
+        IFC_Label_Attribute,
         # --- OG_Properties (central property bag) ---
         OG_Properties,
         # --- Dictionary ---
@@ -93,6 +95,9 @@ def get_classes():
         _props_panels.Panel_Properties,
         #- --- Types ---
         _types_panels.Panel_Types,
-        # --- Settings ---        
+        # --- Settings ---
+        _settings_ops.Operator_add_ifc_label_attr,
+        _settings_ops.Operator_remove_ifc_label_attr,
+        _settings_panels.BIM_UL_ifc_label_attrs,
         _settings_panels.Panel_Info,
     ]

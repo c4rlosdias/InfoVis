@@ -66,6 +66,7 @@ else:
 
 from .modules import get_classes
 from .modules.og_properties import OG_Properties
+from .modules.common.operators import register_ifc_label_overlay, unregister_ifc_label_overlay
 from . import data
 from .data import tree as _data_tree
 from . import auth
@@ -181,7 +182,7 @@ def register():
     bpy.types.WindowManager.add_connect_object_c = PointerProperty(type=bpy.types.Object, name="Object C")
     _subscribe_msgbus()
     bpy.app.handlers.load_post.append(_on_load_post)
-
+    register_ifc_label_overlay()
 
 
 def unregister():
@@ -194,6 +195,7 @@ def unregister():
         del bpy.types.WindowManager.add_connect_object_b
     if hasattr(bpy.types.WindowManager, "add_connect_object_a"):
         del bpy.types.WindowManager.add_connect_object_a
+    unregister_ifc_label_overlay()
     if hasattr(Scene, "og_props"):
         del Scene.og_props
     for c in classes:
