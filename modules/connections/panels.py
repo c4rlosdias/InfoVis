@@ -120,7 +120,7 @@ class Panel_Connect_Elements(bpy.types.Panel):
         row.label(text=connect['Relating Element'].Name if connect['Relating Element'] else "None")
         row.operator("element.select_object", text="", icon='RESTRICT_SELECT_OFF').id = connect['Relating Element'].id()
         
-        if 'Realizing Elements' in connect:
+        if 'Realizing Elements' in connect and connect['Realizing Elements']:
             for value in connect['Realizing Elements']:
                 row = box.row()
                 row.label(text=f"{value.Name}:", icon='DOT')

@@ -50,12 +50,22 @@ def get_unit_symbol(unit):
     return symbol.replace('1', '')
 
 
+def get_pset_items(pset):
+    if pset is None:
+        return []
+    if pset.is_a('IfcElementQuantity'):
+        return pset.Quantities or []
+    if pset.is_a('IfcPropertySet'):
+        return pset.HasProperties or []
+    return []
+
+
 def get_unit(ifc_obj, pset_name, prop_name):
     model = tool.Ifc.get()
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
     pset = model.by_id(psets[pset_name]['id'])
     symbol = ''
-    for prop in pset.HasProperties:        
+    for prop in get_pset_items(pset):
         if prop.Name == prop_name:
             unit = ifcopenshell.util.unit.get_property_unit(ifc_file=model, prop=prop)
             if unit is not None:
@@ -69,7 +79,11 @@ def get_unit(ifc_obj, pset_name, prop_name):
 def get_property(ifc_obj, pset_name, prop_name):
     model = tool.Ifc.get()
     pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
-    for prop in pset.HasProperties:
+    if pset is None:
+        return None
+    props = get_pset_items(pset)
+    
+    for prop in props:
         if prop.Name == prop_name:
             return prop
     return None
@@ -85,14 +99,14 @@ def set_properties(props, ifc_obj, is_a, i):
     if ifc_obj is None:
         return i
     id = ifc_obj.id()
-    psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)        
+    psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False )        
     for pset, _props in psets.items():             
-        _pset = get_pset(ifc_obj, pset)        
-        table = {}    
 
+        _pset = get_pset(ifc_obj, pset)      
+        table = {}    
         new_item = props.prop_metadata.add()            
         new_item.name = pset  
-        new_item.description = _pset.Description
+        new_item.description = _pset.Description or ''
         new_item.is_a = is_a 
         new_item.id_obj = id          
         new_item.index = i     
@@ -201,33 +215,35 @@ def refresh_props(context):
     props.has_document = False
     props.document = ''
     obj = context.active_object
-    if obj:
-        ifc_obj = tool.Ifc.get_entity(obj)
-        if ifc_obj is None:
-            return
-        ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
-        if getattr(ifc_obj_type, 'HasAssociations', None):
-            associations = ifc_obj_type.HasAssociations            
-            for association in associations:
-                if association.is_a('IfcRelAssociatesDocument'):
-                    props.has_document = True
-                    document = association.RelatingDocument
-                    newdocument = props.documents.add()
-                    newdocument.name = document.Name
-                    newdocument.identification = document.Identification
-                    if document.Location:
-                        newdocument.location = str(document.Location)
-                    else:
-                        newdocument.location = ''
+    try:
+        if obj:
+            ifc_obj = tool.Ifc.get_entity(obj)
+            if ifc_obj is None:
+                return
+            # ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
+            # if getattr(ifc_obj_type, 'HasAssociations', None):
+            #     associations = ifc_obj_type.HasAssociations            
+            #     for association in associations:
+            #         if association.is_a('IfcRelAssociatesDocument'):
+            #             props.has_document = True
+            #             document = association.RelatingDocument
+            #             newdocument = props.documents.add()
+            #             newdocument.name = document.Name
+            #             newdocument.identification = document.Identification
+            #             if document.Location:
+            #                 newdocument.location = str(document.Location)
+            #             else:
+            #                 newdocument.location = ''
 
-        ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
+            ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
 
-        if ifc_obj.is_a('IfcTypeProduct'):
-            set_properties(props, ifc_type_obj, "type", 0)
-        else:
-            i = set_properties(props, ifc_obj, "instance", 0)
-            set_properties(props, ifc_type_obj, "type", i)
-
+            if ifc_obj.is_a('IfcTypeProduct'):
+                set_properties(props, ifc_type_obj, "type", 0)
+            else:
+                i = set_properties(props, ifc_obj, "instance", 0)
+                set_properties(props, ifc_type_obj, "type", i)
+    except Exception as e:
+        print(f"Error refreshing properties: {e}")
 
 def set_hide_class(context, index, is_hidden):
     props = context.scene.og_props

@@ -22,24 +22,55 @@ class Panel_Types(bpy.types.Panel):
 
     def draw(self, context):
         model = tool.Ifc.get()
-        type = None
+        ifc_type = None
         layout = self.layout        
         props = context.scene.og_props
         row = layout.row()
         obj = context.active_object
         if obj is not None and obj.select_get():
             element = model.by_id(obj.BIMObjectProperties.ifc_definition_id)
-            types = getattr(element, "IsTypedBy", None)
-            if types:
-                type = types[0].RelatingType
-                if type:
-                    row.label(text=f"{type.ElementType}")
-                    row.operator("catag.select_elements", text="", icon='RESTRICT_SELECT_OFF').id = type.id()
-                    row.operator("catag.show_layers", text="", icon='INFO_LARGE').id = type.id()
+            ifc_types = getattr(element, "IsTypedBy", None)
+            if ifc_types:
+                ifc_type = ifc_types[0].RelatingType
+                if ifc_type:
+                    
+
+                    row.label(text=f"{ifc_type.ElementType}")
+                    row.operator("catag.select_elements", text="", icon='RESTRICT_SELECT_OFF').id = ifc_type.id()
+                    row.operator("catag.show_layers", text="", icon='INFO_LARGE').id = ifc_type.id()
                     row = layout.row()
-                    row.label(text=f" Name           : {type.Name}", icon='DOT')
+                    row.label(text=f" Name           : {ifc_type.Name}", icon='DOT')
                     row = layout.row()
-                    row.label(text=f" Description :  {type.Description}", icon = 'DOT')
+                    row.label(text=f" Description :  {ifc_type.Description}", icon = 'DOT')
+
+                    if getattr(ifc_type, "HasAssociations", None):  
+                        rels = ifc_type.HasAssociations
+                        row= layout.row()
+                        row.label(text="Associated Documents:", icon='FILE')                                                                        
+                        for rel in rels:
+                            if rel.is_a("IfcRelAssociatesDocument"):
+                                document = rel.RelatingDocument  
+
+                                location_value = str(getattr(document, 'Location', None))
+                                if isinstance(location_value, str):
+                                    location = location_value
+                                elif location_value is not None:
+                                    try:
+                                        location = location_value.wrappedValue
+                                    except AttributeError:
+                                        location = str(location_value)
+                                else:
+                                    location = "N/A"
+                                
+                                box= layout.box()                      
+                                row = box.row()
+                                row.label(text=f"Identification: {getattr(document, 'Identification', 'N/A')}")
+                                row = box.row()
+                                row.label(text=f"Name: {getattr(document, 'Name', 'N/A')}")
+                                row = box.row()
+                                row.label(text=f"Location: {location}")
+                                op = row.operator("props.open_doc", icon='BORDERMOVE', text="")  
+                                op.location = location
                 else:
                     row.label(text="Type: None", icon='ERROR')
             else:
@@ -51,7 +82,7 @@ class Panel_Types(bpy.types.Panel):
         row.separator()
         row = layout.row()
 
-        if len(props.layers) > 0 and type is not None and type.is_a("IfcPipeSegmentType"):            
+        if len(props.layers) > 0 and ifc_type is not None and ifc_type.is_a("IfcPipeSegmentType"):            
             row = layout.row()
             row.label(text="Layers:", icon='INFO')
 

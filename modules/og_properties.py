@@ -86,7 +86,7 @@ def active_product_changed(self, context):
     global _updating_element
     type_id = self.types_show[self.active_type_index].id if self.active_type_index < len(self.types_show) else None
     print(f"Active type ID: {type_id}")
-    if type_id is not None:
+    if type_id is not None and type_id != 0:
         model = tool.Ifc.get()
         ifc_type = model.by_id(type_id)
         

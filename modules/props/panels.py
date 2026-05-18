@@ -23,6 +23,7 @@ class Panel_Properties(bpy.types.Panel):
 
     def draw(self, context):   
         props = context.scene.og_props 
+        can_edit_props = auth.is_authenticated()
         layout = self.layout       
         row = layout.row()   
         obj = context.active_object  
@@ -216,6 +217,7 @@ class Panel_Properties(bpy.types.Panel):
                                     titulos = titulos + item.name  
 
                                 act_prop = f"value{item.type_value}"                                                                                                                            
+                                col.enabled = can_edit_props
                                 col.prop(item, act_prop, text='')                                
                                 if i%item.n_rows == 0:
                                     col = rowb.column(align=True)   
@@ -249,6 +251,7 @@ class Panel_Properties(bpy.types.Panel):
                                         val=getattr(item, "enbumerated")
                                         col.label(text=str(val))
                                     col = rowb.column(align=False)
+                                    col.enabled = can_edit_props
                                     for enum in item.enumerations:
                                         col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
                                     if getattr(item, "has_document", False) and auth.is_authenticated():
@@ -261,6 +264,7 @@ class Panel_Properties(bpy.types.Panel):
                                     col = rowb.column(align=True)
                                     col.alignment = 'RIGHT'
                                     act_prop = f"value{item.type_value}"                           
+                                    col.enabled = can_edit_props
                                     col.prop(item, act_prop, text='')
                                     col = rowb.column()
                                     col.scale_x =0.4
