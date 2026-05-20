@@ -38,6 +38,7 @@ class Panel_Types(bpy.types.Panel):
                     row.label(text=f"{ifc_type.ElementType}")
                     row.operator("catag.select_elements", text="", icon='RESTRICT_SELECT_OFF').id = ifc_type.id()
                     row.operator("catag.show_layers", text="", icon='INFO_LARGE').id = ifc_type.id()
+                    row.operator("element.select_object", text="", icon='RADIOBUT_ON').id = ifc_type.id()
                     row = layout.row()
                     row.label(text=f" Name           : {ifc_type.Name}", icon='DOT')
                     row = layout.row()

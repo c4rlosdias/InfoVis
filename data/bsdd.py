@@ -1,6 +1,10 @@
+import os
+
 import requests
 import ifcopenshell
 import ifcopenshell.util.selector as selector
+import json
+import os.path
 
 
 class bSDD:
@@ -35,7 +39,7 @@ class bSDD:
         
     @classmethod
     def load_classes(cls, use_nested : bool) -> bool: 
-           
+          
         params = {
             'uri' : f'{cls.uri}',
             'UseNestedClasses' : use_nested
@@ -52,6 +56,7 @@ class bSDD:
            
     @classmethod
     def load_properties(cls) -> bool:        
+
         params = {'uri' : f'{cls.uri}'}
         response = requests.get(f'{cls.endpoint}Dictionary/v1/Properties', params=params)        
         if response.status_code == 200:            
@@ -63,9 +68,10 @@ class bSDD:
     
     @classmethod
     def get_class(cls, uri : str, include_properties : bool = False) -> bool:        
+
         params = {'uri' : uri, 'includeClassProperties' : include_properties}
         response = requests.get(f'{cls.endpoint}Class/v1', params=params)        
-        if response.status_code == 200:            
+        if response.status_code == 200:  
             cls.data_info_class = response.json()
             return True
         else:
@@ -74,6 +80,8 @@ class bSDD:
     
     @classmethod
     def get_class_prop(cls, uri : str) -> bool:        
+
+
         params = {'ClassUri' : uri}
         response = requests.get(f'{cls.endpoint}Class/Properties/v1', params=params)        
         if response.status_code == 200:                        
@@ -85,10 +93,12 @@ class bSDD:
     
     @classmethod
     def get_property(cls, uri : str) -> bool:        
+
         params = {'uri' : uri, 'includeClasses' : True}
         response = requests.get(f'{cls.endpoint}Property/v4', params=params)        
         if response.status_code == 200:            
             cls.data_info_prop = response.json()
+
             return True
         else:
             cls.response = response.text

@@ -80,7 +80,7 @@ def active_class_changed(self, context):
     self.class_prop_info_loaded = False
 
 def active_class_prop_changed(self, context):
-    self.info_class_prop_loaded = False
+    return None
 
 def active_product_changed(self, context):
     global _updating_element
@@ -133,8 +133,8 @@ def active_element_changed(self, context):
     context.view_layer.objects.active = obj
 
     # view type layers
-    type_id = ifcopenshell.util.element.get_type(ifc_element).id() if ifc_element is not None else None
-    print(f"Active type ID: {type_id}")
+    type_ifc = ifcopenshell.util.element.get_type(ifc_element) if ifc_element is not None else None
+    type_id = type_ifc.id() if type_ifc is not None else None    
     if type_id is not None:
         model = tool.Ifc.get()
         ifc_type = model.by_id(type_id)
