@@ -1,0 +1,36 @@
+site_name: InfoVis
+site_description: Documentacao tecnica e de desenvolvimento do add-on InfoVis para Blender
+repo_name: InfoVis
+docs_dir: docs
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+nav:
+  - Inicio:
+      - Visao Geral: index.md
+      - Arquitetura: ARCHITECTURE.md
+      - Desenvolvimento: DEVELOPMENT.md
+  - Referencia Tecnica:
+      - Operadores: guides/OPERATORS_DOCUMENTATION.md
+      - Paineis: guides/PANELS_DOCUMENTATION.md
+      - Propriedades: guides/PROPERTIES_DOCUMENTATION.md
+      - Dados: guides/DATA_DOCUMENTATION.md
+  - Referencia:
+      - Glossario: reference/GLOSSARY.md
+  - Extras:
+      - Sumario Executivo: extra/SUMARIO_EXECUTIVO.md
+      - Proximos Passos: extra/PROXIMOS_PASSOS.md
+      - Documentacao Concluida: extra/DOCUMENTACAO_CONCLUIDA.md
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - tables
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: true

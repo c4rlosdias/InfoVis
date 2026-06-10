@@ -159,6 +159,7 @@ O&G_TOOLS/
 
 # mkdocs documentation
 /site
+site/
 
 # mypy
 .mypy_cache/

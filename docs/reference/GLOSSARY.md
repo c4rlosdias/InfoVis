@@ -1,293 +1,247 @@
-# 📖 Glossário e Referência Rápida
+# Glossario e Referencia Rapida
 
----
+## Termos principais
 
-## 📚 Glossário de Termos
-
-### Termos Gerais
+**InfoVis**
+- add-on para Blender voltado a visualizacao e enriquecimento de dados IFC
+- nome definido em `bl_info` em `__init__.py`
 
 **Add-on**
-- Extensão/plugin para Blender
-- Oil & Gas Tools é um add-on (versão 0.1.2)
+- extensao carregada pelo Blender
+- registrada por classes Python derivadas de tipos como `bpy.types.Operator`, `bpy.types.Panel` e `bpy.types.PropertyGroup`
 
 **Blender**
-- Software 3D open-source (versão 5.0+)
-- Host da aplicação
-- Fornece API Python para extensões
+- aplicacao hospedeira do add-on
+- fornece API Python, UI, handlers e `msgbus`
 
-**Contexto (context)**
-- Objeto `bpy.context` do Blender
-- Contém referências à cena, objetos, propriedades
+**Contexto**
+- objeto `bpy.context`
+- concentra acesso a cena, objeto ativo, preferencias e estado da interface
 
 **Bonsai**
-- Add-on BIM para Blender (anteriormente BlenderBIM)
-- Dependência principal — fornece IfcStore e ferramentas IFC
+- ecossistema BIM usado pelo projeto para acesso a dados IFC no Blender
 
-### Termos IFC
+## Termos IFC e integracao
 
-**IFC (Industry Foundation Classes)**
-- Padrão aberto para dados de construção
-- Formato: .ifc
+**IFC**
+- formato aberto para dados de construcao
+- usado como base para leitura de elementos, propriedades, documentos e relacoes
 
-**IFC Entity (Entidade)**
-- Objeto dentro de um arquivo IFC
-- Exemplos: IfcWall, IfcPipeSegment, IfcFlexiblePipe
+**IFC Entity**
+- entidade individual dentro de um arquivo IFC
+- exemplos comuns: `IfcWall`, `IfcPipeSegment`, `IfcDistributionElement`
 
-**bSDD (buildingSMART Data Dictionary)**
-- Dicionário internacional de dados de construção
-- API REST acessível via HTTP
-- Módulo: `data/bsdd.py`
+**bSDD**
+- buildingSMART Data Dictionary
+- dicionario externo consultado por `data/bsdd.py`
 
-**GUID (GlobalId)**
-- Identificador único global para cada entidade IFC
+**GUID / GlobalId**
+- identificador unico de uma entidade IFC
 
-**Pset (Property Set)**
-- Conjunto de propriedades aplicável a um elemento
-- Exemplo: Pset_WallCommon, EPset_OG
+**Pset**
+- conjunto de propriedades associado a um elemento
 
-**Qset (Quantity Set)**
-- Conjunto de quantidades medidas
+**IDS**
+- Information Delivery Specification
+- pode ser exportado a partir de operadores do dominio `dictionary`
 
-**IDS (Information Delivery Specification)**
-- Especificação de requisitos de informação em XML
-- Exportado via operador `ids.export` em `modules/dictionary/operators.py`
+**CDE**
+- Common Data Environment
+- integracao apoiada por `data/cde.py`
 
-### Termos da Aplicação
+## Termos internos do projeto
 
 **PropertyGroup**
-- Classe que define estrutura de dados Blender
-- Distribuídas em `modules/*/properties.py` (por domínio)
-- Agregador central: `modules/og_properties.py`
+- estrutura de dados registrada no Blender
+- definida em `modules/*/properties.py` e agregada em `modules/og_properties.py`
 
-**Operador**
-- Ação executável pelo usuário via botão/menu
-- Organizados em `modules/*/operators.py` (por domínio)
+**OG_Properties**
+- agregador central de estado do add-on
+- fica em `context.scene.og_props`
+
+**Operator**
+- acao executavel exposta ao usuario
+- normalmente localizada em `modules/*/operators.py`
 
 **Panel**
-- Painel de UI na viewport
-- Distribuídos em `modules/*/panels.py` (por domínio)
+- componente visual na sidebar da View3D
+- normalmente localizado em `modules/*/panels.py`
 
-**Callback**
-- Função disparada quando propriedade muda
-- Definidos em `modules/og_properties.py`
+**UIList**
+- lista visual usada para exibir colecoes Blender com selecao e interacao
 
-**Collection**
-- Lista de items do mesmo tipo (CollectionProperty)
+**CollectionProperty**
+- colecao tipada usada para armazenar listas dentro de `PropertyGroup`s
 
 **Handler**
-- Função registrada para evento do Blender
-- `depsgraph_update_post` + msgbus
+- funcao registrada em eventos do Blender, como carregamento de arquivo
 
-**Autenticação (auth)**
-- Sistema de login por senha (SHA-256 + salt)
-- Módulo: `auth.py`
-- Senha: pré-estabelecida, verificada via `auth.is_authenticated()`
+**msgbus**
+- mecanismo de observacao do Blender usado para reagir a mudancas no objeto ativo
 
-**AddonPreferences (Preferências)**
-- Configurações persistentes do add-on
-- Classe: `OilGasAddonPreferences` em `__init__.py`
-- Campos: CDE URL, token, debug mode, auth password
+**AddonPreferences**
+- preferencias persistentes do add-on, definidas em `OilGasAddonPreferences`
 
-**CDE (Common Data Environment)**
-- Ambiente de dados comum para projetos
-- Módulo: `data/cde.py` (stub/mock)
+## Estrutura do repositorio
 
----
-
-## 🏗️ Estrutura Modular
-
-```
-oil-gas-addon/
-+-- __init__.py          # Registro, preferences, auth operators
-+-- auth.py              # Autentica\u00e7\u00e3o SHA-256
-+-- data/                # Camada de dados
-|   +-- bsdd.py          # Cliente REST bSDD
-|   +-- catalog.py       # Import IFC, Catalog, PropTempl
-|   +-- cde.py           # API CDE (mock)
-|   +-- tree.py          # \u00c1rvore, refresh, callbacks
-|   +-- ifc_utils.py     # Utilidades IFC
-+-- properties/          # Modelos de dados
-|   +-- types.py         # PropertyGroups individuais
-|   +-- main.py          # OG_Properties + callbacks
-+-- operators/           # L\u00f3gica de neg\u00f3cio
-|   +-- common.py        # Utilit\u00e1rios compartilhados
-|   +-- dictionary.py    # Operadores bSDD
-|   +-- decomposition.py # Decomposi\u00e7\u00e3o IFC
-|   +-- catalog.py       # Cat\u00e1logo de tipos
-|   +-- connections.py   # Conex\u00f5es IFC
-|   +-- properties.py    # Propriedades e gr\u00e1ficos
-+-- panels/              # Interface do usu\u00e1rio
-    +-- main.py          # Pain\u00e9is e UILists
+```text
+InfoVis/
+|-- __init__.py
+|-- auth.py
+|-- data/
+|   |-- bsdd.py
+|   |-- catalog.py
+|   |-- cde.py
+|   |-- ifc_utils.py
+|   `-- tree.py
+|-- modules/
+|   |-- __init__.py
+|   |-- og_properties.py
+|   |-- common/
+|   |-- dictionary/
+|   |-- decomposition/
+|   |-- catalog/
+|   |-- connections/
+|   |-- props/
+|   |-- settings/
+|   `-- types/
+|-- resources/
+|-- libs311/
+`-- libs313/
 ```
 
----
+## Referencia rapida de codigo
 
-## 🎯 Referência Rápida de Código
+### Acessar o estado principal
 
-### Acessar Propriedades
 ```python
-props = context.scene.og_props
-classes = props.classes
-active_index = props.active_class_index
+props = bpy.context.scene.og_props
+print(len(props.classes))
 ```
 
-### Verificar Autenticação
-```python
-from oil_gas_addon.auth import is_authenticated
-if is_authenticated():
-    # Conte\u00fado protegido
-```
+### Acessar preferencias do add-on
 
-### Acessar Preferências
 ```python
-prefs = bpy.context.preferences.addons['oil_gas_addon'].preferences
+prefs = bpy.context.preferences.addons["InfoVis"].preferences
 print(prefs.cde_url)
 ```
 
-### Adicionar Item a Collection
-```python
-new_item = props.classes.add()
-new_item.name = "Novo Item"
-```
+Se o pacote tiver sido instalado com outro nome de pasta, a chave em `addons[...]` deve seguir o nome real do pacote carregado pelo Blender.
 
-### Chamar Operador
+### Chamar operadores comuns
+
 ```python
-bpy.ops.bsdd.get_class()
+bpy.ops.bsdd.get_prop()
 bpy.ops.props.load_properties()
+bpy.ops.og.login()
 ```
 
-### Registrar/Desregistrar Classe
+### Adicionar item em colecao Blender
+
 ```python
-bpy.utils.register_class(MinhaClasse)
-bpy.utils.unregister_class(MinhaClasse)
+item = props.classes.add()
+item.name = "Novo item"
 ```
 
-### Acessar Arquivo IFC
+### Consultar autenticacao
+
 ```python
-import ifcopenshell
-from bonsai.bim.ifc import IfcStore
-ifc = IfcStore.get_file()
-walls = ifc.by_type("IfcWall")
+import InfoVis.auth as auth
+print(auth.is_authenticated())
 ```
 
----
+## Convencoes usadas no codigo
 
-## 🔧 Padrões Comuns
+### Classes Blender
 
-### Pattern: Operador com Validação
 ```python
-class Operator_example(bpy.types.Operator):
-    bl_idname = "og.example"
-    bl_label = "Exemplo"
+class Operator_get_properties(bpy.types.Operator):
+    ...
 
-    @classmethod
-    def poll(cls, context):
-        return len(context.scene.og_props.classes) > 0
-
-    def execute(self, context):
-        try:
-            props = context.scene.og_props
-            self.report({'INFO'}, "Sucesso")
-            return {'FINISHED'}
-        except Exception as e:
-            self.report({'ERROR'}, str(e))
-            return {'CANCELLED'}
+class Panel_Properties(bpy.types.Panel):
+    ...
 ```
 
-### Pattern: Refresh de Dados
+### `bl_idname`
+
 ```python
-def refresh_list(context):
-    props = context.scene.og_props
-    props.items_shown.clear()
-    for item in props.items_all:
-        if not item.is_hidden:
-            novo = props.items_shown.add()
-            novo.name = item.name
+bl_idname = "bsdd.get_prop"
+bl_idname = "props.load_properties"
+bl_idname = "og.login"
 ```
 
----
+### Funcoes auxiliares
 
-## 🎨 Convenções de Nomenclatura
-
-### Operadores
 ```python
-Operator_get_properties            # CamelCase com Operator_ prefixo
-bl_idname = "bsdd.get_prop"       # namespace.snake_case
+refresh_classes()
+refresh_props()
+build_classes()
 ```
 
-### Painéis
+## Padroes recorrentes
+
+**Estado centralizado**
+- os paineis e operadores leem e escrevem principalmente em `context.scene.og_props`
+
+**Refresh apos mutacao**
+- alteracoes em colecoes ou selecao costumam ser seguidas por chamadas de `refresh_*()` em `data/tree.py` ou `data/ifc_utils.py`
+
+**Registro centralizado**
+- toda nova classe Blender deve entrar em `modules/__init__.py`
+
+**Separacao por dominio**
+- UI, operadores e dados ficam organizados por dominio funcional em `modules/`
+
+## Debug rapido
+
+### Console Python do Blender
+
 ```python
-Panel_Connect                      # CamelCase com Panel_ prefixo
-bl_idname = "VIEW3D_PT_og_connect"
-bl_category = "O&G-Dictionary"    # Categorias: O&G-Dictionary, O&G-Occurrence, O&G-Catalog, O&G-Info
-```
-
-### PropertyGroups
-```python
-Ifc_properties                     # CamelCase com underscore
-Class_info
-OG_Properties                      # Agregador principal
-```
-
-### Funções
-```python
-build_classes()                    # snake_case
-refresh_products()
-set_hide_class()
-```
-
----
-
-## 🔍 Debugging Rápido
-
-### Console Blender (Shift + F4)
-```python
-# Imports
 import bpy
-from oil_gas_addon import data, auth
-from oil_gas_addon.modules.dictionary import operators as dict_ops
-
-# Propriedades
-props = bpy.context.scene.og_props
-print(len(props.classes))
-
-# Autentica\u00e7\u00e3o
-print(f"Autenticado: {auth.is_authenticated()}")
-
-# Recarregar m\u00f3dulo
 import importlib
-from oil_gas_addon.data import bsdd
+import InfoVis.auth as auth
+from InfoVis.modules import get_classes
+
+props = bpy.context.scene.og_props
+print(len(get_classes()))
+print(auth.is_authenticated())
+print(hasattr(props, "classes"))
+```
+
+### Recarregar um modulo
+
+```python
+import importlib
+import InfoVis.data.bsdd as bsdd
+
 importlib.reload(bsdd)
+```
 
----
+## Problemas comuns
 
-## 🆘 Problemas Comuns
+**Operador nao aparece na interface**
+- a classe nao foi adicionada a `modules/__init__.py`
+- o arquivo nao foi recarregado no Blender depois da mudanca
 
-**"Login necessário" em todos os painéis**
-- Execute `bpy.ops.og.login(password="certi2024")` ou use o painel de login
+**PropertyGroup nao persiste**
+- o tipo nao foi registrado antes de `OG_Properties`
+- a propriedade nao foi anexada corretamente ao agregador central ou a `Scene`
 
-**"AttributeError: module 'bpy' has no attribute 'types'"**
-- Falta import: `import bpy`
+**Erro de contexto no Blender**
+- operador ou funcao foi chamado fora do contexto esperado pela UI ou pelo objeto ativo
 
-**"RuntimeError: context is incorrect"**
-- Função chamada fora de contexto Blender
+**ImportError de dependencia cientifica**
+- ambiente Blender nao encontrou as bibliotecas embarcadas ou faltou instalacao dinamica fora do Windows
 
-**"Operador não aparece no menu"**
-- Não registrado na lista `classes` retornada por `modules/__init__.py get_classes()`
+**Dados nao atualizam ao trocar selecao**
+- verificar handlers, assinatura de `msgbus` e funcoes de `refresh_*()`
 
-**"PropertyGroup não persiste"**
-- Não registrada com `register_class()`
-- Não incluída em `get_classes()` no `modules/__init__.py`
-
----
-
-## 📞 Recursos
+## Recursos externos
 
 | Recurso | Link |
 |---------|------|
 | Blender API | https://docs.blender.org/api/current/ |
-| ifcopenshell | http://docs.ifcopenshell.org/ |
+| IfcOpenShell | https://docs.ifcopenshell.org/ |
 | buildingSMART | https://www.buildingsmart.org/ |
 | Matplotlib | https://matplotlib.org/ |
-| Pandas | https://pandas.pydata.org/ |
 | SciPy | https://scipy.org/ |

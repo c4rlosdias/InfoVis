@@ -229,6 +229,6 @@ props_dict = element.get_psets(element_obj)
 ## 🔗 Integração com Outros Pacotes
 
 - **`data/`**: Fornece `bSDD`, `Catalog`, `tree`, `ifc_utils` — toda a camada de dados
-- **`properties/`**: Define `Class_info`, `Class_type`, `OG_Properties` — estruturas de dados
-- **`panels/`**: Consome dados construídos aqui para renderizar na UI
+- **`modules/*/properties.py`** e **`modules/og_properties.py`**: Definem `Class_info`, `Class_type`, `OG_Properties` e outras estruturas de dados
+- **`modules/*/panels.py`**: Consomem dados construidos aqui para renderizar na UI
 - **`__init__.py`**: Registra todos os operadores para o Blender

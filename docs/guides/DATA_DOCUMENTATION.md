@@ -267,7 +267,7 @@ build_classes(context, classe_dict, 0, 1, "", False)
     ┌────────────▼─────────────┐
     │ msgbus / Handler:        │
     │ depsgraph_update_post    │
-    └────────────┬─────────────┘
+    │ (modules/props/operators.py)   │
                  │
     ┌────────────▼─────────────────┐
     │ tree.call_back() ou          │
@@ -276,7 +276,7 @@ build_classes(context, classe_dict, 0, 1, "", False)
                  │
     ┌────────────▼──────────────────┐
     │ bpy.ops.props.load_properties()│
-    │ (operators/properties.py)      │
+    │ (modules/props/operators.py)   │
     └────────────┬──────────────────┘
                  │
     ┌────────────▼──────────────────┐
@@ -356,7 +356,7 @@ self.updating = False
 
 ## 🔗 Integração com Outros Pacotes
 
-- **`operators/`**: Usa `tree.refresh_*()` e `ifc_utils.*` para atualizar após operações
-- **`panels/`**: Exibe dados de `classes_shown`, `products_show`, etc. Usa `tree.draw_tree()`
-- **`properties/`**: Define as PropertyGroups manipuladas aqui
+- **`modules/*/operators.py`**: Usa `tree.refresh_*()` e `ifc_utils.*` para atualizar após operações
+- **`modules/*/panels.py`**: Exibe dados de `classes_shown`, `products_show`, etc. Usa `tree.draw_tree()`
+- **`modules/*/properties.py`** e **`modules/og_properties.py`**: Definem as PropertyGroups manipuladas aqui
 - **`__init__.py`**: Registra os handlers de eventos via msgbus usando `tree.call_back`

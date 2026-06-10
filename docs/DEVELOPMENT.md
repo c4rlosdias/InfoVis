@@ -1,183 +1,164 @@
-# 🚀 Desenvolvimento - Oil & Gas Tools
+# Desenvolvimento do InfoVis
 
-## Setup Inicial
+## Objetivo deste guia
 
-### Requisitos
-- Blender 5.0+
-- Python 3.10+
+Este documento descreve como preparar o ambiente, iterar no add-on e empacotar releases do InfoVis sem perder aderencia a estrutura atual do repositorio.
+
+## Requisitos
+
+- Blender 5.0 ou superior
+- acesso ao Python embarcado do Blender
 - Git
-- VS Code (recomendado)
+- VS Code ou outro editor com suporte a Python
 
-### Instalação para Desenvolvimento
+## Estrutura relevante para desenvolvimento
+
+- `__init__.py`: entrada do add-on e registro de classes
+- `auth.py`: autenticacao e controle de sessao
+- `modules/`: operadores, paineis e `PropertyGroup`s por dominio
+- `data/`: integracoes e logica de apoio
+- `resources/`: arquivos JSON de apoio
+- `Example/`: arquivo IFC para testes manuais
+- `build_release.bat` e `build_release.sh`: empacotamento
+
+## Preparacao do ambiente
+
+### Dependencias Python
+
+O arquivo `requirements.txt` lista dependencias de apoio ao projeto. Em ambiente Blender, a execucao depende tambem das bibliotecas embarcadas nas pastas `libs311/` e `libs313/`.
+
+No Windows, o add-on prioriza essas bibliotecas empacotadas. Em Linux e macOS, dependencias ausentes podem ser instaladas dinamicamente pelo proprio add-on quando ele e importado.
+
+### Instalar o add-on para iteracao local
+
+Fluxo recomendado:
+
+1. trabalhe normalmente neste repositorio
+2. gere um zip instalavel com o script de build
+3. reinstale o zip no Blender quando precisar validar mudancas
+
+Windows:
+
+```powershell
+.\build_release.bat dev-local
+```
+
+Linux ou macOS:
 
 ```bash
-# Clone o repositório
-git clone <repo-url> oil-gas-addon
-cd oil-gas-addon
-
-# Instale dependências
-pip install -r requirements.txt
-
-# Copie para pasta de add-ons do Blender
-# Windows:
-cp -r . "C:\Users\%USERNAME%\AppData\Roaming\Blender\5.0\scripts\addons\oil-gas-addon"
-# Linux/Mac:
-cp -r . ~/.config/blender/5.0/scripts/addons/oil-gas-addon
+./build_release.sh dev-local
 ```
 
-### Ativar em Blender
+O pacote gerado fica em `releases/dev-local.zip`.
 
-1. Abra Blender
-2. Edit > Preferences > Add-ons
-3. Busque "Oil & Gas"
-4. Clique para ativar
+### Instalar no Blender
 
-## Estrutura de Módulos
+1. abra o Blender
+2. acesse `Edit > Preferences > Add-ons`
+3. clique em `Install from Disk`
+4. selecione o zip gerado em `releases/`
+5. habilite o add-on `InfoVis`
 
-O projeto utiliza uma **estrutura modular organizada por domínio funcional**. Cada domínio agrupa seus operadores, painéis e propriedades dentro de `modules/`:
+## Fluxo de trabalho recomendado
 
-### Raiz
-| Arquivo | Responsabilidade |
-|---------|------------------|
-| `__init__.py` | Registro do add-on, preferences, auth operators |
-| `auth.py` | Autenticação por senha (SHA-256) |
+1. altere o codigo em `modules/`, `data/`, `auth.py` ou `resources/`
+2. gere um novo zip com o script de build
+3. reinstale o add-on ou remova e instale novamente no Blender
+4. valide os paineis e operadores impactados com um arquivo IFC real
+5. repita o ciclo ate estabilizar a funcionalidade
 
-### Pacote `modules/`
-| Módulo | Responsabilidade |
-|--------|------------------|
-| `__init__.py` | `get_classes()` — registro centralizado de todas as classes |
-| `og_properties.py` | OG_Properties (PropertyGroup central) + callbacks |
-| `common/operators.py` | Utilitários compartilhados (tree expand/contract, Columns, ErrorMessage) |
-| `dictionary/` | Integração bSDD (operators, panels, properties) |
-| `decomposition/` | Decomposição IFC (operators, panels, properties) |
-| `catalog/` | Catálogo de tipos (operators, panels, properties) |
-| `connections/` | Conexões entre elementos (operators, panels) |
-| `props/` | Propriedades do objeto (operators, panels, properties) |
-| `settings/` | Configurações e informações (panels) |
+## Onde fazer cada tipo de mudanca
 
-### Pacote `data/`
-| Módulo | Responsabilidade |
-|--------|------------------|
-| `bsdd.py` | Cliente REST bSDD |
-| `catalog.py` | Import IFC, Catalog, PropTempl |
-| `cde.py` | API CDE (mock) |
-| `tree.py` | Árvore, refresh, callbacks |
-| `ifc_utils.py` | Utilidades IFC, propriedades, conexões |
+### Novo operador
 
-## Adicionando Funcionalidades
+1. adicione a classe em `modules/<dominio>/operators.py`
+2. registre a classe em `modules/__init__.py`
+3. exponha a acao no painel apropriado, se necessario
+4. use `data/` para encapsular acesso a IFC, bSDD ou CDE
 
-### Novo Operador
+### Novo painel ou UIList
 
-**1. Crie no submódulo apropriado em `modules/<domínio>/operators.py`:**
-```python
-# modules/dictionary/operators.py
-class Operator_meu_novo(bpy.types.Operator):
-    """Tooltip"""
-    bl_idname = "og.meu_novo"
-    bl_label = "Meu Novo Operador"
-    
-    def execute(self, context):
-        # Sua lógica aqui
-        self.report({'INFO'}, "Pronto!")
-        return {'FINISHED'}
-```
+1. implemente em `modules/<dominio>/panels.py`
+2. registre em `modules/__init__.py`
+3. leia e escreva estado apenas por `context.scene.og_props` ou propriedades Blender relacionadas
 
-**2. Registre em `modules/__init__.py` na função `get_classes()`:**
-```python
-def get_classes():
-    return [
-        # ... classes existentes ...
-        _dict_ops.Operator_meu_novo,  # <- Adicione na seção correta
-    ]
-```
+### Novo `PropertyGroup`
 
-**3. Adicione botão no painel do domínio (`modules/<domínio>/panels.py`):**
-```python
-layout.operator("og.meu_novo", text="Clique Aqui")
-```
+1. declare o tipo no modulo de dominio correspondente
+2. registre o tipo antes de `OG_Properties`
+3. adicione a propriedade agregada em `modules/og_properties.py` quando o estado for compartilhado
 
-### Novo Painel
+### Nova integracao ou regra de negocio
 
-**Em `modules/<domínio>/panels.py`:**
-```python
-class Panel_meu_painel(bpy.types.Panel):
-    bl_label = "Meu Painel"
-    bl_idname = "VIEW3D_PT_meu_painel"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "O&G Tools"
-    
-    def draw(self, context):
-        layout = self.layout
-        layout.label(text="Conteúdo aqui")
-```
+Prefira colocar logica fora de `draw()` dos paineis. Se a funcionalidade conversar com APIs, arquivos IFC, catalogos ou transformacao de dados, o destino natural costuma ser `data/`.
 
-### Novo PropertyGroup
+## Regras praticas do projeto
 
-**Crie em `modules/<domínio>/properties.py` e adicione ao OG_Properties:**
-```python
-# modules/<domínio>/properties.py
-class MinhaPropertyGroup(PropertyGroup):
-    meu_campo: StringProperty(name="Campo")
+- mantenha `modules/__init__.py` como fonte unica da ordem de registro
+- nao coloque logica pesada dentro de `Panel.draw()`
+- preserve o uso de `OG_Properties` como estado compartilhado entre modulos
+- trate dependencias multiplataforma considerando o carregamento de `libs311/` e `libs313/`
+- teste no Blender depois de qualquer alteracao que envolva registro, UI ou callbacks
 
-# modules/og_properties.py — adicione ao OG_Properties:
-minha_prop: CollectionProperty(type=MinhaPropertyGroup)
-```
+## Validacao manual
 
-### Novo Módulo de Domínio
+Use `Example/C3388.8_UN-31.ifc` como base para verificacoes manuais quando aplicavel.
 
-Para adicionar uma funcionalidade completamente nova:
+Checklist minimo:
 
-1. Crie a pasta `modules/<novo_dominio>/`
-2. Crie `__init__.py`, `operators.py`, `panels.py`, `properties.py`
-3. Importe os submódulos em `modules/__init__.py`
-4. Adicione as classes na função `get_classes()`
+1. o add-on instala e habilita sem erro
+2. os paineis principais aparecem na barra lateral da View3D
+3. a selecao de objetos atualiza as informacoes do painel de propriedades
+4. operadores alterados executam sem excecao no console do Blender
+5. overlays ou listas afetadas refletem o novo estado apos refresh
 
-## Testando Mudanças
+## Debug no Blender
 
-1. Edite o arquivo
-2. No Blender: Edit > Preferences > Add-ons
-3. Desabilite e reabilite "Oil & Gas Tools"
-4. Testes suas mudanças
+O console Python do Blender pode ser usado para verificacoes rapidas.
 
-## Debug
-
-**Console do Blender:** Shift + F4
+Exemplos uteis:
 
 ```python
-# Teste imports
 import bpy
-from oil_gas_addon import modules, data, auth
+import InfoVis
+from InfoVis.modules import get_classes
+from InfoVis import auth
 
-# Acesse propriedades
 props = bpy.context.scene.og_props
-print(f"Classes carregadas: {len(props.classes)}")
-
-# Verifique autenticação
-print(f"Autenticado: {auth.is_authenticated()}")
-
-# Acesse preferências do addon
-prefs = bpy.context.preferences.addons['oil_gas_addon'].preferences
-print(f"CDE URL: {prefs.cde_url}")
-
-# Veja todas as classes registradas
-from oil_gas_addon.modules import get_classes
-print(f"Total de classes: {len(get_classes())}")
+print(len(get_classes()))
+print(auth.is_authenticated())
+print(hasattr(props, "classes"))
 ```
 
-## Padrões do Projeto
+Se o add-on foi instalado com outro nome de pasta, ajuste o import conforme o nome real do pacote no ambiente Blender.
 
-- **PropertyGroups** mantêm dados sincronizados com UI
-- **Operadores** herdam de `bpy.types.Operator`
-- **Painéis** herdam de `bpy.types.Panel`
-- **Callbacks** executam código quando propriedades mudam
+## Processo de release
 
-## Documentação Detalhada
+Os scripts de build fazem a montagem do pacote em `releases/InfoVis/` e depois geram um zip final.
 
-- **[Arquitetura](ARCHITECTURE.md)** - Estrutura técnica
-- **[operators/](guides/OPERATORS_DOCUMENTATION.md)** - Todas as operações
-- **[panels/](guides/PANELS_DOCUMENTATION.md)** - Interface
-- **[properties/](guides/PROPERTIES_DOCUMENTATION.md)** - Dados
-- **[data/](guides/DATA_DOCUMENTATION.md)** - Sincronização e dados
-- **[Glossário](reference/GLOSSARY.md)** - Termos e FAQ
+Conteudo do pacote:
+
+- `__init__.py`
+- `auth.py`
+- `modules/`
+- `data/`
+- `libs311/`
+- `libs313/`
+- `resources/`
+
+Antes de publicar um release:
+
+1. confirme a versao em `bl_info` dentro de `__init__.py`
+2. valide a instalacao do zip em um Blender limpo
+3. confira se recursos JSON e bibliotecas embarcadas estao incluidos
+4. registre as mudancas relevantes na documentacao principal
+
+## Documentacao relacionada
+
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+- [guides/OPERATORS_DOCUMENTATION.md](guides/OPERATORS_DOCUMENTATION.md)
+- [guides/PANELS_DOCUMENTATION.md](guides/PANELS_DOCUMENTATION.md)
+- [guides/PROPERTIES_DOCUMENTATION.md](guides/PROPERTIES_DOCUMENTATION.md)
+- [guides/DATA_DOCUMENTATION.md](guides/DATA_DOCUMENTATION.md)
+- [reference/GLOSSARY.md](reference/GLOSSARY.md)
 
