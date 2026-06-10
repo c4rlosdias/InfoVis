@@ -13,12 +13,12 @@
 
 
 bl_info = {
-    "name"        : "Oil&Gas Tools",
+    "name"        : "InfoVis - alpha - v0.1.2",
     "author"      : "Carlos Dias",
     "description" : "",
     "blender"     : (5, 0, 0),
-    "version"     : (0, 1, 1),
-    "location"    : "View3D > Panel > O&G Tools",
+    "version"     : (0, 1, 2),
+    "location"    : "View3D > Panel > InfoVis",
     "warning"     : "",
     "category"    : "User"
 }
@@ -26,96 +26,183 @@ bl_info = {
 
 import sys
 import os
+import platform
+import subprocess
+import bpy
 from bpy.props import PointerProperty
 from bpy.types import Scene
 from bpy.utils import register_class, unregister_class
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs", "site", "packages"))
-
-from .operators import *
-from .panels import *
-from .properties import *
-from . import data
-
-
-classes = [     
-    Operator_get_properties,
-    Operator_get_classes,
-    Operator_contract_tree,
-    Operator_expand_tree,
-    Operator_decomposition_move,
-    Operator_add_properties,
-    Operator_clear_properties,
-    Operator_get_prop_info,
-    Operator_get_class_info,
-    Operator_get_class_prop,
-    Operator_assign_all,
-    Operator_unassign_all,
-    Operator_uri,
-    Operator_export_ids,
-    Operator_decomposition_select_components,
-    Operator_decomposition_select_element,
-    Operator_catalog_select_type,
-    Operator_catalog_select_elements,
-    Operator_load_products,
-    Operator_props_load,
-    Operator_props_expand,
-    Operator_docs_expand,
-    Operator_props_edit,
-    Columns,
-    Operator_props_graph,
-    Operator_props_invert,
-    Operator_document_edit,
-    Operator_document_load,
-    Operator_document_open,
-    Operator_show_table,
-    Operator_decomposition_load,
-    ErrorMessage,    
-    Panel_Connect, 
-    Panel_Decompositions,  
-    Panel_Catalog, 
-    Panel_Properties,
-    Panel_Settings,
-    Panel_Info,
-    BIM_UL_tree,
-    BIM_UL_ifc_properties,
-    BIM_UL_classes,
-    BIM_UL_class_prop,
-    BIM_UL_products,
-    BIM_UL_property_class,
-    BIM_UL_decomposition,
-    Ifc_properties,
-    Enumeration_values,
-    Documents,  
-    Class_info,
-    Class_type,
-    Class_prop_info,
-    Property_info,
-    Pset_info,
-    Container,
-    OG_Properties,
+_BUNDLED_PKGS = [
+    "matplotlib", "scipy", "tqdm", "kiwisolver", "cycler",
+    "contourpy", "fonttools", "PIL", "pillow",
+    "pyparsing", "dateutil", "python_dateutil",
 ]
+for _key in list(sys.modules.keys()):
+    if any(_key == p or _key.startswith(p + ".") for p in _BUNDLED_PKGS):
+        del sys.modules[_key]
+
+if platform.system() == "Windows":
+        
+    if sys.version_info >= (3, 13):
+        # On Windows with Python 3.13+, we can use the bundled libs directly.
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs313", "site-packages"))  
+    else:
+        # On Windows with Python 3.11+, we can use the bundled libs directly.
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs311", "site", "packages")) 
+else:
+    # On Linux/macOS the bundled libs contain Windows-only binaries (.pyd),
+    # so we install the required packages into Blender's Python instead.
+    _required = ["matplotlib", "scipy", "tqdm", "kiwisolver", "cycler"]
+    _missing = []
+    for _pkg in _required:
+        try:
+            __import__(_pkg)
+        
+        except ImportError:
+            _missing.append(_pkg)
+    if _missing:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", *_missing])
+
+from .modules import get_classes
+from .modules.og_properties import OG_Properties
+from .modules.common.operators import register_ifc_label_overlay, unregister_ifc_label_overlay
+from . import data
+from .data import tree as _data_tree
+from . import auth
+
+
+# ----- Operadores de autenticação -----
+
+class OG_OT_Login(bpy.types.Operator):
+    bl_idname = "og.login"
+    bl_label = "Login"
+    bl_description = "Autenticar com a senha cadastrada"
+
+    def execute(self, context):
+        prefs = context.preferences.addons[__package__].preferences
+        pw = prefs.auth_password
+        if auth.login(pw):
+            prefs.auth_password = ""
+            self.report({'INFO'}, "Autenticado com sucesso")
+        else:
+            prefs.auth_password = ""
+            self.report({'ERROR'}, "Senha incorreta")
+        return {'FINISHED'}
+
+
+class OG_OT_Logout(bpy.types.Operator):
+    bl_idname = "og.logout"
+    bl_label = "Logout"
+    bl_description = "Encerrar sessão autenticada"
+
+    def execute(self, context):
+        auth.logout()
+        self.report({'INFO'}, "Sessão encerrada")
+        return {'FINISHED'}
+
+
+# ----- Preferências do Addon -----
+
+class OilGasAddonPreferences(bpy.types.AddonPreferences):
+    bl_idname = __package__
+
+    cde_url: bpy.props.StringProperty(
+        name="CDE URL",
+        description="URL base da API do CDE",
+        default="http://localhost:8000",
+    )
+    cde_token: bpy.props.StringProperty(
+        name="CDE Token",
+        description="Token de autenticação para o CDE",
+        default="",
+        subtype='PASSWORD',
+    )
+    debug_mode: bpy.props.BoolProperty(
+        name="Debug Mode",
+        description="Ativar modo de depuração",
+        default=False,
+    )
+    auth_password: bpy.props.StringProperty(
+        name="Senha",
+        description="Senha para autenticação no addon",
+        default="",
+        subtype='PASSWORD',
+    )
+
+    def draw(self, context):
+        layout = self.layout
+
+        # --- Autenticação ---
+        box = layout.box()
+        box.label(text="Autenticação para status de editor", icon='LOCKED')
+
+        if auth.is_authenticated():
+            box.label(text="Status de editor: Autenticado", icon='CHECKMARK')
+            box.operator("og.logout", icon='PANEL_CLOSE')
+        else:
+            box.label(text="Status de editor: Não autenticado", icon='ERROR')
+            box.prop(self, "auth_password")
+            box.operator("og.login", icon='UNLOCKED')
+
+        # # --- Outras configurações ---
+        # box3 = layout.box()
+        # box3.label(text="Configurações", icon='PREFERENCES')
+        # box3.prop(self, "cde_url")
+        # box3.prop(self, "cde_token")
+        # box3.prop(self, "debug_mode")
+
+
+classes = [
+    OilGasAddonPreferences,
+    OG_OT_Login,
+    OG_OT_Logout,
+] + get_classes()
 owner = object()
+
+def _subscribe_msgbus():
+    bpy.msgbus.clear_by_owner(owner)
+    bpy.msgbus.subscribe_rna(
+        key=(bpy.types.LayerObjects, "active"),
+        owner=owner,
+        args=(),
+        notify=_data_tree.call_back
+    )
+
+@bpy.app.handlers.persistent
+def _on_load_post(*args):
+    _subscribe_msgbus()
+
 def register():
     for c in classes:
         register_class(c)
     Scene.og_props = PointerProperty(type=OG_Properties)
-    bpy.msgbus.subscribe_rna( 
-        key=(bpy.types.LayerObjects, "active"),
-        owner=owner,
-        args=(),
-        notify=data.call_back 
-    )
-    #bpy.app.handlers.depsgraph_update_post.append(data.on_active_object_change)
-
+    bpy.types.WindowManager.add_connect_object_a = PointerProperty(type=bpy.types.Object, name="Object A")
+    bpy.types.WindowManager.add_connect_object_b = PointerProperty(type=bpy.types.Object, name="Object B")
+    bpy.types.WindowManager.add_connect_object_c = PointerProperty(type=bpy.types.Object, name="Object C")
+    _subscribe_msgbus()
+    bpy.app.handlers.load_post.append(_on_load_post)
+    register_ifc_label_overlay()
 
 
 def unregister():
-    #bpy.app.handlers.depsgraph_update_post.remove(data.on_active_object_change)
+    if _on_load_post in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(_on_load_post)
     bpy.msgbus.clear_by_owner(owner)
-    del Scene.og_props
+    if hasattr(bpy.types.WindowManager, "add_connect_object_c"):
+        del bpy.types.WindowManager.add_connect_object_c
+    if hasattr(bpy.types.WindowManager, "add_connect_object_b"):
+        del bpy.types.WindowManager.add_connect_object_b
+    if hasattr(bpy.types.WindowManager, "add_connect_object_a"):
+        del bpy.types.WindowManager.add_connect_object_a
+    unregister_ifc_label_overlay()
+    if hasattr(Scene, "og_props"):
+        del Scene.og_props
     for c in classes:
-        unregister_class(c)
+        try:
+            unregister_class(c)
+        except RuntimeError:
+            pass
 
 if __name__ == "__main__":
     register()

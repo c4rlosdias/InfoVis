@@ -1,185 +1,167 @@
-# Módulo: operators.py
+# Operadores - modules/*/operators.py
 
 ## 📌 Visão Geral
 
-Este é o módulo mais extenso da aplicação (1551 linhas) e contém a lógica principal de negócio. Implementa operadores Blender que manipulam dados IFC, realizam análises e gerenciam a decomposição de projetos de óleo e gás.
+Os operadores estão distribuídos por domínio funcional dentro de `modules/`. Cada domínio possui seu próprio `operators.py` com a lógica de negócio específica.
+
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `modules/common/operators.py` | Utilitários compartilhados |
+| `modules/dictionary/operators.py` | Operadores bSDD |
+| `modules/decomposition/operators.py` | Decomposição IFC |
+| `modules/catalog/operators.py` | Catálogo de tipos |
+| `modules/connections/operators.py` | Conexões IFC |
+| `modules/props/operators.py` | Propriedades e gráficos |
+
+Todas as classes são registradas centralmente em `modules/__init__.py` via `get_classes()`.
 
 ---
 
-## 🔧 Funcionalidades Principais
+## 🔧 Módulo: modules/common/operators.py
 
-### 1. Gerenciamento de Dados JSON
+Funções e operadores utilitários compartilhados por todos os módulos.
 
-#### `save_json(dados)`
-```python
-def save_json(dados):
-    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "dados.json")
-    with open(path, 'w', encoding='utf-8') as file:
-        json.dump(dados, file, ensure_ascii=False, indent=4)
-```
-**Propósito**: Salva dados em formato JSON no arquivo `dados.json` local
-**Uso**: Persistência de configurações e cache de resultados
+### Funções
 
----
+| Função | Descrição |
+|--------|-----------|
+| `reorder_element(context, index, chg)` | Reordena elementos IFC aninhados |
+| `_open_in_browser(url)` | Abre URL no navegador (cross-platform) |
+| `get_options(self, context)` | Callback para `dynamic_items` em EnumProperty |
 
-### 2. Construção de Hierarquias
+### Operadores
 
-#### `build_classes(context, classe, c, level, parent, hide)`
-Constrói recursivamente a hierarquia de classes na propriedade `classes`.
+| Classe | bl_idname | Descrição |
+|--------|-----------|-----------|
+| `Operator_expand_tree` | `element.expand_tree` | Expande nó da árvore |
+| `Operator_contract_tree` | `element.contract_tree` | Contrai nó da árvore |
+| `ErrorMessage` | `og.error_message` | Popup de mensagem de erro |
 
-**Parâmetros:**
-- `context`: Contexto do Blender
-- `classe`: Dicionário com dados da classe (código, nome, descrição, URI)
-- `c`: Contador/índice do elemento
-- `level`: Nível de profundidade na hierarquia
-- `parent`: Nome da classe pai
-- `hide`: Se deve ocultar inicialmente (True/False)
+### PropertyGroup
 
-**Lógica:**
-1. Cria novo item `Class_info` em `props.classes`
-2. Preenche propriedades: código, nome, descrição, URI, tipo
-3. Define índice, nível e relação de parentesco
-4. Se tem filhos, marca como expandível e processa recursivamente
-5. Define visibilidade com `set_hide_class()`
-
-**Exemplo:**
-```python
-classe_dict = {
-    "code": "001",
-    "name": "Pipe",
-    "descriptionPart": "Tubulação subsuperficial",
-    "uri": "http://bsdd.buildingsmart.org/...",
-    "classType": "IfcPipeSegment",
-    "children": [...]
-}
-build_classes(context, classe_dict, 0, 1, "", False)
-```
-
-#### `build_products(context, classe, c, level, parent, hide, children)`
-Similar a `build_classes` mas para tipos de produtos/elementos IFC.
-
-**Diferenças:**
-- Adiciona em `props.types` em vez de `props.classes`
-- Usa `element_type` em vez de `classType`
-- Parametro adicional `children`
+- **`Columns`** — `name` (StringProperty) + `selected` (BoolProperty) — para seleção de colunas em gráficos
 
 ---
 
-### 3. Controle de Visibilidade Hierárquica
+## 🌐 Módulo: modules/dictionary/operators.py
 
-#### `set_hide_class(context, index, is_hidden)`
-Oculta/mostra recursivamente todas as subclasses de um item.
+Operadores de integração com o bSDD (buildingSMART Data Dictionary).
 
-**Algoritmo:**
-```
-Para cada classe após o índice:
-  Se nível > nível do índice:
-    Aplica o estado is_hidden
-  Se nível <= nível do índice:
-    Para (limite alcançado)
-```
+### Operadores
 
-#### `set_hide_product(context, index, is_hidden)`
-Versão para produtos com mesma lógica.
+| Classe | bl_idname | Descrição |
+|--------|-----------|-----------|
+| `Operator_clear_properties` | `object.clear_prop` | Limpa propriedades do objeto |
+| `Operator_assign_all` | `object.assign_all` | Seleciona todas as propriedades |
+| `Operator_unassign_all` | `object.unassign_all` | Desmarca todas as propriedades |
+| `Operator_get_properties` | `bsdd.get_prop` | Busca propriedades do bSDD |
+| `Operator_uri` | `object.uri` | Abre URI no navegador |
+| `Operator_get_classes` | `bsdd.get_class` | Busca classes do bSDD |
+| `Operator_add_properties` | `object.add_prop` | Adiciona pset templates do bSDD |
+| `Operator_get_prop_info` | `property.get_prop_info` | Busca metadados de propriedade |
+| `Operator_get_class_info` | `bsdd.get_class_info` | Busca metadados de classe |
+| `Operator_get_class_prop` | `bsdd.get_class_prop` | Busca propriedades de classe |
+| `Operator_export_ids` | `ids.export` | Exporta arquivo IDS (XML) |
 
----
-
-### 4. Operadores IFC
-
-#### Importação e Configuração
-```python
-import ifcopenshell.util.element as element
-import ifcopenshell.util.representation as representation
-import ifcopenshell.util.selector as selector
-import ifcopenshell.api.root.create_entity as create_entity
-import ifcopenshell.api.material as material
-import ifcopenshell.api.geometry as geometry
-import ifcopenshell.api.style as style
-```
-
-**Funcionalidades:**
-- **element**: Manipulação de elementos (obter propriedades, valores)
-- **representation**: Gerenciar representações geométricas
-- **selector**: Selecionar elementos por critério
-- **create_entity**: Criar novos objetos IFC
-- **material**: Associar materiais
-- **geometry**: Manipular geometrias
-- **style**: Aplicar estilos visuais
-
-#### Integração Bonsai/Blender
-```python
-import bonsai.core
-import bonsai.core.geometry
-import bonsai.core.material
-import bonsai.core.type
-import bonsai.tool as tool
-from bonsai.bim import import_ifc
-```
-
-Usa a biblioteca Bonsai para integração profunda com BlenderBIM.
+### Dependências
+- `tqdm` — barras de progresso
+- `ifctester.ids` — validação IDS
+- `data.bsdd` — cliente bSDD
+- `data.catalog` — templates de propriedade
+- `data.ifc_utils` — construção de hierarquias
 
 ---
 
-### 5. Análise e Visualização de Dados
+## 🏗️ Módulo: modules/decomposition/operators.py
 
-#### Bibliotecas
-```python
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.ticker import MultipleLocator
-import matplotlib
-import numpy as np
-from scipy.interpolate import interp1d
-```
+Operadores para decomposição de projetos IFC.
 
-#### Capacidades
-- **Pandas**: Processamento de dados tabulares, cálculos estatísticos
-- **Matplotlib**: Geração de gráficos 2D/3D
-- **NumPy**: Operações vetorizadas em arrays
-- **SciPy**: Interpolação de curvas, algoritmos científicos
+### Operadores
 
-#### Exemplos de Uso
-```python
-# Interpolação de dados
-f = interp1d(x_values, y_values, kind='cubic')
-y_interpolated = f(x_new)
+| Classe | bl_idname | Descrição |
+|--------|-----------|-----------|
+| `Operator_decomposition_load` | `decomposition.load` | Carrega árvore de decomposição IFC |
+| `Operator_decomposition_select_element` | `decomposition.select_element` | Seleciona elemento individual |
+| `Operator_decomposition_select_components` | `decomposition.select_components` | Seleciona elemento + filhos recursivamente |
+| `Operator_decomposition_move` | `decomposition.move` | Move elemento para novo pai (nest/aggregate) |
+| `Operator_decomposition_chg_order` | `decomposition.chg_order` | Reordena elementos |
 
-# Gráficos com matplotlib
-plt.figure(figsize=(10, 6))
-plt.plot(x, y)
-plt.xlabel('Distância (m)')
-plt.ylabel('Pressão (bar)')
-plt.show()
-```
+### Dependências
+- `data.tree` — `load_contained_elements_by_decomposition()`, `refresh_tree()`
 
 ---
 
-### 6. Validação com IDS
+## 📦 Módulo: modules/catalog/operators.py
 
-#### Importação
-```python
-from ifctester import ids
-```
+Operadores para o catálogo de tipos de produtos IFC.
 
-#### Uso
-- Validar se arquivo IFC atende especificações IDS
-- Testar conformidade com PetroBRAS
-- Gerar relatórios de conformidade
+### Operadores
+
+| Classe | bl_idname | Descrição |
+|--------|-----------|-----------|
+| `Operator_load_products` | `catag.load_products` | Carrega produtos IFC agrupados por ElementType |
+| `Operator_catalog_select_type` | `catag.select_type` | Seleciona objeto de tipo |
+| `Operator_catalog_select_elements` | `catag.select_elements` | Seleciona todas as instâncias de um tipo |
+| `Operator_catalog_show_layers` | `catag.show_layers` | Gera relatório HTML de camadas |
+| `Operator_catalog_select_layer` | `catag.select_layer` | Seleciona objeto de uma camada |
+
+### Funções
+
+| Função | Descrição |
+|--------|-----------|
+| `update_predefined_types()` | Atualiza ObjectType/PredefinedType em elementos IFC em lote |
+
+### Dependências
+- `data.catalog` — `Import_ifc`, `Catalog`
+- `data.ifc_utils` — `build_products()`
+- `data.tree` — `refresh_products()`, `refresh_types()`
 
 ---
 
-### 7. Função `get_options(self, context)`
+## 🔌 Módulo: modules/connections/operators.py
 
-**Propósito**: Callback para propriedades enum que usam `dynamic_items`
+Operadores para gerenciamento de conexões IFC.
 
-```python
-dynamic_items = []  # Lista global
+### Operadores
 
-def get_options(self, context):    
-    return dynamic_items
-```
+| Classe | bl_idname | Descrição |
+|--------|-----------|-----------|
+| `Operator_disconnect` | `conn.disconnect` | Remove relação de conexão IFC |
+| `Operator_select_object` | `conn.select_object` | Seletor de objeto (eyedropper) |
+| `Operator_add_connect` | `conn.add_connect` | Cria conexão IFC entre objetos |
 
-**Uso**: Permite opções dinâmicas em dropdowns da UI
+### Padrão
+Usa `WindowManager` pointer properties para seleção de objetos.
+
+---
+
+## 📊 Módulo: modules/props/operators.py
+
+Operadores para edição de propriedades IFC e geração de gráficos.
+
+### Operadores
+
+| Classe | bl_idname | Descrição |
+|--------|-----------|-----------|
+| `Operator_props_edit` | `props.edit` | Edita valor de propriedade (single, list, enum) |
+| `Operator_props_load` | `props.load_properties` | Carrega propriedades do objeto ativo |
+| `Operator_props_expand` | `props.expand` | Toggle expandir/contrair pset |
+| `Operator_docs_expand` | `docs.expand` | Toggle seção de documentos |
+| `Operator_props_graph` | `props.graph` | Gera gráfico matplotlib de dados tabela/CSV |
+| `Operator_props_invert` | `props.invert` | Inverte eixos X/Y |
+| `Operator_document_edit` | `props.doc_edit` | Edita referências de documentos IFC |
+| `Operator_document_load` | `props.load_doc` | File browser para caminhos de documentos |
+| `Operator_document_open` | `props.open_doc` | Abre documento no navegador/OS |
+| `Operator_show_table` | `props.show_table` | Toggle visibilidade de tabela |
+
+### Bibliotecas de Análise
+- **pandas**: Processamento de dados tabulares
+- **matplotlib**: Geração de gráficos 2D
+- **numpy**: Operações vetorizadas
+- **scipy.interpolate**: Interpolação de curvas
+
+### Padrão
+Usa `invoke_props_dialog` para configuração de gráficos com seleção de colunas.
 
 ---
 
@@ -187,68 +169,41 @@ def get_options(self, context):
 
 ```
 1. Usuário seleciona arquivo IFC ou clica em botão
-   │
-2. Callback ou operador disparado
-   │
-3. Extrai dados com ifcopenshell
-   │
-4. Processa com pandas/numpy se necessário
-   │
-5. Constrói hierarquias com build_classes/build_products
-   │
-6. Atualiza propriedades (properties.py)
-   │
-7. Renderiza na UI (panels.py)
-   │
-8. Salva dados em dados.json se necessário
+   |
+2. Operador disparado (ex: bsdd.get_class)
+   |
+3. auth.is_authenticated() verificado (se necessário)
+   |
+4. Extrai dados com ifcopenshell
+   |
+5. Processa com pandas/numpy se necessário
+   |
+6. Constrói hierarquias com ifc_utils.build_classes/build_products
+   |
+7. Atualiza propriedades (modules/og_properties.py)
+   |
+8. Renderiza na UI (modules/*/panels.py)
 ```
 
 ---
 
 ## 📦 Estruturas de Dados
 
-### Classe JSON esperada
+### Classe JSON esperada (bSDD)
 ```json
 {
   "code": "001",
   "name": "Flexible Pipe",
-  "descriptionPart": "Descrição",
+  "descriptionPart": "Descri\u00e7\u00e3o",
   "uri": "http://bsdd.buildingsmart.org/...",
   "classType": "IfcPipeSegmentFlexible",
   "children": [
     {
       "code": "001.001",
-      "name": "Tensioner",
-      ...
+      "name": "Tensioner"
     }
   ]
 }
-```
-
-### Dicionário de Produto
-```json
-{
-  "id": 123,
-  "name": "Product Name",
-  "description": "Descrição",
-  "element_type": "IfcPipeSegment"
-}
-```
-
----
-
-## ⚙️ Configurações
-
-### Caminho de Dados
-```python
-path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "dados.json")
-# Salva no mesmo diretório do script
-```
-
-### Encoding
-```python
-encoding='utf-8'  # Suporta caracteres especiais (português)
-ensure_ascii=False
 ```
 
 ---
@@ -262,35 +217,18 @@ for classe in props.classes:
     print(f"{classe.name} (level: {classe.level_index})")
 ```
 
-### Validar IFC
+### Inspecionar Propriedades IFC
 ```python
-import ifcopenshell
-ifc_file = ifcopenshell.open("path/file.ifc")
-print(f"Entidades: {len(ifc_file)}")
-```
-
-### Inspecionar Propriedades
-```python
-element_obj = ifc_file[123]  # Por GlobalId
+import ifcopenshell.util.element as element
+element_obj = ifc_file[123]
 props_dict = element.get_psets(element_obj)
 ```
 
 ---
 
-## 📝 Boas Práticas
+## 🔗 Integração com Outros Pacotes
 
-1. **Sempre validar** entrada IFC antes de processar
-2. **Usar try-except** em operações de arquivo
-3. **Limpar dados** dinâmicos antes de recarregar
-4. **Usar tqdm** para feedback em operações longas
-5. **Documentar** callbacks e eventos
-
----
-
-## 🔗 Integração com Outros Módulos
-
-- **properties.py**: Define estruturas usadas aqui (`Class_info`, `Class_type`)
-- **panels.py**: Consome dados construídos aqui
-- **data.py**: Complementa com funcionalidades de integração
-- **__init__.py**: Registra operadores para Blender
-
+- **`data/`**: Fornece `bSDD`, `Catalog`, `tree`, `ifc_utils` — toda a camada de dados
+- **`modules/*/properties.py`** e **`modules/og_properties.py`**: Definem `Class_info`, `Class_type`, `OG_Properties` e outras estruturas de dados
+- **`modules/*/panels.py`**: Consomem dados construidos aqui para renderizar na UI
+- **`__init__.py`**: Registra todos os operadores para o Blender

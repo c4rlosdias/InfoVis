@@ -1,496 +1,195 @@
-# 🏗️ Arquitetura - Oil & Gas Tools
+# Arquitetura do InfoVis
 
-## Visão Geral
+## Visao Geral
 
-O Oil & Gas Tools é um **add-on Blender modular** que segue o padrão **MVC (Model-View-Controller)** adaptado para Blender.
+O InfoVis e um add-on para Blender estruturado como um pacote Python modular. A aplicacao se apoia em tres blocos principais:
 
-```
-┌──────────────────────────────────────────────────┐
-│            BLENDER (Host)                        │
-├──────────────────────────────────────────────────┤
-│  Panels (UI)           → panels.py               │
-│  Properties (Data)     → properties.py           │
-│  Operators (Logic)     → operators.py            │
-│  Data Layer            → data.py                 │
-└─────────────────────┬────────────────────────────┘
-                      │
-                      ▼
-        ┌──────────────────────────┐
-        │  External Services       │
-        ├──────────────────────────┤
-        │ • bSDD                   │
-        │ • ifcopenshell           │
-        │ • matplotlib, scipy      │
-        └──────────────────────────┘
-```
+- `__init__.py`: ponto de entrada, metadados do add-on, preferencias, autenticacao e ciclo de registro
+- `modules/`: UI, operadores e estruturas de dados expostas ao Blender
+- `data/`: funcoes de suporte para IFC, bSDD, catalogo, CDE e refresh de arvores
 
-## Camadas Principais
+O registro das classes Blender acontece a partir de `modules.get_classes()`, preservando a ordem exigida pelo Blender: tipos auxiliares, `PropertyGroup`s, `OG_Properties`, operadores e paineis.
 
-### 1. **UI Layer** (panels.py)
-Renderiza painéis na viewport com botões, listas e controles. Interage com o usuário através da interface do Blender.
+## Mapa de Componentes
 
-### 2. **Properties Layer** (properties.py)
-Define a estrutura de dados usando PropertyGroups do Blender. Armazena estado da aplicação e sincroniza com UI.
-
-### 3. **Operators Layer** (operators.py)
-Implementa a lógica de negócio: extração IFC, construção de hierarquias, processamento de dados.
-
-### 4. **Data Layer** (data.py)
-Gerencia sincronização entre camadas, callbacks, eventos e integração com bSDD.
-
-## Fluxo de Dados
-
-### Exemplo: Carregar Classes do bSDD
-
-```
-Usuário clica botão → Operador executa → Dados carregados
-      (UI)                (Logic)         (Properties)
-                            │
-                            ▼
-                    data.refresh() atualiza
-                            │
-                            ▼
-                    Panel redesenha
+```text
+Blender
+  |
+  |-- __init__.py
+  |    |-- bl_info
+  |    |-- OilGasAddonPreferences
+  |    |-- OG_OT_Login / OG_OT_Logout
+  |    `-- register() / unregister()
+  |
+  |-- modules/
+  |    |-- __init__.py
+  |    |-- og_properties.py
+  |    |-- common/
+  |    |-- dictionary/
+  |    |-- decomposition/
+  |    |-- catalog/
+  |    |-- connections/
+  |    |-- props/
+  |    |-- types/
+  |    `-- settings/
+  |
+  |-- data/
+  |    |-- bsdd.py
+  |    |-- catalog.py
+  |    |-- cde.py
+  |    |-- ifc_utils.py
+  |    `-- tree.py
+  |
+  |-- auth.py
+  |-- resources/
+  |-- libs311/
+  `-- libs313/
 ```
 
-## Estrutura de Dados
+## Responsabilidades por Camada
 
-```
-context.scene.og_props
-├── classes: todas as classes (incluso ocultas)
-├── classes_shown: apenas visíveis
-├── types: todos os tipos
-├── types_show: tipos visíveis
-└── flags: status de carregamento
-```
+### Entrada e ciclo de vida
 
-## Padrões de Design
+`__init__.py` concentra o que o Blender precisa para carregar o add-on:
 
-| Padrão | Arquivo | Uso |
-|--------|---------|-----|
-| PropertyGroup | properties.py | Dados sincronizados com UI |
-| Operator | operators.py | Lógica + undo/redo |
-| Panel | panels.py | Interface visual |
-| Callback | data.py | Reage a mudanças |
+- define `bl_info`
+- ajusta `sys.path` para bibliotecas empacotadas no Windows
+- instala dependencias faltantes em Linux e macOS quando necessario
+- declara preferencias do add-on e operadores de autenticacao
+- cria `Scene.og_props`
+- registra handlers e subscriber de `bpy.msgbus`
+- ativa e desativa overlays da viewport
 
-## Fluxo de Inicialização
+### Modulos Blender
 
-```
-1. Usuário ativa add-on
-2. __init__.py carrega módulos
-3. Registra classes e PropertyGroups
-4. Painel aparece na View3D
-5. Pronto para usar
-```
+`modules/` organiza a funcionalidade por dominio. Cada dominio agrupa operadores, paineis e, quando necessario, `PropertyGroup`s.
 
-## Dependências Entre Módulos
+#### `modules/common/`
 
-```
-__init__.py (registro)
-    ↓
-properties.py ← operators.py ← panels.py
-    ↓            ↓
-  data.py (sincronização)
-    ↓
-External APIs (ifcopenshell, bSDD, etc)
-```
+Utilitarios compartilhados entre paineis e operadores, como expansao de arvores, selecao e mensagens de erro.
 
-## Para Mais Detalhes
+#### `modules/dictionary/`
 
-- **[Desenvolvimento](DEVELOPMENT.md)** - Como setup e contribuir
-- **[Módulos](guides/)** - Documentação completa por arquivo
-- **[Glossário](reference/GLOSSARY.md)** - Termos e FAQ
+Fluxos de consulta ao bSDD: classes, propriedades, detalhes de classe e exportacao relacionada a IDS.
 
-### 1. **Initialization Layer** (`__init__.py`)
+#### `modules/decomposition/`
 
-**Responsabilidades:**
-- Definir metadados do add-on
-- Registrar classes com Blender
-- Gerenciar ciclo de vida (register/unregister)
+Visualizacao da decomposicao IFC, selecao de elementos, ordenacao e navegacao em estruturas hierarquicas.
 
-**Fluxo:**
-```
-Blender inicia add-on
-    │
-    ▼
-__init__.py executa
-    │
-    ├─ Define bl_info
-    ├─ Importa módulos
-    ├─ Registra classes (register_class)
-    ├─ Adiciona handlers
-    └─ Anexa PropertyGroups à Scene
-```
+#### `modules/catalog/`
 
-### 2. **UI Layer** (`panels.py`)
+Carregamento de produtos, tipos e camadas, com apoio ao filtro e selecao de elementos no modelo.
 
-**Responsabilidades:**
-- Renderizar painéis na viewport
-- Criar componentes visuais
-- Gerenciar interações do usuário
+#### `modules/connections/`
 
-**Padrão:**
-```python
-class PanelName(bpy.types.Panel):
-    def draw_header(self, context):
-        # Ícone e label
+Operacoes de criacao, remocao e selecao de conexoes entre objetos no contexto IFC.
 
-    def draw(self, context):
-        # Layout completo
-        props = context.scene.og_props
-        layout.template_list(...)
-        layout.operator(...)
-```
+#### `modules/props/`
 
-### 3. **Properties Layer** (`properties.py`)
+Inspecao e edicao de propriedades, documentos associados e visualizacoes graficas.
 
-**Responsabilidades:**
-- Definir estrutura de dados
-- Gerenciar callbacks de mudança
-- Armazenar estado da aplicação
+#### `modules/types/`
 
-**Padrão:**
-```python
-class PropertyGroup(bpy.types.PropertyGroup):
-    campo1: StringProperty(...)
-    campo2: IntProperty(...)
-    
-    def callback(self, context):
-        # Reagir a mudanças
+Painel dedicado a tipos exibidos no add-on.
+
+#### `modules/settings/`
+
+Controles de configuracao e gerenciamento dos atributos exibidos como labels IFC.
+
+#### `modules/og_properties.py`
+
+Define `OG_Properties`, o agregador central de estado do add-on. Ele concentra colecoes e flags utilizadas por varios paineis e operadores.
+
+## Camada de Dados
+
+`data/` encapsula operacoes que nao pertencem diretamente a UI do Blender.
+
+- `bsdd.py`: chamadas HTTP para consulta ao bSDD
+- `catalog.py`: leitura de catalogo, tipos e apoio ao carregamento IFC
+- `cde.py`: integracao com a API de CDE
+- `ifc_utils.py`: utilitarios para elementos, propriedades, documentos e conexoes IFC
+- `tree.py`: refresh de estruturas em arvore e callback associado a mudanca de objeto ativo
+
+Essa separacao evita que a logica de negocio fique espalhada nos paineis e reduz acoplamento com o ciclo de desenho da interface.
+
+## Registro de Classes
+
+`modules/__init__.py` funciona como registro central. A funcao `get_classes()` retorna todas as classes Blender em ordem estavel.
+
+Sequencia atual:
+
+1. utilitarios compartilhados
+2. `PropertyGroup`s especializados
+3. `IFC_Label_Attribute`
+4. `OG_Properties`
+5. operadores por dominio
+6. paineis e `UIList`s
+
+Essa ordem e importante porque o Blender exige que tipos referenciados por propriedades sejam registrados antes de serem usados.
+
+## Fluxo de Inicializacao
+
+```text
+Usuario ativa o add-on
+  -> Blender executa __init__.py
+  -> bibliotecas empacotadas sao adicionadas ao sys.path quando aplicavel
+  -> preferencias e operadores basicos sao declarados
+  -> modules.get_classes() monta a lista de classes
+  -> register() registra classes no Blender
+  -> Scene.og_props e WindowManager.* sao criados
+  -> msgbus passa a observar o objeto ativo
+  -> overlay de labels IFC e registrado
 ```
 
-### 4. **Operators Layer** (`operators.py`)
+Ao abrir um novo arquivo, o handler `_on_load_post` restabelece a assinatura do `msgbus`, mantendo a sincronizacao entre selecao ativa e arvores exibidas nos paineis.
 
-**Responsabilidades:**
-- Implementar lógica de negócio
-- Manipular dados IFC
-- Processar e transformar informações
+## Gestao de Dependencias
 
-**Padrão:**
-```python
-class MyOperator(bpy.types.Operator):
-    bl_idname = "namespace.operator_name"
-    bl_label = "Label"
-    
-    def execute(self, context):
-        # Lógica principal
-        return {'FINISHED'}
-```
+O projeto usa duas estrategias de distribuicao:
 
-### 5. **Data Layer** (`data.py`)
+- Windows: bibliotecas binarias embarcadas em `libs311/` e `libs313/`
+- Linux e macOS: instalacao sob demanda usando o Python do Blender
 
-**Responsabilidades:**
-- Sincronizar dados entre camadas
-- Gerenciar eventos e callbacks
-- Integrar com bSDD
+Esse comportamento e decidido em tempo de importacao com base em `platform.system()` e `sys.version_info`.
 
-**Padrão:**
-```python
-def event_handler(scene):
-    # Detecta mudanças
-    # Dispara atualizações
+## Recursos Estaticos
 
-def refresh_function(context):
-    # Sincroniza dados
-    # Filtra resultados
-```
+`resources/` armazena arquivos JSON utilizados pela aplicacao, incluindo definicoes auxiliares de tipos IFC, unidades e datasets de dominio.
 
----
+## Pacote de Release
 
-## 🔄 Fluxos de Dados
+Os scripts `build_release.bat` e `build_release.sh` copiam apenas o subconjunto necessario do repositorio para `releases/InfoVis/` e geram um arquivo zip instalavel no Blender.
 
-### Fluxo 1: Carregar Classes do bSDD
+Conteudo empacotado:
 
-```
-Usuário clica "get classes from bSDD" (panels.py)
-        │
-        ▼
-Operador bsdd.get_class (operators.py)
-        │
-        ├─ Conecta ao servidor bSDD
-        ├─ Faz requisição HTTP
-        ├─ Recebe dados JSON
-        │
-        ▼
-build_classes() constrói hierarquia
-        │
-        ├─ Itera sobre classes recursivamente
-        ├─ Cria items em props.classes
-        ├─ Define relações parent-child
-        │
-        ▼
-data.py refresh() filtra visíveis
-        │
-        ├─ Limpa props.classes_shown
-        ├─ Copia items não-ocultos
-        │
-        ▼
-Panel desenha nova lista (panels.py)
-        │
-        ▼
-Usuário vê resultado
-```
+- `__init__.py`
+- `auth.py`
+- `modules/`
+- `data/`
+- `libs311/`
+- `libs313/`
+- `resources/`
 
-### Fluxo 2: Selecionar Objeto e Carregar Propriedades
+Arquivos de documentacao e exemplos nao entram no pacote de instalacao.
 
-```
-Usuário seleciona objeto no viewport
-        │
-        ▼
-Handler depsgraph_update_post (data.py)
-        │
-        ▼
-on_active_object_change() detecta mudança
-        │
-        ├─ Compara com last_active
-        ├─ Atualiza last_active
-        │
-        ▼
-bpy.ops.props.load_properties() (operators.py)
-        │
-        ├─ Extrai objeto IFC selecionado
-        ├─ Carrega propriedades com ifcopenshell
-        ├─ Processa com pandas/numpy se necessário
-        │
-        ▼
-data.py refresh() atualiza listas
-        │
-        ▼
-Panel exibe propriedades (panels.py)
-        │
-        ▼
-Usuário vê informações do objeto
-```
+## Convencoes Arquiteturais
 
-### Fluxo 3: Expandir/Contrair Hierarquia
+- os paineis devem delegar trabalho pesado para operadores e funcoes de `data/`
+- o estado compartilhado deve ficar em `OG_Properties` ou em `PropertyGroup`s dedicados
+- integracoes externas devem ser encapsuladas em `data/` ou em um modulo de infraestrutura claro
+- o registro de novas classes deve passar por `modules/__init__.py`
 
-```
-Usuário clica em expand/collapse (panels.py)
-        │
-        ▼
-set_hide_class() / set_hide_product() (operators.py)
-        │
-        ├─ Encontra índice do item
-        ├─ Recursivamente oculta/mostra filhos
-        ├─ Marca items como is_hidden
-        │
-        ▼
-data.py refresh() atualiza visibilidade
-        │
-        ├─ Filtra baseado em is_hidden
-        ├─ Reconstrói classes_shown
-        │
-        ▼
-Panel redesenha com nova hierarquia (panels.py)
-        │
-        ▼
-Usuário vê estrutura expandida/contraída
-```
+## Documentos Relacionados
 
----
-
-## 🗂️ Estrutura de Dados
-
-### Dados Persistentes (na Scene)
-```
-context.scene.og_props (SceneProperties)
-│
-├── classes: CollectionProperty[Ifc_properties]
-│   └── [Todas as classes, inclusive ocultas]
-│
-├── classes_shown: CollectionProperty[Ifc_properties]
-│   └── [Classes visíveis apenas]
-│
-├── types: CollectionProperty[Class_type]
-│   └── [Todos os tipos]
-│
-├── types_show: CollectionProperty[Class_type]
-│   └── [Tipos visíveis apenas]
-│
-└── flags: BoolProperty
-    ├── classes_loaded: bool
-    ├── types_loaded: bool
-    └── product_loaded: bool
-```
-
-### Dados em Arquivo JSON (`dados.json`)
-```json
-{
-  "classes": [
-    {
-      "code": "001",
-      "name": "Flexible Pipe",
-      "uri": "http://bsdd.buildingsmart.org/...",
-      ...
-    }
-  ],
-  "timestamp": "2025-01-19T10:30:00",
-  "version": "0.1.1"
-}
-```
-
-### Dados Temporários em Memória
-```python
-dynamic_items = []  # Para dropdowns
-last_active = None  # Objeto anterior selecionado
-bSDD.data_dic = {}  # Cache de dicionários
-```
-
----
-
-## 🔌 Integração com Blender
-
-### PropertyGroups
-- Atreladas a `bpy.types.Scene`
-- Persistem entre saves
-- Atualizáveis via UI
-
-### Operators
-- Herdam de `bpy.types.Operator`
-- Registrados com `register_class()`
-- Acessíveis via `bpy.ops.<namespace>.<name>()`
-
-### Panels
-- Herdam de `bpy.types.Panel`
-- Renderizados em regiões específicas
-- Atualizados automaticamente
-
-### Handlers
-- Registrados em `bpy.app.handlers`
-- Chamados durante eventos da cena
-- Exemplo: `depsgraph_update_post`
-
----
-
-## 🧪 Padrões de Design
-
-### 1. Property Group Pattern
-```python
-class MyPropertyGroup(PropertyGroup):
-    value: StringProperty(
-        name="Value",
-        update=callback_function
-    )
-```
-
-**Vantagem**: Dados sincronizados com UI automaticamente
-
-### 2. Operator Pattern
-```python
-class MyOperator(bpy.types.Operator):
-    bl_idname = "my.operator"
-    
-    def execute(self, context):
-        return {'FINISHED'}
-    
-    def undo_push(self):
-        # Para undo/redo
-```
-
-**Vantagem**: Integração com sistema de undo/redo do Blender
-
-### 3. Panel Pattern
-```python
-class MyPanel(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    
-    def draw(self, context):
-        layout = self.layout
-        # Desenhar elementos
-```
-
-**Vantagem**: Aparecem corretamente na UI
-
-### 4. Callback Pattern
-```python
-def on_property_change(self, context):
-    # Reagir a mudanças
-    refresh(context)
-```
-
-**Vantagem**: Sincronização automática
-
----
-
-## 🔗 Dependências Entre Módulos
-
-```
-__init__.py
-    │
-    ├─ importa: operators.py, panels.py, properties.py
-    ├─ registra: todas as classes
-    └─ annexa: PropertyGroups à Scene
-
-operators.py
-    ├─ importa: data.py (funções refresh)
-    ├─ usa: ifcopenshell, matplotlib, scipy, pandas
-    ├─ popula: props.classes, props.types
-    └─ chama: data.refresh()
-
-panels.py
-    ├─ importa: operators.py (operadores para botões)
-    ├─ lê: properties.py (PropertyGroups)
-    └─ renderiza: dados de properties
-
-properties.py
-    ├─ define: PropertyGroups
-    ├─ callbacks: para sincronização
-    └─ usado por: panels.py, operators.py
-
-data.py
-    ├─ gerencia: eventos e sincronização
-    ├─ implementa: refresh functions
-    ├─ integra: bSDD
-    └─ manipula: properties.py
-```
-
----
-
-## 🚀 Fluxo de Inicialização
-
-```
-1. Usuário ativa add-on em Blender
-   │
-2. __init__.py executa:
-   ├─ Define bl_info
-   ├─ Importa módulos
-   └─ Chama register()
-   
-3. register() executa:
-   ├─ Registra classes (register_class)
-   ├─ Anexa PropertyGroups
-   └─ Registra handlers
-   
-4. Blender pronto
-   └─ Painel aparece na View3D
-   └─ Pronto para usar
-```
-
----
-
-## 📊 Fluxo de Execução de Um Operador
-
-```
-Usuário clica botão em Panel (panels.py)
-    │
-    ▼
-Operador disparado (operators.py)
-    │
-    ├─ Recebe parâmetros do painel
-    ├─ Executa lógica principal
-    ├─ Modifica context.scene.og_props
-    │
-    ▼
-data.refresh() chamado
-    │
-    ├─ Filtra dados
-    ├─ Atualiza collections
-    │
-    ▼
-Panel render() chamado automaticamente
+- [DEVELOPMENT.md](DEVELOPMENT.md)
+- [guides/OPERATORS_DOCUMENTATION.md](guides/OPERATORS_DOCUMENTATION.md)
+- [guides/PANELS_DOCUMENTATION.md](guides/PANELS_DOCUMENTATION.md)
+- [guides/PROPERTIES_DOCUMENTATION.md](guides/PROPERTIES_DOCUMENTATION.md)
+- [guides/DATA_DOCUMENTATION.md](guides/DATA_DOCUMENTATION.md)
+- [reference/GLOSSARY.md](reference/GLOSSARY.md)
     │
     ├─ Lê dados atualizados
+    ├─ Verifica auth.is_authenticated() para funcionalidades de edição
     ├─ Desenha novamente
     │
     ▼

@@ -58,7 +58,7 @@ TXT_DIM  = '#666666'
 # ══════════════════════════════════════════════════════════════════
 # TÍTULO
 # ══════════════════════════════════════════════════════════════════
-txt(ax, FIG_W/2, 21.5, 'Oil & Gas Tools — Arquitetura do Add-on',
+txt(ax, FIG_W/2, 21.5, 'InfoVis — Arquitetura do Add-on',
     size=16, color='#f0a500', weight='bold')
 txt(ax, FIG_W/2, 21.1, 'Blender 5.0 + Bonsai/BIM  ·  v0.1.1',
     size=9, color='#888888')

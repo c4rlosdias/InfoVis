@@ -1,148 +1,167 @@
-# � Oil & Gas Tools - Add-on Blender
+# InfoVis
 
-Um add-on para Blender que oferece ferramentas especializadas para modelagem e análise de estruturas de Oil & Gas, com suporte a IFC e integração com bSDD.
+Add-on para Blender voltado a visualizacao, inspecao e enriquecimento de informacoes IFC, com integracao a bSDD, estruturas de decomposicao, catalogo de tipos, conexoes e propriedades de objetos.
 
-## 📋 Início Rápido
+## Visao Geral
 
-### Requisitos
-- Blender 5.0+
-- Python 3.10+
-- Git
+O projeto e distribuido como um add-on Python para Blender. A entrada principal fica em `__init__.py`, que registra preferencias, operadores de autenticacao, `OG_Properties` e todas as classes carregadas por `modules/get_classes()`.
 
-### Instalação
+Principais capacidades:
 
-1. **Obtenha o arquivo zipado com o release:**
+- leitura e navegacao de dados IFC
+- consulta a classes e propriedades via bSDD
+- visualizacao de decomposicao e arvore de elementos
+- selecao de tipos e camadas de catalogo
+- edicao e inspecao de propriedades e documentos
+- exibicao de atributos IFC na viewport
 
-   - Abra Blender
-   - Acesse Edit > Preferences > Add-ons
-   - Clique Install 'AddOn from disk'
-   - Selecione o arquivo zip correspondente ao release que deseja instalar
+## Requisitos
 
-### Criação do release
-1. **Execute:**
+- Blender 5.0 ou superior
+- Python embarcado do Blender compativel com o ambiente alvo
+- Windows, Linux ou macOS
 
-```
->_ build_realease.bat
-```
+Observacoes sobre dependencias:
 
-## 🏗️ Estrutura do Projeto
+- no Windows, o add-on utiliza bibliotecas empacotadas em `libs311/` e `libs313/`
+- em Linux e macOS, pacotes ausentes podem ser instalados no Python do Blender na inicializacao do add-on
 
-```
-├── operators.py       # Lógica principal (1551 linhas)
-├── panels.py         # Interface do usuário (766 linhas)
-├── properties.py     # Estrutura de dados (234 linhas)
-├── data.py          # Sincronização (613 linhas)
-├── resources/       # Arquivos de configuração e dados
-├── libs/           # Dependências empacotadas
-└── docs/           # Documentação detalhada
-```
+## Instalacao
 
-## 📚 Documentação
+### Uso de release zipado
 
-- **[Arquitetura](docs/ARCHITECTURE.md)** - Estrutura técnica do projeto
-- **[Desenvolvimento](docs/DEVELOPMENT.md)** - Guia para contribuidores
-- **Documentação por Módulo:**
-  - [operators.py](docs/guides/OPERATORS_DOCUMENTATION.md) - Lógica principal
-  - [panels.py](docs/guides/PANELS_DOCUMENTATION.md) - Interface do usuário
-  - [properties.py](docs/guides/PROPERTIES_DOCUMENTATION.md) - Estrutura de dados
-  - [data.py](docs/guides/DATA_DOCUMENTATION.md) - Sincronização de dados
-- **[Glossário](docs/reference/GLOSSARY.md)** - Termos e padrões usados no projeto
+1. Gere ou obtenha um arquivo `.zip` do release.
+2. No Blender, abra `Edit > Preferences > Add-ons`.
+3. Clique em `Install from Disk`.
+4. Selecione o arquivo `.zip` gerado em `releases/`.
+5. Ative o add-on `InfoVis`.
 
-## 🚀 Funcionalidades Principais
+### Instalacao para desenvolvimento
 
-- **Extração IFC**: Importação e análise de arquivos IFC
-- **Visualização de Dados**: Gráficos e estatísticas de estruturas
-- **Integração bSDD**: Acesso ao dicionário de dados buildingSMART
-- **Gerenciamento de Propriedades**: Controle de propriedades BIM
+1. Clone ou copie este repositorio para um diretorio de trabalho.
+2. Gere um pacote de release com um dos scripts abaixo:
 
-## 🤝 Contribuindo
-
-1. Leia o [Guia de Desenvolvimento](docs/DEVELOPMENT.md)
-2. Consulte a documentação do módulo relevante em `docs/guides/`
-3. Siga os padrões definidos no [Glossário](docs/reference/GLOSSARY.md)
-
-## 📄 Licença
-
-Consulte o arquivo LICENSE para mais informações.
-
-```
-README.md                            # Este arquivo
-docs/
-│
-├── ARCHITECTURE.md                  # Arquitetura técnica profunda
-├── DEVELOPMENT.md                   # Guia de desenvolvimento
-│
-├── guides/                          # Guias por Módulo
-│   ├── OPERATORS_DOCUMENTATION.md       # operators.py (1551 linhas)
-│   ├── PANELS_DOCUMENTATION.md          # panels.py (766 linhas)
-│   ├── PROPERTIES_DOCUMENTATION.md      # properties.py (234 linhas)
-│   └── DATA_DOCUMENTATION.md            # data.py (613 linhas)
-│
-├── reference/                   # Referência Rápida
-│   ├── GLOSSARY.md              # Glossário e padrões
-│   └── INDICE_COMPLETO.md       # Índice de todos os documentos
-│
-└── extra/                       # Documentos Adicionais
-    ├── SUMARIO_EXECUTIVO.md     # Resumo para gestão
-    ├── PROXIMOS_PASSOS.md       # Ações pós-documentação
-    └── DOCUMENTACAO_CONCLUIDA.md # Verificação final
+```powershell
+.\build_release.bat nome-do-release
 ```
 
-## 🗺️ Como Navegar
+```bash
+./build_release.sh nome-do-release
+```
 
-### Começando
-1. **Raiz do projeto** → `DOCUMENTATION.md` (visão geral)
-2. **Raiz do projeto** → `README_DOCUMENTATION.md` (índice central)
+3. Instale o zip gerado no Blender pelo fluxo de `Install from Disk`.
 
-### Por Objetivo
+Se preferir instalar sem zip durante o desenvolvimento, copie a pasta do projeto para o diretorio de add-ons do Blender mantendo a estrutura atual e o nome do pacote consistente com `InfoVis`.
 
-**"Quero usar o software"**
-- Consulte: [DOCUMENTATION.md](./doc/DOCUMENTATION.md)
+## Build de Release
 
-**"Quero aprender arquitetura"**
-- Leia: `ARCHITECTURE.md` (este diretório)
+Os scripts de build copiam os arquivos necessarios para `releases/InfoVis/` e geram um zip final em `releases/<nome>.zip`.
 
-**"Quero desenvolver"**
-- Leia: `DEVELOPMENT.md` (este diretório)
-- Depois: `guides/` (módulo específico)
+Arquivos e pastas incluidos no pacote:
 
-**"Preciso de referência rápida"**
-- Consulte: `reference/GLOSSARY.md`
+- `__init__.py`
+- `auth.py`
+- `modules/`
+- `data/`
+- `libs311/`
+- `libs313/`
+- `resources/`
 
+## Estrutura do Repositorio
 
-**"Qual é o próximo passo?"**
-- Veja: `extra/PROXIMOS_PASSOS.md`
+```text
+InfoVis/
+|-- __init__.py
+|-- auth.py
+|-- build_release.bat
+|-- build_release.sh
+|-- data/
+|-- docs/
+|-- Example/
+|-- libs311/
+|-- libs313/
+|-- modules/
+|-- releases/
+`-- resources/
+```
 
-## 📖 Documentos Principais (Raiz)
+### Modulos principais
 
-Mantenha na raiz do projeto:
-- ✅ `../DOCUMENTATION.md` - Visão geral técnica
-- ✅ `../README_DOCUMENTATION.md` - Índice central
-- ✅ `../README.md` - README padrão do projeto
+- `modules/dictionary/`: integracao com bSDD e propriedades de classe
+- `modules/decomposition/`: arvore de decomposicao e navegacao IFC
+- `modules/catalog/`: tipos de produto e camadas
+- `modules/connections/`: criacao e remocao de conexoes entre objetos
+- `modules/props/`: propriedades, documentos e visualizacoes
+- `modules/types/`: painel de tipos
+- `modules/settings/`: informacoes do add-on e configuracoes visuais
+- `modules/common/`: utilitarios compartilhados
+- `modules/og_properties.py`: property group central da aplicacao
 
-## 📦 Documentação por Módulo
+### Camadas de suporte
 
-Na pasta `guides/`:
-- `OPERATORS_DOCUMENTATION.md` - Lógica principal
-- `PANELS_DOCUMENTATION.md` - Interface do usuário
-- `PROPERTIES_DOCUMENTATION.md` - Estrutura de dados
-- `DATA_DOCUMENTATION.md` - Sincronização
+- `data/bsdd.py`: cliente para a API bSDD
+- `data/catalog.py`: leitura de catalogo e importacao IFC
+- `data/cde.py`: integracao com CDE
+- `data/tree.py`: refresh de arvores e callbacks
+- `data/ifc_utils.py`: funcoes auxiliares para IFC
+- `resources/`: arquivos JSON de apoio
 
-## 🔍 Referência Rápida
+## Documentacao
 
-Na pasta `reference/`:
-- `GLOSSARY.md` - Termos, padrões e debugging
-- `INDICE_COMPLETO.md` - Lista completa de documentos
+Documentos principais:
 
-## 📊 Documentos Adicionais
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): arquitetura do add-on, fluxo de inicializacao e organizacao por modulos
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md): setup, fluxo de trabalho e manutencao
+- [docs/reference/GLOSSARY.md](docs/reference/GLOSSARY.md): termos recorrentes e convencoes
 
-Na pasta `extra/`:
-- `SUMARIO_EXECUTIVO.md` - Para stakeholders
-- `MAPA_MENTAL.md` - Trilhas de aprendizado
-- `PROXIMOS_PASSOS.md` - Publicação e manutenção
-- `DOCUMENTACAO_CONCLUIDA.md` - Verificação
+Guias detalhados:
 
----
+- [docs/guides/OPERATORS_DOCUMENTATION.md](docs/guides/OPERATORS_DOCUMENTATION.md)
+- [docs/guides/PANELS_DOCUMENTATION.md](docs/guides/PANELS_DOCUMENTATION.md)
+- [docs/guides/PROPERTIES_DOCUMENTATION.md](docs/guides/PROPERTIES_DOCUMENTATION.md)
+- [docs/guides/DATA_DOCUMENTATION.md](docs/guides/DATA_DOCUMENTATION.md)
 
-**Total: 13 documentos em 4 pastas + 2 na raiz**
+Documentos complementares:
+
+- `docs/extra/` contem materiais de apoio gerencial e historico da documentacao
+
+### Publicacao com MkDocs
+
+O repositorio ja possui uma base inicial para publicacao da documentacao:
+
+- `mkdocs.yml`
+- `docs/index.md`
+- `requirements-docs.txt`
+
+Para publicar localmente:
+
+```powershell
+pip install -r requirements-docs.txt
+mkdocs serve
+```
+
+Para gerar o site estatico:
+
+```powershell
+mkdocs build
+```
+
+Se o repositorio estiver hospedado no GitHub, o workflow em `.github/workflows/docs.yml` pode publicar automaticamente a documentacao via GitHub Pages.
+
+## Fluxo de Desenvolvimento
+
+1. Ajuste o codigo em `modules/`, `data/` ou `resources/`.
+2. Reinstale ou recarregue o add-on no Blender.
+3. Valide os paines e operadores afetados com um arquivo IFC de exemplo.
+4. Gere um novo zip de release quando necessario.
+
+## Arquivos de Exemplo
+
+- `Example/C3388.8_UN-31.ifc`: arquivo IFC para testes manuais
+- `graphic.html` e `layers.html`: artefatos auxiliares para visualizacao
+
+## Observacoes
+
+- `requirements.txt` lista dependencias Python do projeto, mas o empacotamento para Blender depende tambem das bibliotecas embarcadas em `libs311/` e `libs313/`.
+- O nome exibido no Blender e definido em `bl_info` dentro de `__init__.py`.
 

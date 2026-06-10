@@ -1,474 +1,85 @@
-# 🚀 Próximos Passos - Oil & Gas Tools
+# Proximos Passos
 
-## 📍 Você Está Aqui
+## Objetivo
 
-Documentação completa da aplicação **Oil & Gas Tools** foi criada com sucesso!
+Este documento lista as acoes mais uteis para manter a documentacao do InfoVis consistente com a evolucao do add-on.
 
----
+## Prioridade imediata
 
-## 📦 O Que Foi Documentado
+1. validar no Blender o fluxo descrito em `README.md` e `docs/DEVELOPMENT.md`
+2. revisar se os paineis e operadores documentados ainda correspondem ao comportamento atual
+3. atualizar exemplos quando houver mudanca de interface, nomenclatura ou fluxo de release
 
-✅ **10 documentos Markdown criados** (~87 páginas)
+## Curto prazo
 
-### Documentos Criados
+### 1. Adicionar evidencia visual
 
-1. **README_DOCUMENTATION.md** - Índice central e guia de navegação
-2. **DOCUMENTATION.md** - Visão geral técnica completa
-3. **ARCHITECTURE.md** - Arquitetura em profundidade
-4. **DEVELOPMENT.md** - Guia prático para desenvolvadores
-5. **OPERATORS_DOCUMENTATION.md** - Documentação de operators.py
-6. **PANELS_DOCUMENTATION.md** - Documentação de panels.py
-7. **PROPERTIES_DOCUMENTATION.md** - Documentação de properties.py
-8. **DATA_DOCUMENTATION.md** - Documentação de data.py
-9. **GLOSSARY.md** - Glossário, referência rápida e padrões
-10. **SUMARIO_EXECUTIVO.md** - Resumo executivo
-11. **MAPA_MENTAL.md** - Mapa mental e trilhas de aprendizado
+- incluir screenshots dos paineis principais do add-on
+- registrar o fluxo de instalacao pelo zip gerado em `releases/`
+- mostrar um exemplo com `Example/C3388.8_UN-31.ifc`
 
----
+### 2. Refinar onboarding tecnico
 
-## 🎯 Próximos Passos Recomendados
+- adicionar um roteiro curto de primeira contribuicao
+- documentar convencoes de registro em `modules/__init__.py`
+- incluir exemplos pequenos de extensao de `OG_Properties`
 
-### Imediatamente (Hoje)
+### 3. Melhorar rastreabilidade
 
-#### 1. **Revisar a Documentação**
-```bash
-# Abra em seu editor
-# Comece por README_DOCUMENTATION.md
-```
+- relacionar mudancas de versao em `bl_info` com alteracoes documentais relevantes
+- registrar, no release process, quando bibliotecas embarcadas forem alteradas
 
-**O que fazer:**
-- Ler o índice principal
-- Verificar se todos os documentos estão corretos
-- Ajustar qualquer informação necessária
+## Medio prazo
 
-**Tempo estimado:** 1-2 horas
+### 1. Publicacao web
 
-#### 2. **Testar Links e Referências**
-- Verificar se todas as ligações cruzadas funcionam
-- Confirmar que paths estão corretos
-- Validar sintaxe Markdown
+Se a equipe quiser navegacao web, uma opcao simples e publicar a pasta `docs/` com MkDocs.
 
-**Tempo estimado:** 30 minutos
+Passos basicos:
 
----
-
-### Curto Prazo (Esta Semana)
-
-#### 3. **Publicar Documentação**
-```bash
-# Opções:
-# 1. Adicionar ao README.md principal
-# 2. Criar página Wiki no GitHub
-# 3. Gerar site com MkDocs ou Sphinx
-# 4. Publicar em Read the Docs
-```
-
-**Sugestão:** Criar site estático com MkDocs
-```bash
-# Instalar MkDocs
-pip install mkdocs mkdocs-material
-
-# Criar mkdocs.yml
-# Organizar docs/
-# Gerar: mkdocs build
-# Preview: mkdocs serve
-```
-
-#### 4. **Atualizar README.md Original**
-- Adicionar link para documentação
-- Incluir guia rápido de início
-- Adicionar referências aos documentos
-
----
-
-### Médio Prazo (Próximas 2 Semanas)
-
-#### 5. **Adicionar Exemplos de Código**
-- Criar arquivo `examples/` com snippets
-- Adicionar exemplos em cada documentação de módulo
-- Criar projeto demo
-
-#### 6. **Criar Testes Baseados em Documentação**
-```python
-# test_operators.py
-# test_panels.py
-# test_properties.py
-# test_data.py
-
-# Testes unitários para validar exemplos
-```
-
-#### 7. **Implementar CI/CD**
-```yaml
-# .github/workflows/docs.yml
-# - Validar Markdown
-# - Verificar links
-# - Gerar documentação
-# - Publicar automaticamente
-```
-
----
-
-### Longo Prazo (Próximo Mês)
-
-#### 8. **Criar Vídeos Tutoriais**
-- Instalação e setup
-- Uso básico
-- Desenvolvimento de extensões
-- Debugging de problemas
-
-#### 9. **Documentação Interativa**
-- Criar Jupyter Notebooks com exemplos
-- Documentação Sphinx com sphinx_immaterial
-- Documentação gerada automaticamente do código
-
-#### 10. **Comunidade**
-- Criar template de Contributing.md
-- Configurar discussions no GitHub
-- Setup de forum ou Discord
-
----
-
-## 🛠️ Ferramentas Recomendadas
-
-### Documentação
-
-**MkDocs** (Recomendado)
 ```bash
 pip install mkdocs mkdocs-material
-mkdocs new my-docs
-mkdocs serve
+mkdocs new infovis-docs
 ```
 
-**Sphinx**
-```bash
-pip install sphinx sphinx_rtd_theme
-sphinx-quickstart
-make html
-```
+Depois, copiar ou referenciar os documentos principais:
 
-**Read the Docs**
-- Hospedagem gratuita
-- Deploy automático do GitHub
-- Suporta MkDocs e Sphinx
+- `README.md`
+- `docs/ARCHITECTURE.md`
+- `docs/DEVELOPMENT.md`
+- `docs/guides/*.md`
+- `docs/reference/GLOSSARY.md`
 
-### Validação
+### 2. Validacao automatica de markdown
 
-```bash
-# Validar Markdown
-pip install markdownlint
+- adicionar verificacao de links internos
+- validar existencia de arquivos referenciados
+- padronizar nomenclatura de titulos e secoes principais
 
-# Verificar links
-pip install markdown-link-check
+## Longo prazo
 
-# Linter Python
-pip install pylint flake8 black
-```
+- manter changelog documental por versao do add-on
+- separar guias de usuario e guias de manutencao se a base crescer
+- gerar material de demonstracao para novos integrantes da equipe
 
-### Geração de Documentação do Código
+## Checklist de manutencao
 
-```bash
-# Sphinx autodoc
-# Pydoc
-# MkDocstrings para MkDocs
-pip install mkdocstrings
-```
+- [ ] mudou a estrutura de pastas do add-on
+- [ ] mudou o processo de build ou release
+- [ ] mudou o nome exibido em `bl_info`
+- [ ] mudou o fluxo de instalacao no Blender
+- [ ] mudou a composicao de `OG_Properties`
+- [ ] mudou a organizacao de operadores, paineis ou `PropertyGroup`s
 
----
+Se qualquer item acima ocorrer, revise pelo menos:
 
-## 📊 Checklist de Ações
+- `README.md`
+- `docs/ARCHITECTURE.md`
+- `docs/DEVELOPMENT.md`
 
-### Verificação Inicial
-- [ ] Todos os arquivos criados com sucesso
-- [ ] Sem erros de sintaxe Markdown
-- [ ] Ligações cruzadas verificadas
-- [ ] Nomes de arquivos consistentes
+## Referencias principais
 
-### Publicação
-- [ ] Escolher plataforma (GitHub Pages, Read the Docs, etc)
-- [ ] Configurar CI/CD para gerar docs
-- [ ] Testar build local
-- [ ] Publicar versão inicial
-
-### Manutenção
-- [ ] Atualizar docs com novas features
-- [ ] Revisar documentação regularmente
-- [ ] Coletar feedback de usuários
-- [ ] Melhorar exemplos conforme necessário
-
-### Comunidade
-- [ ] Adicionar guide de contribuição
-- [ ] Criar template de issue
-- [ ] Setup discussions/forum
-- [ ] Responder dúvidas
-
----
-
-## 📚 Estrutura Recomendada para Publicação
-
-```
-docs/
-├── index.md                    # Home page
-├── README.md -> README_DOCUMENTATION.md
-├── getting-started/
-│   ├── installation.md
-│   ├── quickstart.md
-│   └── first-addon.md
-├── user-guide/
-│   ├── interface.md
-│   ├── import-ifc.md
-│   ├── analysis.md
-│   └── export-data.md
-├── developer-guide/
-│   ├── architecture.md
-│   ├── setup.md
-│   ├── adding-features.md
-│   └── testing.md
-├── api-reference/
-│   ├── operators.md
-│   ├── panels.md
-│   ├── properties.md
-│   └── data.md
-├── glossary.md
-└── faq.md
-```
-
-### mkdocs.yml
-```yaml
-site_name: Oil & Gas Tools
-site_description: Blender add-on for O&G projects
-theme:
-  name: material
-nav:
-  - Home: index.md
-  - User Guide:
-      - Installation: getting-started/installation.md
-      - Quick Start: getting-started/quickstart.md
-  - Developer Guide:
-      - Architecture: developer-guide/architecture.md
-      - Setup: developer-guide/setup.md
-  - API Reference:
-      - Operators: api-reference/operators.md
-  - Glossary: glossary.md
-```
-
----
-
-## 🎓 Como Usar Esta Documentação
-
-### Para Usuários
-```
-1. Comece em README_DOCUMENTATION.md
-2. Siga link para "Como Usar"
-3. Instale e experimente
-4. Consulte GLOSSARY.md se tiver dúvidas
-```
-
-### Para Contribuidores
-```
-1. Leia DEVELOPMENT.md
-2. Configure ambiente
-3. Escolha funcionalidade
-4. Implemente e teste
-5. Envie pull request
-```
-
-### Para Integradores/Partners
-```
-1. Comece em SUMARIO_EXECUTIVO.md
-2. Avalie ARCHITECTURE.md
-3. Discuta integrações possíveis
-4. Consulte GLOSSARY.md conforme necessário
-```
-
----
-
-## 💡 Sugestões para Melhoria da Documentação
-
-### A Curto Prazo
-- [ ] Adicionar screenshots das UI
-- [ ] Incluir diagrama de arquitetura em SVG
-- [ ] Criar tabela de comparação de versões
-- [ ] Adicionar FAQ expandido
-
-### A Médio Prazo
-- [ ] Criar vídeos tutoriais
-- [ ] Implementar search na documentação
-- [ ] Adicionar exemplos interativos
-- [ ] Criar guia de troubleshooting
-
-### A Longo Prazo
-- [ ] Localização (português, espanhol, inglês)
-- [ ] Documentação em múltiplos formatos (HTML, PDF, EPUB)
-- [ ] Versioning de documentação
-- [ ] Documentação gerada automaticamente
-
----
-
-## 🔄 Ciclo de Manutenção Recomendado
-
-### Semanal
-- [ ] Responder dúvidas em discussions
-- [ ] Revisar issues relacionadas
-
-### Mensal
-- [ ] Atualizar documentação com mudanças
-- [ ] Revisar links quebrados
-- [ ] Coletar feedback
-
-### Trimestral
-- [ ] Revisão maior de conteúdo
-- [ ] Atualizar exemplos
-- [ ] Melhorar estrutura conforme necessário
-
-### Anualmente
-- [ ] Auditoria completa
-- [ ] Renovação de screenshots
-- [ ] Atualizar versões externas
-
----
-
-## 📞 Contatos e Suporte
-
-### Criação da Documentação
-- **Data**: 19 de Janeiro de 2026
-- **Documentos**: 11 arquivos Markdown
-- **Total de páginas**: ~87
-- **Tempo investido**: Análise e redação completas
-
-### Próximas Revisões
-- Planejar para 1 mês após publicação
-- Coletar feedback de usuários
-- Melhorar conforme necessário
-
----
-
-## 🎯 Objetivos Alcançados ✅
-
-- [x] Documentação técnica completa
-- [x] Guias separados por módulo
-- [x] Arquitetura documentada
-- [x] Guia de desenvolvimento
-- [x] Glossário e referência rápida
-- [x] Sumário executivo
-- [x] Mapa mental e trilhas de aprendizado
-- [x] Ligações cruzadas entre documentos
-- [x] Exemplos de código
-- [x] Padrões de design
-
----
-
-## 🚀 Próximo Grande Passo
-
-### Recomendação Principal:
-
-**Publicar documentação em site estático com MkDocs**
-
-```bash
-# 1. Instalar MkDocs
-pip install mkdocs mkdocs-material
-
-# 2. Criar estrutura
-mkdocs new oil-gas-docs
-cd oil-gas-docs
-
-# 3. Copiar arquivos .md
-cp ../oil-gas-addon/*.md docs/
-
-# 4. Configurar mkdocs.yml
-# (veja exemplo acima)
-
-# 5. Testar localmente
-mkdocs serve
-
-# 6. Build para produção
-mkdocs build
-
-# 7. Deploy em GitHub Pages / Read the Docs
-```
-
----
-
-## 📋 Quick Reference
-
-| Tarefa | Arquivo Relevante |
-|--------|-------------------|
-| Entender arquitetura | ARCHITECTURE.md |
-| Começar desenvolvimento | DEVELOPMENT.md |
-| Usar o software | DOCUMENTATION.md |
-| Procurar padrão | GLOSSARY.md |
-| Debugar problema | Módulo + GLOSSARY.md |
-| Adicionar feature | DEVELOPMENT.md + GLOSSARY.md |
-| Entender fluxo | ARCHITECTURE.md |
-| Referência rápida | README_DOCUMENTATION.md |
-
----
-
-## 🎓 Recursos para Você
-
-### Aprender MkDocs
-- https://www.mkdocs.org/
-- https://squidfunk.github.io/mkdocs-material/
-
-### Aprender Markdown Avançado
-- https://www.markdownguide.org/
-- https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet
-
-### Aprender Git/GitHub
-- https://docs.github.com/
-- https://git-scm.com/book/
-
----
-
-## ❓ FAQ - Documentação
-
-**P: Preciso reescrever a documentação?**
-R: Não, está completa. Use como está ou adapte conforme necessário.
-
-**P: Como usar para onboarding de novos desenvolvedores?**
-R: Compartilhe README_DOCUMENTATION.md como ponto de entrada.
-
-**P: Posso publicar em GitHub Pages?**
-R: Sim! Use MkDocs + GitHub Pages workflow.
-
-**P: Como manter documentação atualizada?**
-R: Siga ciclo de manutenção recomendado acima.
-
-**P: Preciso adicionar screenshots?**
-R: Recomendado, especialmente para seções de UI.
-
----
-
-## 📊 Resumo de Documentação Criada
-
-| Métrica | Valor |
-|---------|-------|
-| Total de arquivos | 11 documentos |
-| Total de páginas | ~87 |
-| Total de palavras | ~40,000+ |
-| Módulos cobertos | 5 (100%) |
-| Linhas de código documentadas | ~3,600+ (100%) |
-| Exemplos de código | 50+ |
-| Diagramas | 20+ |
-| Ligações cruzadas | 100+ |
-
----
-
-## ✨ Conclusão
-
-A documentação completa da aplicação **Oil & Gas Tools** foi criada com sucesso. Você tem agora:
-
-✅ Visão geral técnica
-✅ Guias de desenvolvimento
-✅ Documentação de módulos
-✅ Referência rápida
-✅ Trilhas de aprendizado
-✅ Mapa mental
-
-**Próximo passo sugerido:** Publicar em MkDocs + GitHub Pages
-
----
-
-**Boa sorte com o projeto! 🎉**
-
-Para dúvidas, consulte os documentos ou abra uma issue no repositório.
+- `README.md`
+- `docs/ARCHITECTURE.md`
+- `docs/DEVELOPMENT.md`
+- `docs/reference/GLOSSARY.md`

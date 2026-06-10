@@ -1,504 +1,247 @@
-# 📖 Glossário e Referência Rápida
+# Glossario e Referencia Rapida
 
----
+## Termos principais
 
-## 📚 Glossário de Termos
-
-### Termos Gerais
+**InfoVis**
+- add-on para Blender voltado a visualizacao e enriquecimento de dados IFC
+- nome definido em `bl_info` em `__init__.py`
 
 **Add-on**
-- Extensão/plugin para Blender
-- Código Python que estende funcionalidades
-- Oil & Gas Tools é um add-on
+- extensao carregada pelo Blender
+- registrada por classes Python derivadas de tipos como `bpy.types.Operator`, `bpy.types.Panel` e `bpy.types.PropertyGroup`
 
 **Blender**
-- Software 3D open-source
-- Host da aplicação
-- Fornece API Python para extensões
+- aplicacao hospedeira do add-on
+- fornece API Python, UI, handlers e `msgbus`
 
-**Contexto (context)**
-- Objeto `bpy.context` do Blender
-- Contém referências à cena, objetos, propriedades
-- Passado como parâmetro em praticamente todas as funções
+**Contexto**
+- objeto `bpy.context`
+- concentra acesso a cena, objeto ativo, preferencias e estado da interface
 
-### Termos IFC
+**Bonsai**
+- ecossistema BIM usado pelo projeto para acesso a dados IFC no Blender
 
-**IFC (Industry Foundation Classes)**
-- Padrão aberto para dados de construção
-- Define estrutura de dados para edifícios
-- Formato: .ifc
+## Termos IFC e integracao
 
-**IFC Entity (Entidade)**
-- Objeto dentro de um arquivo IFC
-- Exemplos: IfcWall (parede), IfcDoor (porta)
-- Cada entidade tem propriedades e relacionamentos
+**IFC**
+- formato aberto para dados de construcao
+- usado como base para leitura de elementos, propriedades, documentos e relacoes
 
-**bSDD (buildingSMART Data Dictionary)**
-- Dicionário internacional de dados de construção
-- Contém definições de tipos de elementos
-- API acessível via HTTP
+**IFC Entity**
+- entidade individual dentro de um arquivo IFC
+- exemplos comuns: `IfcWall`, `IfcPipeSegment`, `IfcDistributionElement`
 
-**GUID (GlobalId)**
-- Identificador único global para cada entidade IFC
-- Garante unicidade mesmo entre arquivos diferentes
-- Formato: "3Q3YFPY9L0Hu0xsQc_HyHF"
+**bSDD**
+- buildingSMART Data Dictionary
+- dicionario externo consultado por `data/bsdd.py`
 
-**Pset (Property Set)**
-- Conjunto de propriedades aplicável a um elemento
-- Exemplo: Pset_WallCommon para paredes
-- Contém propriedades como Name, Description, etc
+**GUID / GlobalId**
+- identificador unico de uma entidade IFC
 
-**Qset (Quantity Set)**
-- Conjunto de quantidades medidas
-- Exemplo: Qto_WallBaseQuantities para paredes
-- Contém: Height, Length, Area, Volume, etc
+**Pset**
+- conjunto de propriedades associado a um elemento
 
-### Termos da Aplicação
+**IDS**
+- Information Delivery Specification
+- pode ser exportado a partir de operadores do dominio `dictionary`
+
+**CDE**
+- Common Data Environment
+- integracao apoiada por `data/cde.py`
+
+## Termos internos do projeto
 
 **PropertyGroup**
-- Classe que define estrutura de dados
-- Anexada a objetos Blender (Scene, Object, etc)
-- Dados persistem quando arquivo é salvo
+- estrutura de dados registrada no Blender
+- definida em `modules/*/properties.py` e agregada em `modules/og_properties.py`
 
-**Operador**
-- Ação que usuário pode executar
-- Herdado de `bpy.types.Operator`
-- Acessível via menu ou botão
+**OG_Properties**
+- agregador central de estado do add-on
+- fica em `context.scene.og_props`
+
+**Operator**
+- acao executavel exposta ao usuario
+- normalmente localizada em `modules/*/operators.py`
 
 **Panel**
-- Painel de UI na viewport
-- Herdado de `bpy.types.Panel`
-- Contém botões, listas, campos de entrada
+- componente visual na sidebar da View3D
+- normalmente localizado em `modules/*/panels.py`
 
-**Callback**
-- Função disparada quando algo muda
-- Exemplo: quando propriedade é alterada
-- Permite reações automáticas
+**UIList**
+- lista visual usada para exibir colecoes Blender com selecao e interacao
 
-**Collection**
-- Lista de items do mesmo tipo
-- Armazenada em PropertyGroup
-- Acessível como array: `collection[0]`, `collection.add()`
+**CollectionProperty**
+- colecao tipada usada para armazenar listas dentro de `PropertyGroup`s
 
 **Handler**
-- Função registrada para evento do Blender
-- Exemplo: `depsgraph_update_post` (cena mudou)
-- Permite automação baseada em eventos
+- funcao registrada em eventos do Blender, como carregamento de arquivo
 
----
+**msgbus**
+- mecanismo de observacao do Blender usado para reagir a mudancas no objeto ativo
 
-## 🎯 Referência Rápida de Código
+**AddonPreferences**
+- preferencias persistentes do add-on, definidas em `OilGasAddonPreferences`
 
-### Acessar Propriedades
+## Estrutura do repositorio
+
+```text
+InfoVis/
+|-- __init__.py
+|-- auth.py
+|-- data/
+|   |-- bsdd.py
+|   |-- catalog.py
+|   |-- cde.py
+|   |-- ifc_utils.py
+|   `-- tree.py
+|-- modules/
+|   |-- __init__.py
+|   |-- og_properties.py
+|   |-- common/
+|   |-- dictionary/
+|   |-- decomposition/
+|   |-- catalog/
+|   |-- connections/
+|   |-- props/
+|   |-- settings/
+|   `-- types/
+|-- resources/
+|-- libs311/
+`-- libs313/
+```
+
+## Referencia rapida de codigo
+
+### Acessar o estado principal
+
 ```python
-props = context.scene.og_props              # PropertyGroup da cena
-classes = props.classes                     # CollectionProperty
-active_index = props.active_class_index     # IntProperty
-```
-
-### Iterar sobre Items
-```python
-for classe in props.classes:
-    print(classe.name)
-
-# Com índice
-for i, classe in enumerate(props.classes):
-    if i == props.active_class_index:
-        print(f"Item ativo: {classe.name}")
-```
-
-### Adicionar Item a Collection
-```python
-new_item = props.classes.add()
-new_item.name = "Novo Item"
-new_item.code = "NI-001"
-```
-
-### Remover Item
-```python
-props.classes.remove(index)  # Remove por índice
-```
-
-### Limpar Collection
-```python
-props.classes.clear()  # Remove todos
-```
-
-### Buscar Item
-```python
-def find_by_name(context, target_name):
-    for item in context.scene.og_props.classes:
-        if item.name == target_name:
-            return item
-    return None
-```
-
-### Chamar Operador
-```python
-bpy.ops.namespace.operator_name()              # Sem parâmetros
-bpy.ops.namespace.operator_name(prop="valor")  # Com parâmetros
-```
-
-### Registrar Classe
-```python
-from bpy.utils import register_class, unregister_class
-
-register_class(MinhaClasse)      # Registra
-unregister_class(MinhaClasse)    # Desregistra
-```
-
-### Registrar Handler
-```python
-def meu_handler(scene):
-    print("Cena mudou!")
-
-# Registrar
-bpy.app.handlers.depsgraph_update_post.append(meu_handler)
-
-# Desregistrar
-bpy.app.handlers.depsgraph_update_post.remove(meu_handler)
-```
-
-### Acessar Arquivo IFC
-```python
-import ifcopenshell
-
-ifc = ifcopenshell.open("caminho/arquivo.ifc")
-walls = ifc.by_type("IfcWall")
-door = ifc.by_id(123)
-
-for entity in ifc:
-    print(entity.is_a())  # Tipo de entidade
-```
-
-### Extrair Propriedades IFC
-```python
-import ifcopenshell.util.element as element
-
-psets = element.get_psets(wall)              # Property Sets
-qsets = element.get_qsets(wall)              # Quantity Sets
-value = element.get_pset_value(wall, "...")  # Um valor específico
-```
-
----
-
-## 🔧 Padrões Comuns
-
-### Pattern: Operador com Validação
-```python
-class Operator_example(bpy.types.Operator):
-    bl_idname = "og.example"
-    bl_label = "Exemplo"
-    
-    @classmethod
-    def poll(cls, context):
-        return len(context.scene.og_props.classes) > 0
-    
-    def execute(self, context):
-        try:
-            props = context.scene.og_props
-            # Lógica segura
-            self.report({'INFO'}, "Sucesso")
-            return {'FINISHED'}
-        except Exception as e:
-            self.report({'ERROR'}, str(e))
-            return {'CANCELLED'}
-```
-
-### Pattern: PropertyGroup com Callback
-```python
-class MeuPropertyGroup(PropertyGroup):
-    valor: IntProperty(
-        name="Valor",
-        default=0,
-        update=on_valor_changed
-    )
-
-def on_valor_changed(self, context):
-    # Reagir a mudança
-    print(f"Novo valor: {self.valor}")
-```
-
-### Pattern: Panel com Template List
-```python
-class MeuPanel(bpy.types.Panel):
-    def draw(self, context):
-        layout = self.layout
-        props = context.scene.og_props
-        
-        layout.template_list(
-            "UI_UL_list",
-            "",
-            props,
-            "items",
-            props,
-            "active_index",
-            rows=10
-        )
-```
-
-### Pattern: Refresh de Dados
-```python
-def refresh_list(context):
-    props = context.scene.og_props
-    props.itens_visíveis.clear()
-    
-    for item in props.items_todos:
-        if not item.is_hidden:
-            novo = props.itens_visíveis.add()
-            novo.name = item.name
-            novo.valor = item.valor
-```
-
----
-
-## 📊 Estrutura de Dados Padrão
-
-### Classe Hierárquica
-```
-Class_info
-├── code: "001"              (identificação)
-├── name: "Pipe"
-├── description: "Descrição"
-├── uri: "http://bsdd/..."   (único)
-├── level_index: 1           (profundidade)
-├── parent: "Classes"        (elemento pai)
-├── index: 0                 (posição sequencial)
-├── has_children: True       (tem subclasses?)
-├── is_hidden: False         (oculto na UI?)
-├── is_expanded: True        (expandido?)
-└── type: "IfcPipeSegment"   (tipo IFC)
-```
-
-### Tipo de Produto
-```
-Class_type
-├── id: 123                   (id numérico)
-├── name: "Produto"
-├── description: "Descrição"
-├── element_type: "IfcPipe"   (tipo de elemento)
-├── level_index: 2
-├── parent: "Categoria"
-├── index: 5
-├── has_children: False
-└── is_hidden: False
-```
-
----
-
-## 🎨 Convenções de Nomenclatura
-
-### Operadores
-```python
-Operator_get_properties           # CamelCase com Operator_ prefixo
-Operator_load_decomposition
-Operator_expand_classes
-
-# bl_idname (snake_case com ponto)
-bl_idname = "og.get_properties"
-bl_idname = "og.load_decomposition"
-```
-
-### Painéis
-```python
-Panel_Connect                      # CamelCase com Panel_ prefixo
-Panel_Properties
-Panel_Analysis
-
-# bl_idname (VIEW3D_PT_<nome>)
-bl_idname = "VIEW3D_PT_og_connect"
-```
-
-### PropertyGroups
-```python
-Ifc_properties                     # CamelCase com underscore
-Class_info
-Class_type
-OG_scene_properties
-```
-
-### Funções
-```python
-build_classes()                    # snake_case
-refresh_products()
-set_hide_class()
-on_active_object_change()
-```
-
-### Variáveis
-```python
-props = context.scene.og_props     # snake_case
-active_index = 0
-dynamic_items = []
-```
-
----
-
-## 🔍 Debugging Rápido
-
-### Console Blender (Shift + F4)
-```python
-# Imprimir propriedades
 props = bpy.context.scene.og_props
 print(len(props.classes))
-print([c.name for c in props.classes[:5]])
-
-# Chamar função
-from oil_gas_addon.data import refresh
-refresh(bpy.context)
-
-# Verificar handlers
-print(bpy.app.handlers.depsgraph_update_post)
 ```
 
-### Imprimir Objeto Selecionado
+### Acessar preferencias do add-on
+
 ```python
-obj = bpy.context.active_object
-print(f"Nome: {obj.name}")
-print(f"Tipo: {obj.type}")
-print(f"Dados: {obj.data}")
+prefs = bpy.context.preferences.addons["InfoVis"].preferences
+print(prefs.cde_url)
 ```
 
-### Validar IFC
+Se o pacote tiver sido instalado com outro nome de pasta, a chave em `addons[...]` deve seguir o nome real do pacote carregado pelo Blender.
+
+### Chamar operadores comuns
+
 ```python
-import ifcopenshell
-ifc = ifcopenshell.open("arquivo.ifc")
-print(f"Válido: {ifc.is_valid()}")
-print(f"Esquema: {ifc.schema}")
-print(f"Total entidades: {len(ifc)}")
+bpy.ops.bsdd.get_prop()
+bpy.ops.props.load_properties()
+bpy.ops.og.login()
 ```
 
----
+### Adicionar item em colecao Blender
 
-## 📋 Checklist de Deployment
-
-- [ ] Código testado em Blender
-- [ ] Sem erros no console
-- [ ] Docstrings completas
-- [ ] Sem trailing whitespace
-- [ ] Imports organizados
-- [ ] Variáveis bem nomeadas
-- [ ] Funções pequenas e focadas
-- [ ] Tratamento de exceções
-- [ ] Mensagens de erro claras
-- [ ] Comentários onde necessário
-- [ ] Git commit com mensagem descritiva
-- [ ] Documentação atualizada
-
----
-
-## 🚀 Comandos Úteis
-
-### Terminal
-```bash
-# Verificar sintaxe Python
-python -m py_compile arquivo.py
-
-# Executar testes
-python -m pytest tests/
-
-# Formatar código
-black arquivo.py
-
-# Verificar estilo
-pylint arquivo.py
-
-# Gerar documentação
-sphinx-build -b html docs/ docs/_build/
-```
-
-### Git
-```bash
-# Ver status
-git status
-
-# Commit com mensagem
-git commit -m "feat: descrição"
-
-# Ver histórico
-git log --oneline -10
-
-# Criar branch
-git checkout -b feature/nome
-
-# Merge
-git merge feature/nome
-```
-
-### Blender (Python Script)
 ```python
-# Recarregar addon
+item = props.classes.add()
+item.name = "Novo item"
+```
+
+### Consultar autenticacao
+
+```python
+import InfoVis.auth as auth
+print(auth.is_authenticated())
+```
+
+## Convencoes usadas no codigo
+
+### Classes Blender
+
+```python
+class Operator_get_properties(bpy.types.Operator):
+    ...
+
+class Panel_Properties(bpy.types.Panel):
+    ...
+```
+
+### `bl_idname`
+
+```python
+bl_idname = "bsdd.get_prop"
+bl_idname = "props.load_properties"
+bl_idname = "og.login"
+```
+
+### Funcoes auxiliares
+
+```python
+refresh_classes()
+refresh_props()
+build_classes()
+```
+
+## Padroes recorrentes
+
+**Estado centralizado**
+- os paineis e operadores leem e escrevem principalmente em `context.scene.og_props`
+
+**Refresh apos mutacao**
+- alteracoes em colecoes ou selecao costumam ser seguidas por chamadas de `refresh_*()` em `data/tree.py` ou `data/ifc_utils.py`
+
+**Registro centralizado**
+- toda nova classe Blender deve entrar em `modules/__init__.py`
+
+**Separacao por dominio**
+- UI, operadores e dados ficam organizados por dominio funcional em `modules/`
+
+## Debug rapido
+
+### Console Python do Blender
+
+```python
+import bpy
 import importlib
-from oil_gas_addon import operators
-importlib.reload(operators)
+import InfoVis.auth as auth
+from InfoVis.modules import get_classes
 
-# Registrar classes
-bpy.utils.register_class(Operator_novo)
+props = bpy.context.scene.og_props
+print(len(get_classes()))
+print(auth.is_authenticated())
+print(hasattr(props, "classes"))
 ```
 
----
+### Recarregar um modulo
 
-## 🆘 Problemas Comuns
+```python
+import importlib
+import InfoVis.data.bsdd as bsdd
 
-**"AttributeError: module 'bpy' has no attribute 'types'"**
-- Falta import: `import bpy`
+importlib.reload(bsdd)
+```
 
-**"RuntimeError: context is incorrect"**
-- Função chamada fora de contexto Blender
-- Use `bpy.context` apropriadamente
+## Problemas comuns
 
-**"Operador não aparece no menu"**
-- Não registrado em `__init__.py`
-- `bl_idname` inválido
-- Erro de sintaxe
+**Operador nao aparece na interface**
+- a classe nao foi adicionada a `modules/__init__.py`
+- o arquivo nao foi recarregado no Blender depois da mudanca
 
-**"PropertyGroup não persiste"**
-- Não registrado com `register_class()`
-- Não anexado corretamente: `Scene.prop = PointerProperty(...)`
+**PropertyGroup nao persiste**
+- o tipo nao foi registrado antes de `OG_Properties`
+- a propriedade nao foi anexada corretamente ao agregador central ou a `Scene`
 
-**"Handler chamado múltiplas vezes"**
-- Registrado múltiplas vezes sem remover
-- Verificar com: `print(bpy.app.handlers.event)`
+**Erro de contexto no Blender**
+- operador ou funcao foi chamado fora do contexto esperado pela UI ou pelo objeto ativo
 
----
+**ImportError de dependencia cientifica**
+- ambiente Blender nao encontrou as bibliotecas embarcadas ou faltou instalacao dinamica fora do Windows
 
-## 📞 Recursos
+**Dados nao atualizam ao trocar selecao**
+- verificar handlers, assinatura de `msgbus` e funcoes de `refresh_*()`
+
+## Recursos externos
 
 | Recurso | Link |
 |---------|------|
 | Blender API | https://docs.blender.org/api/current/ |
-| ifcopenshell | http://docs.ifcopenshell.org/ |
+| IfcOpenShell | https://docs.ifcopenshell.org/ |
 | buildingSMART | https://www.buildingsmart.org/ |
 | Matplotlib | https://matplotlib.org/ |
-| Pandas | https://pandas.pydata.org/ |
 | SciPy | https://scipy.org/ |
-
----
-
-## 🎓 Exercícios Sugeridos
-
-1. **Iniciante**
-   - Adicione um novo atributo StringProperty a uma PropertyGroup
-   - Crie um botão que imprime "Olá Mundo" no console
-
-2. **Intermediário**
-   - Crie um novo operador que ordena as classes por nome
-   - Adicione um painel que mostra estatísticas dos dados
-
-3. **Avançado**
-   - Implemente cache de dados com invalidação automática
-   - Crie exportador de dados para CSV/JSON
-   - Adicione sistema de plugins para extensões
-
----
-
-## 📝 Notas Finais
-
-- **Sempre** revise a documentação relevante antes de implementar
-- **Sempre** teste em Blender depois de mudanças
-- **Sempre** commit regularmente no Git
-- **Sempre** mantenha a documentação atualizada
-
----
-
-**Boa sorte com o desenvolvimento! 🚀**

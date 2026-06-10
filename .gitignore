@@ -3,10 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Auth hash file
+.auth
+
 # C extensions
 *.so
 
 #files
+*.txt
 *.ifc
 *.pdf
 *.xlsx
@@ -138,6 +142,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv313
 env/
 venv/
 ENV/
@@ -154,6 +159,7 @@ O&G_TOOLS/
 
 # mkdocs documentation
 /site
+site/
 
 # mypy
 .mypy_cache/
