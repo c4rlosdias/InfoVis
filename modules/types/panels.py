@@ -33,7 +33,6 @@ class Panel_Types(bpy.types.Panel):
             if ifc_types:
                 ifc_type = ifc_types[0].RelatingType
                 if ifc_type:
-                    
 
                     row.label(text=f"{ifc_type.ElementType}")
                     row.operator("catag.select_elements", text="", icon='RESTRICT_SELECT_OFF').id = ifc_type.id()

@@ -36,12 +36,11 @@ def update_tree_type(self, context):
 
     cde = CDE_Api('')
     elements_tree = []
-    if self.tree_type == 'assets':
-        elements_tree = cde.get_assets()    
-    elif self.tree_type == 'contracts':
-        elements_tree = cde.get_contracts()
-    elif self.tree_type == 'inventory':
-        elements_tree = cde.get_inventory()
+  
+    if self.tree_type == 'contracts':
+        elements_tree = cde.get_contracts(self.containers_show[self.active_element_index])
+    else:
+        elements_tree = cde.get_inventory(self.containers_show[self.active_element_index])
     i = 0
     
     for element in elements_tree:
@@ -184,7 +183,6 @@ class OG_Properties(PropertyGroup):
 
     tree_type                : EnumProperty(
                                     items=[
-                                        ('assets', 'Assets', 'Assets'),
                                         ('contracts', 'Contracts', 'Contracts'),
                                         ('inventory', 'Inventory', 'Inventory')                                        
                                     ],

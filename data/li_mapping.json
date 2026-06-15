@@ -1,0 +1,361 @@
+{
+  "$schema_version": "1.0",
+  "description": "Mapeamento de/para entre as colunas da LI (Lista de Itens, Anexo 03/04) e as fontes de dados no modelo IFC (atributos, Psets, Qtos e classes bSDD). Usado pelo InfoVis para gerar/checar a LI a partir do modelo. Editável pelo usuário para adaptar a forma da LI.",
+  "reference_sheet": "Lista de Materiais (LI-*.xlsx)",
+  "source_types": {
+    "ifc_attribute": "Atributo direto da entidade IFC (ex.: Name, Description, Tag, ObjectType, GlobalId)",
+    "ifc_property": "Propriedade dentro de um Pset (lido via ifcopenshell.util.element.get_psets / get_property)",
+    "ifc_quantity": "Quantidade dentro de um Qto (IfcElementQuantity)",
+    "ifc_class": "Classe/tipo IFC da ocorrência (mapeada para classe bSDD do dicionário do projeto)",
+    "spatial": "Derivado da hierarquia espacial (IfcRelContainedInSpatialStructure / IfcRelNests)",
+    "computed": "Valor calculado a partir de um template combinando outros campos",
+    "manual": "Sem correspondência no modelo IFC v2.1 — preenchimento manual ou Pset customizado (Pset_LI_Extra / Pset_Procurement)",
+    "not_applicable": "Campo de controle da LI, sem relação com o modelo (status do documento, observações livres etc.)"
+  },
+  "columns": [
+    {
+      "column": "Seção",
+      "source_type": "spatial",
+      "source": {
+        "level": "IfcSite/IfcBuilding ancestor",
+        "attribute": "Name ou ObjectType do contêiner espacial que representa a seção/área (ex.: 'RT')"
+      },
+      "editable": true,
+      "notes": "Código da região/área do arranjo a que o tramo pertence."
+    },
+    {
+      "column": "Tramo",
+      "source_type": "ifc_attribute",
+      "source": {
+        "ifc_class": "FlexiblePipeSegment",
+        "attribute": "Tag",
+        "fallback_attribute": "Name"
+      },
+      "editable": true,
+      "notes": "Identificador do tramo (FlexiblePipeSegment pai na hierarquia IfcRelNests)."
+    },
+    {
+      "column": "Envoltória",
+      "source_type": "ifc_property",
+      "source": {
+        "ifc_class": "FlexiblePipeStructureType",
+        "pset": "Pset_FlexiblePipeSegment",
+        "property": "StructureCode"
+      },
+      "bsdd_property": "StructureCode",
+      "editable": true,
+      "notes": "Código da estrutura flexível padrão (ex.: 'E-1.01')."
+    },
+    {
+      "column": "Tipo de Montagem",
+      "source_type": "manual",
+      "source": {
+        "pset": "Pset_LI_Extra",
+        "property": "AssemblyType",
+        "allowed_values": ["M", "S"]
+      },
+      "editable": true,
+      "notes": "M = item de montagem principal, S = sobressalente/spare. Sem equivalente na ET v2.1; sugerido como propriedade customizada."
+    },
+    {
+      "column": "Posição de Montagem",
+      "source_type": "manual",
+      "source": {
+        "pset": "Pset_LI_Extra",
+        "property": "AssemblyPosition",
+        "allowed_values": ["Intermediario", "Livre", "Topo", "Fundo"]
+      },
+      "editable": true,
+      "notes": "Posição relativa do item dentro do tramo. Pode futuramente ser derivado da ordem em IfcRelNests."
+    },
+    {
+      "column": "Classe do Material",
+      "source_type": "ifc_class",
+      "source": {
+        "mapping_table": "subsea_flexible_classes",
+        "attribute": "ObjectType / classe da entidade (IfcPipeSegment, IfcPipeFitting, ...)"
+      },
+      "editable": false,
+      "notes": "Tradução da classe IFC/bSDD para o nome em português usado na LI (ver 'subsea_flexible_classes' abaixo)."
+    },
+    {
+      "column": "Atendimento",
+      "source_type": "manual",
+      "source": {
+        "pset": "Pset_LI_Extra",
+        "property": "SupplyStatus",
+        "allowed_values": ["Novo", "Existente", "Reaproveitado"]
+      },
+      "editable": true,
+      "notes": "Sem equivalente direto na ET v2.1; default 'Novo' se ausente."
+    },
+    {
+      "column": "Descrição",
+      "source_type": "computed",
+      "source": {
+        "template_table": "description_templates",
+        "selected_by": "Classe do Material"
+      },
+      "editable": true,
+      "notes": "Composição de atributo Description + propriedades do Pset correspondente, conforme ET §3.4.4.4. Templates editáveis por classe."
+    },
+    {
+      "column": "QTD",
+      "source_type": "ifc_quantity",
+      "source": {
+        "mapping_table": "quantity_by_class",
+        "selected_by": "Classe do Material"
+      },
+      "editable": true,
+      "notes": "Quantidade física (contagem ou comprimento), lida do Qto correspondente à classe."
+    },
+    {
+      "column": "Unidade",
+      "source_type": "computed",
+      "source": {
+        "derived_from": "QTD",
+        "method": "get_unit_symbol(unit) sobre a quantidade selecionada"
+      },
+      "editable": false,
+      "notes": "Unidade da quantidade (ex.: 'un', 'm'), obtida via ifcopenshell.util.unit."
+    },
+    {
+      "column": "Item PPU Padrão",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "StandardPPUItem" },
+      "editable": true,
+      "notes": "Sem equivalente na ET v2.1 — dado de suprimentos/PPU."
+    },
+    {
+      "column": "N° Contratação",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "ContractingNumber" },
+      "editable": true,
+      "notes": "Sem equivalente na ET v2.1."
+    },
+    {
+      "column": "Item PPU",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "PPUItem" },
+      "editable": true,
+      "notes": "Sem equivalente na ET v2.1."
+    },
+    {
+      "column": "Unifilar",
+      "source_type": "ifc_property",
+      "source": {
+        "pset": "Pset_LI_Extra",
+        "property": "UnifilarDrawingNumber"
+      },
+      "editable": true,
+      "notes": "Número do desenho unifilar de referência. Candidato a IfcDocumentReference no futuro."
+    },
+    {
+      "column": "Item Unif.",
+      "source_type": "ifc_property",
+      "source": {
+        "pset": "Pset_LI_Extra",
+        "property": "UnifilarItemNumber"
+      },
+      "editable": true,
+      "notes": "Número de item dentro do unifilar."
+    },
+    {
+      "column": "Item Croqui",
+      "source_type": "ifc_attribute",
+      "source": {
+        "attribute": "Tag",
+        "format": "{Croqui}-{Item}"
+      },
+      "editable": true,
+      "notes": "Referência ao croqui de montagem; pode coincidir com o Tag do tipo (ex.: '00010-PMT-KRL-101.51942')."
+    },
+    {
+      "column": "Desenho de Projeto",
+      "source_type": "manual",
+      "source": {
+        "pset": "Pset_LI_Extra",
+        "property": "ProjectDrawingNumber"
+      },
+      "editable": true,
+      "notes": "Candidato a IfcDocumentReference (DocumentId)."
+    },
+    {
+      "column": "Desenho de Projeto Rev.",
+      "source_type": "manual",
+      "source": {
+        "pset": "Pset_LI_Extra",
+        "property": "ProjectDrawingRevision"
+      },
+      "editable": true,
+      "notes": "Candidato a IfcDocumentInformation.Revision."
+    },
+    {
+      "column": "Desenho da Peça",
+      "source_type": "manual",
+      "source": {
+        "pset": "Pset_LI_Extra",
+        "property": "PartDrawingNumber"
+      },
+      "editable": true,
+      "notes": "Candidato a IfcDocumentReference associado ao Type."
+    },
+    {
+      "column": "Desenho da Peça Rev.",
+      "source_type": "manual",
+      "source": {
+        "pset": "Pset_LI_Extra",
+        "property": "PartDrawingRevision"
+      },
+      "editable": true,
+      "notes": "Candidato a IfcDocumentInformation.Revision."
+    },
+    {
+      "column": "Contrato",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "ContractNumber" },
+      "editable": true,
+      "notes": "Dado de suprimentos/SAP — fora do escopo de modelagem da ET v2.1."
+    },
+    {
+      "column": "Item Contrato",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "ContractItem" },
+      "editable": true,
+      "notes": "Dado de suprimentos/SAP."
+    },
+    {
+      "column": "Repetro",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "RepetroFlag" },
+      "editable": true,
+      "notes": "Sim/Não — regime aduaneiro. Sem equivalente na ET v2.1."
+    },
+    {
+      "column": "Pedido",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "PurchaseOrder" },
+      "editable": true,
+      "notes": "Dado de suprimentos/SAP."
+    },
+    {
+      "column": "Item Pedido",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "PurchaseOrderItem" },
+      "editable": true,
+      "notes": "Dado de suprimentos/SAP."
+    },
+    {
+      "column": "Requisição SAP",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "SAPRequisition" },
+      "editable": true,
+      "notes": "Dado de suprimentos/SAP."
+    },
+    {
+      "column": "Item Requisição SAP",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "SAPRequisitionItem" },
+      "editable": true,
+      "notes": "Dado de suprimentos/SAP."
+    },
+    {
+      "column": "Reserva",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "Reservation" },
+      "editable": true,
+      "notes": "Dado de suprimentos/SAP."
+    },
+    {
+      "column": "Item Reserva",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "ReservationItem" },
+      "editable": true,
+      "notes": "Dado de suprimentos/SAP."
+    },
+    {
+      "column": "NM Topo",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "MaterialNumberTopside" },
+      "editable": true,
+      "notes": "Número de material (SAP) do lado topside. Sem equivalente na ET v2.1."
+    },
+    {
+      "column": "NM",
+      "source_type": "manual",
+      "source": { "pset": "Pset_Procurement", "property": "MaterialNumber" },
+      "editable": true,
+      "notes": "Número de material (SAP)."
+    },
+    {
+      "column": "Localização",
+      "source_type": "spatial",
+      "source": {
+        "level": "IfcBuilding",
+        "attribute": "ObjectType (ex.: 'SubseaPipeline', 'FloatingProductionUnit', 'Well')"
+      },
+      "editable": true,
+      "notes": "Localização física macro do item dentro da hierarquia de composição (§3.4.4.2)."
+    },
+    {
+      "column": "Observações",
+      "source_type": "not_applicable",
+      "source": null,
+      "editable": true,
+      "notes": "Texto livre — não preenchido a partir do IFC."
+    },
+    {
+      "column": "Notas",
+      "source_type": "not_applicable",
+      "source": null,
+      "editable": true,
+      "notes": "Texto livre — não preenchido a partir do IFC."
+    },
+    {
+      "column": "Status",
+      "source_type": "not_applicable",
+      "source": null,
+      "editable": true,
+      "notes": "Status do item na LI (controle do documento, não do modelo)."
+    }
+  ],
+  "subsea_flexible_classes": {
+    "FlexiblePipeSegment": "Tramo",
+    "FlexiblePipeStructure": "Estrutura",
+    "EndFitting": "Conector",
+    "TopBendStiffener": "Enrijecedor de Topo",
+    "IntermediateBendStiffener": "Enrijecedor Intermediário",
+    "BendRestrictor": "Restritor de Curvatura",
+    "HangOffCollar": "Colar de Suspensão",
+    "StopperCollar": "Colar Batente",
+    "PullInCollar": "Colar de Puxamento",
+    "AnchoringCollar": "Colar de Ancoragem",
+    "DeadweightCollar": "Colar de Peso Morto",
+    "BuoyancyModule": "Módulo de Flutuação",
+    "AnodeCollarSet": "Conjunto de Anodos",
+    "HandlingCollar": "Colar de Manuseio",
+    "PipePullingHead": "Cabeça de Puxamento",
+    "UNSStudSet": "Conjunto de Estojos (UNS)",
+    "MetricStudSet": "Conjunto de Estojos (Métrico)",
+    "UNSBoltSet": "Conjunto de Parafusos (UNS)",
+    "RingGasket": "Anel de Vedação",
+    "MetallicStrandSet": "Cordoalha Metálica",
+    "Shackle": "Manilha",
+    "RepairKit": "Kit de Reparo"
+  },
+  "description_templates": {
+    "_comment": "Placeholders no formato {pset.propriedade}. Strings literais entre placeholders são mantidas como no template.",
+    "FlexiblePipeSegment": "Tramo de duto flexível; Código do tramo: {attr.Tag}; Comprimento (m): {Pset_FlexiblePipeSegment.NominalLength}; Envoltória padrão: {Pset_FlexiblePipeSegment.StructureCode}; Diâmetro interno da linha (in): {Pset_FlexiblePipeSegment.NominalInsideDiameter}; Unifilar de fornecimento: {Pset_LI_Extra.UnifilarDrawingNumber}; LDA de projeto (m): {Pset_FlexiblePipeSegment.MaxWaterDepth}",
+    "FlexiblePipeStructure": "Estrutura Flexível {attr.Description}; Pressão do projeto = {Pset_FlexiblePipeSegment.MaxOperatingPressure} psi; LDA do projeto = {Pset_FlexiblePipeSegment.MaxWaterDepth} m",
+    "EndFitting": "Conector {attr.Description}; Flange {Pset_EndFitting.FlangeStandard} {Pset_EndFitting.FlangeNominalDiameter}; {Pset_EndFitting.FlangePressureRating} psi; anel {Pset_EndFitting.RingJointProfile}",
+    "AnodeCollarSet": "Conjunto de Anodos: {Pset_AnodeCollarSet.AnodeCollarsQuantity} colares; massa total {Pset_AnodeCollarSet.AnodeMass} kg; vida útil {Pset_AnodeCollarSet.ServiceLife} anos",
+    "UNSStudSet": "Conjunto de Estojos {Pset_StudSet.StudStandard} {Pset_StudSet.StudSize}; {Pset_StudSet.StudQuantity} estojos, {Pset_StudSet.NutQuantity} porcas; tratamento {Pset_StudSet.SurfaceTreatment}",
+    "MetricStudSet": "Conjunto de Estojos {Pset_StudSet.StudStandard} {Pset_StudSet.StudSize}; {Pset_StudSet.StudQuantity} estojos, {Pset_StudSet.NutQuantity} porcas; tratamento {Pset_StudSet.SurfaceTreatment}",
+    "_default": "{attr.Description}"
+  },
+  "quantity_by_class": {
+    "_comment": "Qto e quantidade lidos para a coluna QTD, por classe.",
+    "FlexiblePipeSegment": { "qto": "Qto_FlexiblePipeSegment", "quantity": "Length" },
+    "_default": { "qto": "BaseQuantities", "quantity": "Count" }
+  }
+}

@@ -62,7 +62,8 @@ class Operator_get_properties(bpy.types.Operator):
         props = context.scene.og_props
         props.add_prop_clicked = False        
         props.ifc_prop.clear()
-        result = bSDD.load_properties(props.dictionary)
+        bSDD.set_uri(props.dictionary)
+        result = bSDD.load_properties()
         if result:
             for property in bSDD.data_prop:  
                 new_prop = props.ifc_prop.add() 

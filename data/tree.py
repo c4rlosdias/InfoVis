@@ -208,6 +208,8 @@ def refresh_types(context):
             new_item.description = classe.description
             new_item.level = classe.level
             new_item.element_type = classe.element_type
+            new_item.qtde = classe.qtde
+            new_item.unit = classe.unit
             new_item.index = classe.index
             new_item.has_children = classe.has_children
             new_item.is_expanded = classe.is_expanded

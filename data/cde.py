@@ -5,14 +5,14 @@ class CDE_Api:
     def __init__(self, endpoint):
         self.endpoint = endpoint
     
-    def get_projects(self):
+    def get_projects(self, element):
         response = requests.get(f'{self.endpoint}/projects')
         if response.status_code == 200:
             return response.json()
         else:
             return None
     
-    def get_contracts(self):
+    def get_contracts(self, element):
         contracts = [
             {
                 "id": "ct1",
@@ -88,38 +88,6 @@ class CDE_Api:
 
         return contracts
 
-    def get_assets(self):
-        assets = [
-            {
-                "id": "as1",
-                "name": "Asset-001",
-                "objects": [
-                    {
-                        "id" : "AC-001",
-                        "name" : "AC-001"
-                    },
-                    {
-                        "id" : "AC-002",
-                        "name" : "AC-002"
-                    }
-                ]
-            },
-            {
-                "id": "as2",
-                "name": "Asset-002",
-                "objects": [
-                    {
-                        "id" : "AC-003",
-                        "name" : "AC-003"
-                    },
-                    {
-                        "id" : "AC-004",
-                        "name" : "AC-004"
-                    }
-                ]
-            }
-        ]
-        return assets
 
     def get_inventory(self):
         inventory = [

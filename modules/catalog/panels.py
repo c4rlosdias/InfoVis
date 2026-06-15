@@ -37,6 +37,9 @@ class Panel_Catalog(bpy.types.Panel):
                 "active_type_index",
                 rows=10
             )
+
+            row = layout.row(align=True)
+            row.operator("catag.export_qtds", text="Export Quantities")
         
         if len(props.layers) > 0:            
             row = layout.row()
@@ -71,10 +74,15 @@ class BIM_UL_products(bpy.types.UIList):
                     {"name": "catag.select_elements", "icon": 'RESTRICT_SELECT_OFF', "att": [("id", item.id)]},
                     {"name": "catag.show_layers", "icon": 'INFO_LARGE', "att": [("id", item.id)]}
                 ],
-                attributes = [(f'{item.name}', icontype)] if item.tag != '' else [(f'{item.name}', icontype)],             
+                attributes = [
+                    (f'Name: {item.name}', icontype),
+                    (f'Qtde: {item.qtde}', icontype),
+                    (f'Unit: {item.unit}', icontype)
+                ] if item.level != 1 else [(f'{item.name}', icontype)],
                 property = 'types',
                 only_children=True
             )
+            
              
 
 class BIM_UL_layers(bpy.types.UIList):

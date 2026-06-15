@@ -1,6 +1,8 @@
 import bpy
 import os
+import pandas as pd
 import json
+import openpyxl
 import ifcopenshell.util.element as element
 import ifcopenshell
 from pathlib import Path
@@ -12,6 +14,28 @@ from ...data.ifc_utils import build_products
 from ...data.tree import refresh_types
 from ..common.operators import _open_in_browser
 
+def get_qtde(type):
+    elements = ifcopenshell.util.element.get_types(type)
+    qtde = 0
+    if type.is_a('IfcPipeSegmentType'):
+        for e in elements:
+            pset = ifcopenshell.util.element.get_pset(e, "OGSubPset_FlexiblePipeSegmentOccurence")
+            length = pset["NominalLength"] if "NominalLength" in pset else 0
+            qtde += length
+    else:
+        qtde = len(elements)
+    return qtde
+            
+def update_predefined_types():
+    model = tool.Ifc.get()
+    for entity in model.by_type('IfcElement'):
+        if entity.IsTypedBy:
+            type = entity.IsTypedBy[0].RelatingType
+            if type.ElementType:
+                object_type = type.ElementType.replace("Type", "")
+                entity.ObjectType = object_type
+                entity.PredefinedType = None
+    
 
 class Operator_load_products(bpy.types.Operator):
     """"""
@@ -43,7 +67,9 @@ class Operator_load_products(bpy.types.Operator):
             dic['tag'] = type.Tag or  ''
             dic['description'] = type.Description or ''
             dic['element_type'] = type.ElementType or ''
-
+            dic['qtde'] = get_qtde(type)
+            dic['unit'] = 'm' if type.is_a('IfcPipeSegmentType') else 'un'
+            
             if type.ElementType not in result:
                 result[type.ElementType] = []
             result[type.ElementType].append(dic)
@@ -236,13 +262,32 @@ class Operator_catalog_select_elements(bpy.types.Operator):
             else:
                 self.report({'ERROR'}, f"No type found for id {self.id}")
                 return {"CANCELLED"}
-            
-def update_predefined_types():
-    model = tool.Ifc.get()
-    for entity in model.by_type('IfcElement'):
-        if entity.IsTypedBy:
-            type = entity.IsTypedBy[0].RelatingType
-            if type.ElementType:
-                object_type = type.ElementType.replace("Type", "")
-                entity.ObjectType = object_type
-                entity.PredefinedType = None
+
+class Operator_export_qtds(bpy.types.Operator):
+    """"""
+    bl_idname  = "catag.export_qtds"
+    bl_label   = "export quantities to json"
+    bl_options = {"REGISTER", "UNDO"}  
+    filepath : bpy.props.StringProperty(subtype="FILE_PATH")
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+    
+    def execute(self, context): 
+            props = context.scene.og_props                     
+            dic = {
+                'Type Name': [],
+                'Quantity': [],
+                'Unit': []
+            }
+            for item in props.types:
+                if item.qtde > 0:
+                    dic['Type Name'].append(item.name)
+                    dic['Quantity'].append(item.qtde)
+                    dic['Unit'].append('un')
+            df = pd.DataFrame(dic)
+
+            df.to_excel(self.filepath + '.xlsx', index=False, engine='openpyxl')
+            self.report({'INFO'}, f"Quantities exported to {self.filepath}.xlsx")
+            return {"FINISHED"}
