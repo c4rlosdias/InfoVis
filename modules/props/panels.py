@@ -240,7 +240,10 @@ class Panel_Properties(bpy.types.Panel):
                                         icon = 'BLANK'
 
                                     rowb.label(text=prop_name)
-                                    
+                                    op = rowb.operator("settings.add_ifc_label_property", icon='ADD', text="")
+                                    op.field_name = f"{pset.name}.{item.name}"
+                                    op.display_name = item.description if item.description else item.name
+                                     
 
                                 if item.type_prop == 'IfcPropertyEnumeratedValue':
                                     rowb = box.row(align=True)   

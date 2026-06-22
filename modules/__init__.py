@@ -10,6 +10,7 @@ from .catalog import panels as _cat_panels
 from .catalog import properties as _cat_props
 from .analysis import operators as _analysis_ops
 from .analysis import panels as _analysis_panels
+from .analysis import properties as _analysis_props
 from .types import panels as _types_panels
 from .connections import operators as _conn_ops
 from .connections import panels as _conn_panels
@@ -45,6 +46,7 @@ def get_classes():
         _props_props.Property_info,
         _props_props.Pset_info,
         _decomp_props.Container,
+        _analysis_props.AnalysisLegendItem,
         IFC_Label_Attribute,
         # --- OG_Properties (central property bag) ---
         OG_Properties,
@@ -68,6 +70,7 @@ def get_classes():
         # --- Decomposition ---
         _decomp_ops.Operator_decomposition_load,
         _decomp_ops.Operator_decomposition_export,
+        _decomp_ops.Operator_decomposition_set_tree_expansion,
         _decomp_ops.Operator_decomposition_select_element,
         _decomp_ops.Operator_decomposition_select_components,
         _decomp_ops.Operator_decomposition_move,
@@ -124,6 +127,7 @@ def get_classes():
         _types_panels.Panel_Types,
         # --- Settings ---
         _settings_ops.Operator_add_ifc_label_attr,
+        _settings_ops.Operator_add_ifc_label_property,
         _settings_ops.Operator_remove_ifc_label_attr,
         _settings_panels.BIM_UL_ifc_label_attrs,
         _settings_panels.Panel_Info,

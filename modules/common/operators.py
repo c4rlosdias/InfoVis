@@ -19,6 +19,39 @@ from ...data.tree import refresh_tree
 _ifc_label_handle = None
 
 
+def _pset_name_variants(pset_name):
+    variants = [pset_name]
+    if "Occurrence" in pset_name:
+        variants.append(pset_name.replace("Occurrence", "Occurence"))
+    elif "Occurence" in pset_name:
+        variants.append(pset_name.replace("Occurence", "Occurrence"))
+    return variants
+
+
+def _get_ifc_label_value(entity, field_name):
+    field_name = field_name.strip()
+    if not field_name:
+        return None
+
+    if '.' in field_name:
+        pset_name, _, prop_name = field_name.partition('.')
+        if not pset_name or not prop_name:
+            return None
+        try:
+            import ifcopenshell.util.element as ifc_util
+            psets = ifc_util.get_psets(entity) or {}
+        except Exception:
+            return None
+
+        for variant in _pset_name_variants(pset_name):
+            pset = psets.get(variant)
+            if pset and prop_name in pset:
+                return pset[prop_name]
+        return None
+
+    return getattr(entity, field_name, None)
+
+
 def _draw_ifc_label():
     context = bpy.context
     og_props = getattr(context.scene, 'og_props', None)
@@ -28,8 +61,8 @@ def _draw_ifc_label():
     if not og_props.show_ifc_label:
         return
 
-    attrs = [item.attr_name for item in og_props.ifc_label_attributes if item.attr_name]
-    if not attrs:
+    fields = [item for item in og_props.ifc_label_attributes if item.attr_name]
+    if not fields:
         return
 
     objs = context.selected_objects
@@ -67,20 +100,13 @@ def _draw_ifc_label():
 
         # --- Build text lines ---
         lines = []
-        for attr_name in attrs:
-            if '.' in attr_name:
-                pset_name, _, prop_name = attr_name.partition('.')
-                try:
-                    import ifcopenshell.util.element as ifc_util
-                    psets = ifc_util.get_psets(entity)
-                    value = psets.get(pset_name, {}).get(prop_name)
-                except Exception:
-                    value = None
-            else:
-                value = getattr(entity, attr_name, None)
+        for item in fields:
+            attr_name = item.attr_name.strip()
+            value = _get_ifc_label_value(entity, attr_name)
             if value is None:
                 continue
-            lines.append(f"{attr_name}: {value}")
+            label = item.display_name.strip() if item.display_name else attr_name
+            lines.append(f"{label}: {value}")
 
         if not lines:
             continue

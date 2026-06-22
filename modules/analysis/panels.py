@@ -65,6 +65,17 @@ class Panel_Analisys(bpy.types.Panel):
         row.operator("analysis.apply_colors", icon='BRUSH_DATA')
         row.operator("analysis.reset_colors", icon='LOOP_BACK')
 
+        if len(props.analysis_legend) > 0:
+            box = layout.box()
+            box.label(text="Legend", icon='COLOR')
+            for item in props.analysis_legend:
+                row = box.row(align=True)
+                split = row.split(factor=0.22, align=True)
+                swatch = split.row(align=True)
+                swatch.enabled = False
+                swatch.prop(item, "color", text="")
+                split.label(text=item.label)
+
         if props.analysis_status:
             box = layout.box()
             box.label(text="Status", icon='TEXT')

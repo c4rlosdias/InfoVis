@@ -279,6 +279,14 @@ def _gradient_color(value, min_value, max_value):
     return (red, green, blue, 1.0)
 
 
+def _legend_entry(label, rgba):
+    return {"label": label, "color": tuple(rgba)}
+
+
+def _format_number(value):
+    return f"{value:.4g}"
+
+
 def validate_analysis_selection(props):
     if tool.Ifc.get() is None:
         raise ValueError("No Ifc file loaded")
@@ -313,16 +321,19 @@ def apply_analysis_colors(props):
     mode = getattr(props, "analysis_color_mode", "distinct")
     matched = 0
     categories = 0
+    legend = []
 
     if mode == "distinct":
-        grouped_keys = []
+        value_counts = {}
+        no_value_count = 0
         for _obj, value in targets:
             if value is None:
+                no_value_count += 1
                 continue
             normalized = _normalize_value(value)
-            if normalized not in grouped_keys:
-                grouped_keys.append(normalized)
-        grouped_keys.sort(key=lambda item: item.lower())
+            value_counts[normalized] = value_counts.get(normalized, 0) + 1
+
+        grouped_keys = sorted(value_counts.keys(), key=lambda item: item.lower())
         palette = {key: _palette_color(index, len(grouped_keys)) for index, key in enumerate(grouped_keys)}
 
         for obj, value in targets:
@@ -332,6 +343,10 @@ def apply_analysis_colors(props):
             _set_object_color(obj, palette[_normalize_value(value)])
             matched += 1
         categories = len(grouped_keys)
+        for key in grouped_keys:
+            legend.append(_legend_entry(f"{key} ({value_counts[key]})", palette[key]))
+        if no_value_count:
+            legend.append(_legend_entry(f"No value ({no_value_count})", _NO_VALUE_COLOR))
 
     elif mode == "exact":
         selected_value = getattr(props, "analysis_value", "")
@@ -344,6 +359,10 @@ def apply_analysis_colors(props):
             else:
                 _set_object_color(obj, _NO_VALUE_COLOR)
         categories = 1
+        legend.append(_legend_entry(f"Match: {selected_value} ({matched})", _MATCH_COLOR))
+        unmatched_count = len(targets) - matched
+        if unmatched_count:
+            legend.append(_legend_entry(f"Other values / no value ({unmatched_count})", _NO_VALUE_COLOR))
 
     else:
         min_value = props.analysis_range_min
@@ -359,13 +378,26 @@ def apply_analysis_colors(props):
         if not any(value is not None for _obj, value in numeric_matches):
             raise ValueError("The selected property does not have numeric values")
 
+        outside_count = 0
         for obj, numeric in numeric_matches:
             if numeric is None or numeric < min_value or numeric > max_value:
                 _set_object_color(obj, _NO_VALUE_COLOR)
+                outside_count += 1
                 continue
             _set_object_color(obj, _gradient_color(numeric, min_value, max_value))
             matched += 1
         categories = 1
+        mid_value = min_value + ((max_value - min_value) / 2.0)
+        legend.extend([
+            _legend_entry(f"Range min: {_format_number(min_value)}", _gradient_color(min_value, min_value, max_value)),
+            _legend_entry(f"Range mid: {_format_number(mid_value)}", _gradient_color(mid_value, min_value, max_value)),
+            _legend_entry(f"Range max: {_format_number(max_value)}", _gradient_color(max_value, min_value, max_value)),
+        ])
+        if outside_count:
+            legend.append(_legend_entry(f"Outside range / no numeric value ({outside_count})", _NO_VALUE_COLOR))
+
+    if others:
+        legend.append(_legend_entry(f"Other elements ({len(others)})", _MUTED_COLOR))
 
     _redraw_viewports()
 
@@ -373,6 +405,7 @@ def apply_analysis_colors(props):
         "target_count": len(targets),
         "matched_count": matched,
         "category_count": categories,
+        "legend": legend,
     }
 
 

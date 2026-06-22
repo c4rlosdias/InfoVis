@@ -84,11 +84,11 @@ class Panel_Decompositions(bpy.types.Panel):
         layout = self.layout     
         props = context.scene.og_props
         row = layout.row(align=True)
-        row.operator("decomposition.load", text="Load decompositions")
+        #row.operator("decomposition.load", text="Load decompositions")
         row.operator("decomposition.export_tree", text="Export", icon='EXPORT')
         row = layout.row()
         row.label(text="Project Composition:", icon='INFO')
-
+                
         if auth.is_authenticated():
             box = layout.box()
             row = box.row()
@@ -101,6 +101,12 @@ class Panel_Decompositions(bpy.types.Panel):
         row.prop(props, "tree_type", expand=True)
         
         if len(props.containers_show) > 0:
+            row = layout.row(align=True)
+            op = row.operator("decomposition.set_tree_expansion", text="Expand all", icon='DISCLOSURE_TRI_DOWN')
+            op.expand = True
+            op = row.operator("decomposition.set_tree_expansion", text="Collapse children", icon='DISCLOSURE_TRI_RIGHT')
+            op.expand = False
+
             self.layout.template_list(
                 "BIM_UL_decomposition",
                 "",

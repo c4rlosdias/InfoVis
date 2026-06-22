@@ -1,6 +1,38 @@
 import bpy
 
-from ...data.tree import draw_tree
+
+def _draw_catalog_type_tree(layout, item, icon):
+    if item.is_hidden:
+        return
+
+    row = layout.row(align=True)
+    for _ in range(0, item.level - 1):
+        row.label(text="", icon="BLANK1")
+
+    if item.has_children:
+        if item.is_expanded:
+            op = row.operator("element.contract_tree", text="", emboss=False, icon="DISCLOSURE_TRI_DOWN")
+        else:
+            op = row.operator("element.expand_tree", text="", emboss=False, icon="DISCLOSURE_TRI_RIGHT")
+        op.index = item.index
+        op.property = 'types'
+    else:
+        row.label(text="", icon="BLANK1")
+
+    if item.level == 1:
+        row.label(text=item.name, icon=icon)
+    else:
+        split = row.split(factor=0.68, align=True)
+        split.label(text=f'Name: {item.name}', icon=icon)
+        split = split.split(factor=0.38, align=True)
+        split.label(text=f'Qtde: {item.qtde:g}', icon=icon)
+        split.label(text=f'Unit: {item.unit}', icon=icon)
+
+    if not item.has_children:
+        op = row.operator("catag.select_elements", text="", icon='RESTRICT_SELECT_OFF')
+        op.id = item.id
+        op = row.operator("catag.show_layers", text="", icon='INFO_LARGE')
+        op.id = item.id
 
 
 class Panel_Catalog(bpy.types.Panel):
@@ -280,21 +312,7 @@ class BIM_UL_products(bpy.types.UIList):
             else:
                 icontype = 'NONE'
 
-            draw_tree(
-                layout,
-                item,
-                operators=[
-                    {"name": "catag.select_elements", "icon": 'RESTRICT_SELECT_OFF', "att": [("id", item.id)]},
-                    {"name": "catag.show_layers", "icon": 'INFO_LARGE', "att": [("id", item.id)]}
-                ],
-                attributes=[
-                    (f'Name: {item.name}', icontype),
-                    (f'Qtde: {item.qtde}', icontype),
-                    (f'Unit: {item.unit}', icontype)
-                ] if item.level != 1 else [(f'{item.name}', icontype)],
-                property='types',
-                only_children=True
-            )
+            _draw_catalog_type_tree(layout, item, icontype)
 
 
 class BIM_UL_li_mapping_columns(bpy.types.UIList):

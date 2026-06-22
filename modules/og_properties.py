@@ -11,6 +11,7 @@ from .dictionary.properties import Ifc_properties, Class_info, Class_prop_info
 from .catalog.properties import Class_type, Layer, LIMappingColumn, LIMappingSourceItem, LISupportTable, LISupportTableRow
 from .props.properties import Enumeration_values, Property_info, Documents, Pset_info
 from .decomposition.properties import Container
+from .analysis.properties import AnalysisLegendItem
 from .analysis.service import (
     ANALYSIS_DISCIPLINE_ITEMS,
     analysis_get_object_types,
@@ -24,10 +25,14 @@ from .analysis.service import (
 class IFC_Label_Attribute(PropertyGroup):
     """Um atributo IFC a ser exibido na viewport overlay."""
     attr_name : StringProperty(name='Attribute', default='Name')
+    display_name : StringProperty(name='Display text', default='')
 
 
 def analysis_selection_changed(self, context):
     self.analysis_status = ''
+    legend = getattr(self, "analysis_legend", None)
+    if legend is not None:
+        legend.clear()
     invalidate_analysis_value_cache()
 
 
@@ -345,6 +350,7 @@ class OG_Properties(PropertyGroup):
     analysis_range_min       : FloatProperty(name='Range min', default=0.0, update=analysis_selection_changed)
     analysis_range_max       : FloatProperty(name='Range max', default=0.0, update=analysis_selection_changed)
     analysis_status          : StringProperty(name='Analysis status', default='')
+    analysis_legend          : CollectionProperty(name='Analysis legend', type=AnalysisLegendItem)
 
     # Viewport overlays
     show_ifc_label              : BoolProperty(name='Show IFC label', description='Mostrar nome do elemento IFC na viewport ao selecionar', default=True)

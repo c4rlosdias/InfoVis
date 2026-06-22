@@ -6,7 +6,10 @@ class BIM_UL_ifc_label_attrs(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.prop(item, "attr_name", text="", emboss=True, icon='DOT')
+            row = layout.row(align=True)
+            split = row.split(factor=0.58, align=True)
+            split.prop(item, "attr_name", text="", emboss=True, icon='DOT')
+            split.prop(item, "display_name", text="", emboss=True, icon='FONT_DATA')
         elif self.layout_type == 'GRID':
             layout.alignment = 'CENTER'
             layout.label(text="", icon='DOT')
@@ -44,7 +47,11 @@ class Panel_Info(bpy.types.Panel):
 
         layout.separator()
         row = layout.row()
-        row.label(text="Attributes to display:", icon='LINENUMBERS_ON')
+        row.label(text="Fields to display:", icon='LINENUMBERS_ON')
+        row = layout.row(align=True)
+        split = row.split(factor=0.58, align=True)
+        split.label(text="Field")
+        split.label(text="Display text")
         row = layout.row()
         col_list = row.column()
         col_list.template_list(
@@ -55,6 +62,7 @@ class Panel_Info(bpy.types.Panel):
         )
         col_btn = row.column(align=True)
         col_btn.operator("settings.add_ifc_label_attr", icon='ADD', text="")
+        col_btn.operator("settings.add_ifc_label_property", icon='PROPERTIES', text="")
         col_btn.operator("settings.remove_ifc_label_attr", icon='REMOVE', text="")
 
         layout.separator()

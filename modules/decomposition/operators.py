@@ -119,6 +119,34 @@ class Operator_decomposition_export(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class Operator_decomposition_set_tree_expansion(bpy.types.Operator):
+    """"""
+    bl_idname  = "decomposition.set_tree_expansion"
+    bl_label   = "Set decomposition tree expansion"
+    bl_options = {"REGISTER", "UNDO"}
+
+    expand : bpy.props.BoolProperty(name="expand", default=True)
+
+    def execute(self, context):
+        props = context.scene.og_props
+        if len(props.elements_containers) == 0:
+            self.report({'WARNING'}, "No decomposition tree loaded.")
+            return {"CANCELLED"}
+
+        for item in props.elements_containers:
+            item.is_expanded = self.expand and item.has_children
+            item.is_hidden = False if self.expand else item.level != 1
+
+        refresh_container(context)
+        if len(props.containers_show) > 0:
+            props.active_element_index = min(
+                props.active_element_index,
+                len(props.containers_show) - 1
+            )
+
+        return {"FINISHED"}
+
+
 class Operator_decomposition_select_element(bpy.types.Operator):
     """"""
     bl_idname  = "decomposition.select_element"
