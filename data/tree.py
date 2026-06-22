@@ -1,12 +1,39 @@
+import json
+
 import bpy
 import ifcopenshell
 import ifcopenshell.util.element
 import bonsai.tool as tool
+import os
 
 from .ifc_utils import refresh_props
 
 last_active = None
+views = None
+views_by_id = None
 
+
+def load_views(force=False):
+    global views, views_by_id
+
+    if views is None or views_by_id is None or force:
+        path = os.path.join(os.path.dirname(__file__), '../resources/decomposition_view.json')
+
+        with open(path, encoding='utf-8') as file:
+            views = json.load(file)['views']
+
+        views_by_id = {view['id']: view for view in views}
+
+    return views
+
+
+def get_view(view_id):
+    load_views()
+    return views_by_id[view_id]
+
+
+def __init__():
+    load_views()
 
 def refresh_layers(context):
     obj = context.view_layer.objects.active
@@ -55,45 +82,37 @@ def on_active_object_change(scene):
         bpy.ops.props.load_properties()
 
 
-def load_contained_elements_by_decomposition(container: ifcopenshell.entity_instance, name_props: str, context : bpy.types.Context ) -> None:
-            props = context.scene.og_props        
-            def get_decomposition(element: ifcopenshell.entity_instance, is_recursive : bool) -> set[ifcopenshell.entity_instance]:
-
+def load_contained_elements_by_decomposition(container: ifcopenshell.entity_instance, view_id : str, name_props: str, context : bpy.types.Context ) -> None:
+            props = context.scene.og_props    
+            #view_id = 'assets'
+                
+            def get_decomposition(element: ifcopenshell.entity_instance, view_id: str, is_recursive : bool) -> set[ifcopenshell.entity_instance]:
+                data_view = get_view(view_id)
                 queue = [element]            
                 results = []
-
+          
                 while queue:
                     element = queue.pop()
-                    for rel in getattr(element, "IsGroupedBy", []):
-                        related = rel.RelatedObjects
-                        queue.extend(related)
-                        results.extend(related) 
-                    for rel in getattr(element, "ContainsElements", []):
-                        related = rel.RelatedElements
-                        queue.extend(related)
-                        results.extend(related)      
-                    for rel in getattr(element, "IsDecomposedBy", []):
-                        related = rel.RelatedObjects
-                        queue.extend(related)
-                        results.extend(related)
-                    for rel in getattr(element, "IsNestedBy", []):
-                        related = rel.RelatedObjects
-                        if related[0].is_a("IfcDistributionPort"):
-                            continue
-                        queue.extend(related)
-                        results.extend(related)
+                    for relation in data_view['relations']:
+                        for rel in getattr(element, relation[0], []):
+                            related = getattr(rel, relation[1], [])
+                            if related and related[0].is_a("IfcDistributionPort"):
+                                continue
+                            queue.extend(related)
+                            results.extend(related)
                     if not is_recursive:
                         break
                 return results
+
 
             def add_elements(elements, name_props, level=1):                
                 for element in elements:                                            
                     new = getattr(props, name_props).add()
                     
-                    new.name = element.Name or 'Unnamed'
-                    new.type = element.is_a()
+                    new.name  = element.Name or 'Unnamed'
+                    new.type  = element.is_a()
                     new.level = level 
-                    new.id = element.id()                
+                    new.id    = element.id()                
                      
                     if hasattr(element, "ObjectType") and element.ObjectType:
                         new.object_type = element.ObjectType
@@ -104,7 +123,7 @@ def load_contained_elements_by_decomposition(container: ifcopenshell.entity_inst
 
                     children = [
                         e
-                        for e in get_decomposition(element, is_recursive=False)
+                        for e in get_decomposition(element, view_id=view_id, is_recursive=False)
                         if not e.is_a("IfcFeatureElement")
                     ]
                     if children:
@@ -112,8 +131,10 @@ def load_contained_elements_by_decomposition(container: ifcopenshell.entity_inst
                         new.is_expanded = False
                         add_elements(children, name_props, level=level + 1)
             
-            getattr(props, name_props).clear()
-            elements = get_decomposition(container, is_recursive=False)
+            getattr(props, name_props).clear()            
+            #elements = get_decomposition(container, view_id=view_id, is_recursive=False)   
+            
+            elements = [container]        
             add_elements(elements, name_props)
 
 

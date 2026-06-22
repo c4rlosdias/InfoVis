@@ -8,9 +8,17 @@ import ifcopenshell.util.element
 from ..data.bsdd import bSDD
 from ..data.cde import CDE_Api
 from .dictionary.properties import Ifc_properties, Class_info, Class_prop_info
-from .catalog.properties import Class_type, Layer
+from .catalog.properties import Class_type, Layer, LIMappingColumn, LIMappingSourceItem, LISupportTable, LISupportTableRow
 from .props.properties import Enumeration_values, Property_info, Documents, Pset_info
 from .decomposition.properties import Container
+from .analysis.service import (
+    ANALYSIS_DISCIPLINE_ITEMS,
+    analysis_get_object_types,
+    analysis_get_properties,
+    analysis_get_psets,
+    analysis_get_values,
+    invalidate_analysis_value_cache,
+)
 
 
 class IFC_Label_Attribute(PropertyGroup):
@@ -18,8 +26,13 @@ class IFC_Label_Attribute(PropertyGroup):
     attr_name : StringProperty(name='Attribute', default='Name')
 
 
+def analysis_selection_changed(self, context):
+    self.analysis_status = ''
+    invalidate_analysis_value_cache()
+
+
 # update function for the decomposition tree 
-def update_tree_type(self, context):
+def _update_tree_type(self, context):
     def add_elements(elements,level=0):
         new = self.elements_tree.add()
         for element in elements:
@@ -36,14 +49,10 @@ def update_tree_type(self, context):
 
     cde = CDE_Api('')
     elements_tree = []
-  
-    if self.tree_type == 'contracts':
-        elements_tree = cde.get_contracts(self.containers_show[self.active_element_index])
-    else:
-        elements_tree = cde.get_inventory(self.containers_show[self.active_element_index])
-    i = 0
-    
+
+    i = 0    
     for element in elements_tree:
+        elements_tree = cde.get_contracts(self.containers_show[self.active_element_index])
         self.elements_tree.clear()
         new = self.elements_tree.add()
         new.name = element['name'] or 'Unnamed'        
@@ -56,6 +65,11 @@ def update_tree_type(self, context):
 
         new.is_hidden = False if new.has_children else True
         i += 1
+
+def update_tree_type(self, context):
+    bpy.ops.decomposition.load(all_expanded=False)
+    
+
 
 def _get_dictionaries(self, context):                
     if not bSDD.is_loaded:
@@ -148,6 +162,27 @@ def active_element_changed(self, context):
             new_layer.name = element.Name or f"Element {element.id()}"
             new_layer.description = element.get_info() or ''
 
+    # view associated contracts
+    cde = CDE_Api('')
+    elements_tree = []
+    elements_tree = cde.get_contracts(self.containers_show[self.active_element_index])
+
+    i = 0
+    print(f"Elements tree: {elements_tree}")
+    for element in elements_tree:
+        self.elements_tree.clear()
+        new = self.elements_tree.add()
+        new.name = element['name'] or 'Unnamed'        
+        new.object_type = element['description'] or 'Unnamed'
+        new.level = 0
+        new.is_expanded = False
+        #new.has_children = True if 'objects' in element and len(element['objects']) > 0 else False
+        # if 'objects' in element and len(element['objects']) > 0:
+        #     add_elements(element['objects'], level=1)
+
+        new.is_hidden = False 
+        i += 1
+
 def load_products(self, context):   
     props = context.scene.my_props
     if props.products_loaded:             
@@ -183,6 +218,7 @@ class OG_Properties(PropertyGroup):
 
     tree_type                : EnumProperty(
                                     items=[
+                                        ('assets', 'Assets', 'Assets'),
                                         ('contracts', 'Contracts', 'Contracts'),
                                         ('inventory', 'Inventory', 'Inventory')                                        
                                     ],
@@ -242,6 +278,14 @@ class OG_Properties(PropertyGroup):
     layers                   : CollectionProperty(name="layers", type=Container)
     active_layer_index       : IntProperty(name='layer index', default=0)
     active_type_id          : IntProperty(name='active type id', default=0)
+    li_mapping_schema_version : StringProperty(name='LI mapping schema version', default='1.0')
+    li_mapping_description    : StringProperty(name='LI mapping description', default='')
+    li_mapping_reference_sheet: StringProperty(name='LI mapping reference sheet', default='')
+    li_mapping_columns        : CollectionProperty(name='LI mapping columns', type=LIMappingColumn)
+    active_li_mapping_index   : IntProperty(name='LI mapping index', default=0)
+    li_support_tables         : CollectionProperty(name='LI support tables', type=LISupportTable)
+    active_li_support_table_index : IntProperty(name='LI support table index', default=0)
+    li_mapping_loaded         : BoolProperty(name='LI mapping loaded', default=False)
 
     # O&G Properties
     active_pset_index        : IntProperty(name='pset index', default=0)
@@ -260,6 +304,47 @@ class OG_Properties(PropertyGroup):
     documents                : CollectionProperty(name='documents', type=Documents)
 
     show_table               : BoolProperty(name='Show table', default=False)
+
+    # Analysis
+    analysis_discipline      : EnumProperty(
+                                 items=ANALYSIS_DISCIPLINE_ITEMS,
+                                    name='Discipline',
+                                    default='flexible_pipes',
+                                    update=analysis_selection_changed,
+                               )
+    analysis_object_type     : EnumProperty(
+                                    items=analysis_get_object_types,
+                                    name='ObjectType',
+                                    update=analysis_selection_changed,
+                               )
+    analysis_pset            : EnumProperty(
+                                    items=analysis_get_psets,
+                                    name='Property set',
+                                    update=analysis_selection_changed,
+                               )
+    analysis_property        : EnumProperty(
+                                    items=analysis_get_properties,
+                                    name='Property',
+                                    update=analysis_selection_changed,
+                               )
+    analysis_color_mode      : EnumProperty(
+                                    items=[
+                                        ('distinct', 'Distinct values', 'Color each distinct value with a different color'),
+                                        ('exact', 'Exact value', 'Highlight a single selected value'),
+                                        ('range', 'Numeric range', 'Color numeric values within a selected range'),
+                                    ],
+                                    name='Analysis mode',
+                                    default='distinct',
+                                    update=analysis_selection_changed,
+                               )
+    analysis_value           : EnumProperty(
+                                    items=analysis_get_values,
+                                    name='Value',
+                                    update=analysis_selection_changed,
+                               )
+    analysis_range_min       : FloatProperty(name='Range min', default=0.0, update=analysis_selection_changed)
+    analysis_range_max       : FloatProperty(name='Range max', default=0.0, update=analysis_selection_changed)
+    analysis_status          : StringProperty(name='Analysis status', default='')
 
     # Viewport overlays
     show_ifc_label              : BoolProperty(name='Show IFC label', description='Mostrar nome do elemento IFC na viewport ao selecionar', default=True)

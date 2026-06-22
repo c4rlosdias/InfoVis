@@ -1,0 +1,28 @@
+{
+  "views": [
+    {
+      "id": "assets",
+      "relations": [
+        ["IsGroupedBy", "RelatedObjects"],
+        ["ContainsElements", "RelatedElements"],
+        ["IsDecomposedBy", "RelatedObjects"],
+        ["IsNestedBy", "RelatedObjects"]
+      ]
+    },
+    {
+      "id": "contracts",
+      "relations": [
+        ["Controls", "RelatedObjects"],
+        ["IsGroupedBy", "RelatedObjects"],
+        ["IsDecomposedBy", "RelatedObjects"],
+        ["IsNestedBy", "RelatedObjects"]
+      ]
+    },
+    {
+      "id": "inventory",
+      "relations": [
+        ["IsGroupedBy", "RelatedObjects"]
+      ]
+    }
+  ]
+}

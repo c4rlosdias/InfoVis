@@ -1,0 +1,132 @@
+{
+  "$schema_version": "1.0",
+  "description": "",
+  "reference_sheet": "teste",
+  "source_types": {
+    "ifc_attribute": "Atributo direto da entidade IFC (ex.: Name, Description, Tag, ObjectType, GlobalId)",
+    "ifc_property": "Propriedade dentro de um Pset (lido via ifcopenshell.util.element.get_psets / get_property)",
+    "ifc_quantity": "Quantidade dentro de um Qto (IfcElementQuantity)",
+    "ifc_class": "Classe/tipo IFC da ocorrência (mapeada para classe bSDD do dicionário do projeto)",
+    "spatial": "Derivado da hierarquia espacial (IfcRelContainedInSpatialStructure / IfcRelNests)",
+    "aggregation_parent": "Atributo de um ancestral na cadeia de montagem (IfcRelNests / IfcRelAggregates), por nível: 1=pai imediato, 2=avô etc.",
+    "computed": "Valor calculado a partir de um template combinando outros campos",
+    "manual": "Sem correspondência no modelo IFC v2.1 — preenchimento manual ou Pset customizado (Pset_LI_Extra / Pset_Procurement)",
+    "not_applicable": "Campo de controle da LI, sem relação com o modelo (status do documento, observações livres etc.)"
+  },
+  "columns": [
+    {
+      "column": "Classe",
+      "source_type": "ifc_class",
+      "source": {
+        "attribute": "ObjectType",
+        "mapping_table": "subsea_flexible_classes"
+      },
+      "editable": false,
+      "notes": "Traduz o ObjectType IFC (ex.: FlexiblePipeSegment) para o nome em PT via subsea_flexible_classes."
+    },
+    {
+      "column": "Name",
+      "source_type": "ifc_attribute",
+      "source": {
+        "attribute": "Name"
+      },
+      "editable": true,
+      "notes": ""
+    },
+    {
+      "column": "space",
+      "source_type": "computed",
+      "source": {
+        "method": "spatial_name_part",
+        "separator": "/"
+      },
+      "editable": false,
+      "notes": "IfcSite/IfcBuilding não diferenciam plataforma/poço neste modelo (tudo está só sob o IfcSite). Sobe a cadeia de Nests/Decomposes até achar um ancestral cujo Name tenha '/' (ex.: segmento raiz 'P-52/7-RO-25D-RJS') e devolve o nome inteiro. Para extrair só um lado, adicione 'part_index' (0 ou 1) em Campos extras."
+    },
+    {
+      "column": "Qtde",
+      "source_type": "ifc_quantity",
+      "source": {
+        "mapping_table": "quantity_by_class",
+        "quantity_mode": "mapping"
+      },
+      "editable": true,
+      "notes": "Soma comprimento para classes com regra 'Length' em quantity_by_class (ex.: FlexiblePipeSegment); conta ocorrências nas demais."
+    },
+    {
+      "column": "Unidade",
+      "source_type": "computed",
+      "source": {
+        "derived_from": "Qtde",
+        "method": "quantity_unit_symbol"
+      },
+      "editable": false,
+      "notes": "Deriva 'm' ou 'un' a partir da mesma regra de quantity_by_class usada na coluna Qtde."
+    },
+    {
+      "column": "Tramo",
+      "source_type": "aggregation_parent",
+      "source": {
+        "level": "1",
+        "attribute": "Name"
+      },
+      "editable": false,
+      "notes": "Pai imediato na cadeia de montagem (Nests/IfcRelAggregates). Vazio se a ocorrência não tiver pai de montagem."
+    },
+    {
+      "column": "Pipe Line",
+      "source_type": "aggregation_parent",
+      "source": {
+        "level": "2",
+        "attribute": "Name"
+      },
+      "editable": false,
+      "notes": "Avô na cadeia de montagem (2 níveis acima). Adicione mais colunas iguais com level=3, 4... para subir mais."
+    }
+  ],
+  "subsea_flexible_classes": {
+    "FlexiblePipeSegment": "Tramo",
+    "FlexiblePipeStructure": "Estrutura",
+    "EndFitting": "Conector",
+    "TopBendStiffener": "Enrijecedor de Topo",
+    "IntermediateBendStiffener": "Enrijecedor Intermediário",
+    "BendRestrictor": "Restritor de Curvatura",
+    "HangOffCollar": "Colar de Suspensão",
+    "StopperCollar": "Colar Batente",
+    "PullInCollar": "Colar de Puxamento",
+    "AnchoringCollar": "Colar de Ancoragem",
+    "DeadweightCollar": "Colar de Peso Morto",
+    "BuoyancyModule": "Módulo de Flutuação",
+    "AnodeCollarSet": "Conjunto de Anodos",
+    "HandlingCollar": "Colar de Manuseio",
+    "PipePullingHead": "Cabeça de Puxamento",
+    "UNSStudSet": "Conjunto de Estojos (UNS)",
+    "MetricStudSet": "Conjunto de Estojos (Métrico)",
+    "UNSBoltSet": "Conjunto de Parafusos (UNS)",
+    "RingGasket": "Anel de Vedação",
+    "MetallicStrandSet": "Cordoalha Metálica",
+    "Shackle": "Manilha",
+    "RepairKit": "Kit de Reparo"
+  },
+  "description_templates": {
+    "_comment": "Placeholders aceitos: {attr.NomeDoAtributo} e {Pset_Nome.NomeDaPropriedade}. Strings literais entre placeholders são mantidas como no template.",
+    "FlexiblePipeSegment": "Tramo de duto flexível; Código do tramo: {attr.Tag}; Comprimento (m): {Pset_FlexiblePipeSegment.NominalLength}; Envoltória padrão: {Pset_FlexiblePipeSegment.StructureCode}; Diâmetro interno da linha (in): {Pset_FlexiblePipeSegment.NominalInsideDiameter}; Unifilar de fornecimento: {Pset_LI_Extra.UnifilarDrawingNumber}; LDA de projeto (m): {Pset_FlexiblePipeSegment.MaxWaterDepth}",
+    "FlexiblePipeStructure": "Estrutura Flexível {attr.Description}; Pressão do projeto = {Pset_FlexiblePipeSegment.MaxOperatingPressure} psi; LDA do projeto = {Pset_FlexiblePipeSegment.MaxWaterDepth} m",
+    "EndFitting": "Conector {attr.Description}; Flange {Pset_EndFitting.FlangeStandard} {Pset_EndFitting.FlangeNominalDiameter}; {Pset_EndFitting.FlangePressureRating} psi; anel {Pset_EndFitting.RingJointProfile}",
+    "AnodeCollarSet": "Conjunto de Anodos: {Pset_AnodeCollarSet.AnodeCollarsQuantity} colares; massa total {Pset_AnodeCollarSet.AnodeMass} kg; vida útil {Pset_AnodeCollarSet.ServiceLife} anos",
+    "UNSStudSet": "Conjunto de Estojos {Pset_StudSet.StudStandard} {Pset_StudSet.StudSize}; {Pset_StudSet.StudQuantity} estojos, {Pset_StudSet.NutQuantity} porcas; tratamento {Pset_StudSet.SurfaceTreatment}",
+    "MetricStudSet": "Conjunto de Estojos {Pset_StudSet.StudStandard} {Pset_StudSet.StudSize}; {Pset_StudSet.StudQuantity} estojos, {Pset_StudSet.NutQuantity} porcas; tratamento {Pset_StudSet.SurfaceTreatment}",
+    "_default": "{attr.Description}"
+  },
+  "quantity_by_class": {
+    "_comment": "Qto e quantidade lidos para a coluna QTD, por classe.",
+    "FlexiblePipeSegment": {
+      "qto": "Qto_FlexiblePipeSegment",
+      "quantity": "Length"
+    },
+    "_default": {
+      "qto": "BaseQuantities",
+      "quantity": "Count"
+    }
+  }
+}

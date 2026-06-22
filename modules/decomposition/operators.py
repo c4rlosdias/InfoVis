@@ -1,5 +1,6 @@
 import bpy
 import ifcopenshell
+import pandas as pd
 import bonsai.tool as tool
 
 from ...data.tree import (
@@ -21,19 +22,101 @@ class Operator_decomposition_load(bpy.types.Operator):
     def execute(self, context):   
         props = context.scene.og_props        
         model = tool.Ifc.get()
-        elements = model.by_type('IfcProject')
+
+        if props.tree_type == 'contracts':
+            ifc_class = 'IfcProjectOrder'
+        elif props.tree_type == 'inventory':
+            ifc_class = 'IfcInventory'
+        elif props.tree_type == 'assets':
+            ifc_class = 'IfcProject'
+        else:
+            self.report({'ERROR'}, f"Unknown tree type: {props.tree_type}")
+            return {"CANCELLED"}
+        
+        elements = model.by_type(ifc_class)
+        print(f"Found elements: {elements}")
         
         if len(elements) > 0:
             for element in elements: 
-                load_contained_elements_by_decomposition(element, 'elements_containers', context)  
+                load_contained_elements_by_decomposition(element, props.tree_type, 'elements_containers', context)  
             i = 0          
             for element in props.elements_containers:
                 element.index = i
                 element.is_expanded = self.all_expanded
                 element.is_hidden = not self.all_expanded if element.level!=1 else False                
                 i += 1   
-            refresh_container(context)
-        return {"FINISHED"} 
+        else:
+            self.report({'WARNING'}, f"No elements found for IFC class: {ifc_class}")
+            props.elements_containers.clear()
+        
+        refresh_container(context)
+        
+        # print(elements)
+        # for element in elements: 
+        #     load_contained_elements_by_decomposition(element, props.tree_type, 'elements_containers', context)  
+        # i = 0          
+        # for element in props.elements_containers:
+        #     element.index = i
+        #     element.is_expanded = self.all_expanded
+        #     element.is_hidden = not self.all_expanded if element.level!=1 else False                
+        #     i += 1   
+        # refresh_container(context)
+
+        return {"FINISHED"}
+
+
+class Operator_decomposition_export(bpy.types.Operator):
+    """Exporta para Excel a árvore de decomposição/montagem (Nests,
+    IfcRelAggregates, containment espacial e grupos) já carregada no painel
+    Decompositions, preservando hierarquia (nível + pai) por linha."""
+    bl_idname  = "decomposition.export_tree"
+    bl_label   = "Export decomposition tree"
+    bl_options = {"REGISTER", "UNDO"}
+    filepath : bpy.props.StringProperty(subtype="FILE_PATH")
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        props = context.scene.og_props
+        items = list(props.elements_containers)
+        if not items:
+            self.report({'WARNING'}, "Nada para exportar. Clique em 'Load decompositions' primeiro.")
+            return {'CANCELLED'}
+
+        rows = []
+        # A árvore é montada em pré-ordem (pai sempre adicionado antes dos
+        # filhos), então o último item visto no nível L-1 é sempre o pai do
+        # item atual de nível L. Guardamos só o último (id, name) por nível e
+        # descartamos níveis mais profundos que o atual ao avançar (o ramo
+        # anterior já terminou).
+        last_at_level = {}
+        for item in items:
+            parent_id, parent_name = last_at_level.get(item.level - 1, ('', ''))
+            rows.append({
+                'Level': item.level,
+                'ID': item.id,
+                'Name': item.name,
+                'Type': item.type,
+                'ObjectType': item.object_type,
+                'Parent ID': parent_id,
+                'Parent Name': parent_name,
+                'Has Children': item.has_children,
+            })
+            last_at_level[item.level] = (item.id, item.name)
+            for level in [l for l in last_at_level if l > item.level]:
+                del last_at_level[level]
+
+        df = pd.DataFrame(
+            rows,
+            columns=['Level', 'ID', 'Name', 'Type', 'ObjectType', 'Parent ID', 'Parent Name', 'Has Children'],
+        )
+        filepath = self.filepath if self.filepath.lower().endswith('.xlsx') else f"{self.filepath}.xlsx"
+        df.to_excel(filepath, index=False, engine='openpyxl')
+
+        self.report({'INFO'}, f"Decomposition tree exported to {filepath}")
+        return {'FINISHED'}
 
 
 class Operator_decomposition_select_element(bpy.types.Operator):

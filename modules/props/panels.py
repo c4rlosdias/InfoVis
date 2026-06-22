@@ -112,7 +112,7 @@ class Panel_Properties(bpy.types.Panel):
                         icon = 'TRIA_RIGHT'
                     row.operator("props.expand", icon=icon, text="").index = pset.index
                     if props.show_description:
-                        row.label(text=pset.description, icon='COPY_ID') 
+                        row.label(text=pset.description if pset.description else pset.name, icon='COPY_ID') 
                     else:
                         row.label(text=pset.name, icon='COPY_ID')                   
                          
