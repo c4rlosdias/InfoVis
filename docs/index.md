@@ -11,6 +11,7 @@ O projeto e distribuido como um add-on Python com entrada em `__init__.py`, orga
 ## O que voce encontra aqui
 
 - arquitetura do add-on e fluxo de inicializacao
+- guia de utilizacao dos paineis do AddOn no Blender
 - guia de desenvolvimento e release
 - referencia por operadores, paineis, propriedades e camada de dados
 - glossario dos termos e componentes recorrentes
@@ -20,6 +21,8 @@ O projeto e distribuido como um add-on Python com entrada em `__init__.py`, orga
 
 | Objetivo | Comece aqui | Proximo passo |
 |----------|-------------|---------------|
+| Usar o AddOn no Blender | [Guia de Utilizacao](guides/GUIA_DE_UTILIZACAO.md) | [Glossario](reference/GLOSSARY.md) |
+| Configurar a Lista de Itens | [Guia LI Mapping](guides/LI_MAPPING_GUIDE.md) | [Guia de Utilizacao](guides/GUIA_DE_UTILIZACAO.md) |
 | Entender a estrutura do add-on | [Arquitetura](ARCHITECTURE.md) | [Glossario](reference/GLOSSARY.md) |
 | Implementar mudancas no codigo | [Desenvolvimento](DEVELOPMENT.md) | Guias em `guides/` |
 | Revisar operadores e paineis | [Operadores](guides/OPERATORS_DOCUMENTATION.md) | [Paineis](guides/PANELS_DOCUMENTATION.md) |
@@ -43,7 +46,7 @@ O projeto e distribuido como um add-on Python com entrada em `__init__.py`, orga
 
 ### Para instalar e validar rapidamente
 
-1. consulte o README na raiz do repositorio para o fluxo geral de instalacao
+1. consulte o [Guia de Utilizacao](guides/GUIA_DE_UTILIZACAO.md) para o fluxo geral de uso
 2. gere um zip com `build_release.bat` ou `build_release.sh`
 3. instale o add-on no Blender por `Install from Disk`
 4. valide com `Example/C3388.8_UN-31.ifc`

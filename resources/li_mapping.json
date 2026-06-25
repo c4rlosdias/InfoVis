@@ -1,7 +1,7 @@
 {
   "$schema_version": "1.0",
   "description": "",
-  "reference_sheet": "teste",
+  "reference_sheet": "Lista de Itens",
   "source_types": {
     "ifc_attribute": "Atributo direto da entidade IFC (ex.: Name, Description, Tag, ObjectType, GlobalId)",
     "ifc_property": "Propriedade dentro de um Pset (lido via ifcopenshell.util.element.get_psets / get_property)",

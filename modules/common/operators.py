@@ -9,7 +9,7 @@ from gpu_extras.batch import batch_for_shader
 import bonsai.tool as tool
 import bpy_extras.view3d_utils
 
-from ...data.tree import refresh_tree
+from ...data.tree import refresh_tree, refresh_container
 
 
 # ---------------------------------------------------------------------------
@@ -346,3 +346,35 @@ class Select_object(bpy.types.Operator):
         else:
             self.report({'WARNING'}, f"Object '{self.obj_name}' not found.")
             return {'CANCELLED'}
+
+class Operator_common_set_tree_expansion(bpy.types.Operator):
+    """"""
+    bl_idname  = "common.set_tree_expansion"
+    bl_label   = "Set decomposition tree expansion"
+    bl_options = {"REGISTER", "UNDO"}
+
+    expand : bpy.props.BoolProperty(name="expand", default=True)
+    property : bpy.props.StringProperty(name="property", default="is_expanded")
+
+    def execute(self, context):
+        props = context.scene.og_props
+        prop = getattr(props, self.property, None)
+        if prop is None:
+            self.report({'ERROR'}, f"Property '{self.property}' not found in og_props.")
+            return {"CANCELLED"}
+        if len(prop) == 0:
+            self.report({'WARNING'}, "No decomposition tree loaded.")
+            return {"CANCELLED"}
+
+        for item in prop:
+            item.is_expanded = self.expand and item.has_children
+            item.is_hidden = False if self.expand else item.level != 1
+
+        refresh_container(context)
+        if len(props.containers_show) > 0:
+            props.active_element_index = min(
+                props.active_element_index,
+                len(props.containers_show) - 1
+            )
+
+        return {"FINISHED"}

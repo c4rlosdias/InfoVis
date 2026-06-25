@@ -11,6 +11,8 @@ theme:
 nav:
   - Inicio:
       - Visao Geral: index.md
+      - Guia de Utilizacao: guides/GUIA_DE_UTILIZACAO.md
+      - Guia LI Mapping: guides/LI_MAPPING_GUIDE.md
       - Arquitetura: ARCHITECTURE.md
       - Desenvolvimento: DEVELOPMENT.md
   - Referencia Tecnica:

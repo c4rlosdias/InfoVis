@@ -19,7 +19,12 @@ from .props import panels as _props_panels
 from .props import properties as _props_props
 from .settings import panels as _settings_panels
 from .settings import operators as _settings_ops
-from .og_properties import OG_Properties, IFC_Label_Attribute
+from .og_properties import (
+    OG_Properties,
+    IFC_Label_Attribute,
+    Decomposition_View,
+    Decomposition_View_Relation,
+)
 
 
 def get_classes():
@@ -31,6 +36,7 @@ def get_classes():
         _common_ops.Select_object,
         _common_ops.Columns,
         _common_ops.ErrorMessage,
+        _common_ops.Operator_common_set_tree_expansion,
         # --- PropertyGroups (must register before OG_Properties) ---
         _dict_props.Ifc_properties,
         _dict_props.Class_info,
@@ -48,6 +54,8 @@ def get_classes():
         _decomp_props.Container,
         _analysis_props.AnalysisLegendItem,
         IFC_Label_Attribute,
+        Decomposition_View_Relation,
+        Decomposition_View,
         # --- OG_Properties (central property bag) ---
         OG_Properties,
         # --- Dictionary ---
@@ -69,8 +77,7 @@ def get_classes():
         _dict_panels.BIM_UL_class_prop,
         # --- Decomposition ---
         _decomp_ops.Operator_decomposition_load,
-        _decomp_ops.Operator_decomposition_export,
-        _decomp_ops.Operator_decomposition_set_tree_expansion,
+        _decomp_ops.Operator_decomposition_export,        
         _decomp_ops.Operator_decomposition_select_element,
         _decomp_ops.Operator_decomposition_select_components,
         _decomp_ops.Operator_decomposition_move,
@@ -129,6 +136,16 @@ def get_classes():
         _settings_ops.Operator_add_ifc_label_attr,
         _settings_ops.Operator_add_ifc_label_property,
         _settings_ops.Operator_remove_ifc_label_attr,
+        _settings_ops.Operator_load_decomposition_views,
+        _settings_ops.Operator_save_decomposition_views,
+        _settings_ops.Operator_reset_decomposition_views,
+        _settings_ops.Operator_add_decomposition_view,
+        _settings_ops.Operator_duplicate_decomposition_view,
+        _settings_ops.Operator_remove_decomposition_view,
+        _settings_ops.Operator_add_decomposition_relation,
+        _settings_ops.Operator_remove_decomposition_relation,
         _settings_panels.BIM_UL_ifc_label_attrs,
+        _settings_panels.BIM_UL_decomposition_views,
+        _settings_panels.BIM_UL_decomposition_view_relations,
         _settings_panels.Panel_Info,
     ]

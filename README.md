@@ -110,12 +110,14 @@ InfoVis/
 
 Documentos principais:
 
+- [docs/guides/GUIA_DE_UTILIZACAO.md](docs/guides/GUIA_DE_UTILIZACAO.md): uso do AddOn no Blender, paineis, fluxos e exportacoes
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): arquitetura do add-on, fluxo de inicializacao e organizacao por modulos
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md): setup, fluxo de trabalho e manutencao
 - [docs/reference/GLOSSARY.md](docs/reference/GLOSSARY.md): termos recorrentes e convencoes
 
 Guias detalhados:
 
+- [docs/guides/LI_MAPPING_GUIDE.md](docs/guides/LI_MAPPING_GUIDE.md)
 - [docs/guides/OPERATORS_DOCUMENTATION.md](docs/guides/OPERATORS_DOCUMENTATION.md)
 - [docs/guides/PANELS_DOCUMENTATION.md](docs/guides/PANELS_DOCUMENTATION.md)
 - [docs/guides/PROPERTIES_DOCUMENTATION.md](docs/guides/PROPERTIES_DOCUMENTATION.md)

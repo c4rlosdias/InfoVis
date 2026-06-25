@@ -28,6 +28,19 @@ class IFC_Label_Attribute(PropertyGroup):
     display_name : StringProperty(name='Display text', default='')
 
 
+class Decomposition_View_Relation(PropertyGroup):
+    element_attribute : StringProperty(name='Element attribute', default='IsDecomposedBy')
+    relationship_type : StringProperty(name='Relationship type', default='IfcRelAggregates')
+    relationship_attribute : StringProperty(name='Relationship attribute', default='RelatedObjects')
+
+
+class Decomposition_View(PropertyGroup):
+    id : StringProperty(name='ID', default='assets')
+    label : StringProperty(name='Label', default='Assets')
+    root_ifc_class : StringProperty(name='Root IFC class', default='IfcProject')
+    relations : CollectionProperty(name='IFC relations', type=Decomposition_View_Relation)
+
+
 def analysis_selection_changed(self, context):
     self.analysis_status = ''
     legend = getattr(self, "analysis_legend", None)
@@ -73,6 +86,23 @@ def _update_tree_type(self, context):
 
 def update_tree_type(self, context):
     bpy.ops.decomposition.load(all_expanded=False)
+
+
+def get_decomposition_view_items(self, context):
+    try:
+        from ..data.tree import load_views
+        items = []
+        for view in load_views():
+            view_id = view.get("id", "").strip()
+            if view_id:
+                items.append((
+                    view_id,
+                    view.get("label") or view_id,
+                    view.get("root_ifc_class", ""),
+                ))
+        return items or [('assets', 'Assets', 'IfcProject')]
+    except Exception:
+        return [('assets', 'Assets', 'IfcProject')]
     
 
 
@@ -222,11 +252,7 @@ class OG_Properties(PropertyGroup):
     # Decomposition
 
     tree_type                : EnumProperty(
-                                    items=[
-                                        ('assets', 'Assets', 'Assets'),
-                                        ('contracts', 'Contracts', 'Contracts'),
-                                        ('inventory', 'Inventory', 'Inventory')                                        
-                                    ],
+                                    items=get_decomposition_view_items,
                                     name='Tree Type',
                                     update=update_tree_type
                                ) # type: ignore
@@ -235,6 +261,10 @@ class OG_Properties(PropertyGroup):
     containers_show          : CollectionProperty(name='containers show', type=Container)  # pyright: ignore[reportInvalidTypeForm]
     elements_tree            : CollectionProperty(name='elements tree', type=Container)
     elements_tree_show       : CollectionProperty(name='elements tree show', type=Container)
+    decomposition_views      : CollectionProperty(name='decomposition views', type=Decomposition_View)
+    active_decomposition_view_index : IntProperty(name='decomposition view index', default=0)
+    active_decomposition_relation_index : IntProperty(name='decomposition relation index', default=0)
+    decomposition_views_loaded : BoolProperty(name='decomposition views loaded', default=False)
     
     show_agg                 : BoolProperty(name="change aggregations", default=False)
     chg_order                : BoolProperty(name="change order", default=False)

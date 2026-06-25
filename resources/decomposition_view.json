@@ -2,26 +2,68 @@
   "views": [
     {
       "id": "assets",
+      "label": "Assets",
+      "root_ifc_class": "IfcProject",
       "relations": [
-        ["IsGroupedBy", "RelatedObjects"],
-        ["ContainsElements", "RelatedElements"],
-        ["IsDecomposedBy", "RelatedObjects"],
-        ["IsNestedBy", "RelatedObjects"]
+        {
+          "element_attribute": "IsGroupedBy",
+          "relationship_type": "IfcRelAssignsToGroup",
+          "relationship_attribute": "RelatedObjects"
+        },
+        {
+          "element_attribute": "ContainsElements",
+          "relationship_type": "IfcRelContainedInSpatialStructure",
+          "relationship_attribute": "RelatedElements"
+        },
+        {
+          "element_attribute": "IsDecomposedBy",
+          "relationship_type": "IfcRelAggregates",
+          "relationship_attribute": "RelatedObjects"
+        },
+        {
+          "element_attribute": "IsNestedBy",
+          "relationship_type": "IfcRelNests",
+          "relationship_attribute": "RelatedObjects"
+        }
       ]
     },
     {
       "id": "contracts",
+      "label": "Contracts",
+      "root_ifc_class": "IfcProjectOrder",
       "relations": [
-        ["Controls", "RelatedObjects"],
-        ["IsGroupedBy", "RelatedObjects"],
-        ["IsDecomposedBy", "RelatedObjects"],
-        ["IsNestedBy", "RelatedObjects"]
+        {
+          "element_attribute": "Controls",
+          "relationship_type": "IfcRelAssignsToControl",
+          "relationship_attribute": "RelatedObjects"
+        },
+        {
+          "element_attribute": "IsGroupedBy",
+          "relationship_type": "IfcRelAssignsToGroup",
+          "relationship_attribute": "RelatedObjects"
+        },
+        {
+          "element_attribute": "IsDecomposedBy",
+          "relationship_type": "IfcRelAggregates",
+          "relationship_attribute": "RelatedObjects"
+        },
+        {
+          "element_attribute": "IsNestedBy",
+          "relationship_type": "IfcRelNests",
+          "relationship_attribute": "RelatedObjects"
+        }
       ]
     },
     {
       "id": "inventory",
+      "label": "Inventory",
+      "root_ifc_class": "IfcInventory",
       "relations": [
-        ["IsGroupedBy", "RelatedObjects"]
+        {
+          "element_attribute": "IsGroupedBy",
+          "relationship_type": "IfcRelAssignsToGroup",
+          "relationship_attribute": "RelatedObjects"
+        }
       ]
     }
   ]

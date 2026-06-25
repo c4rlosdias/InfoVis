@@ -34,7 +34,7 @@ class Panel_Connect(bpy.types.Panel):
         row = layout.row()
         row.prop(props, "dictionary", text="Select Dictionary")
         row.operator("bsdd.get_class", text="get classes from bSDD")
-        row.operator("bsdd.get_prop", text="get properties from bSDD")
+        row.operator("bsdd.get_prop", text="get properties from bSDD")      
 
         if len(props.classes_shown) > 0:
             row = layout.row()

@@ -1,11 +1,9 @@
-import json
-
 import bpy
 import ifcopenshell
 import ifcopenshell.util.element
 import bonsai.tool as tool
-import os
 
+from . import decomposition_views
 from .ifc_utils import refresh_props
 
 last_active = None
@@ -17,11 +15,7 @@ def load_views(force=False):
     global views, views_by_id
 
     if views is None or views_by_id is None or force:
-        path = os.path.join(os.path.dirname(__file__), '../resources/decomposition_view.json')
-
-        with open(path, encoding='utf-8') as file:
-            views = json.load(file)['views']
-
+        views = decomposition_views.load_views()
         views_by_id = {view['id']: view for view in views}
 
     return views
@@ -94,8 +88,13 @@ def load_contained_elements_by_decomposition(container: ifcopenshell.entity_inst
                 while queue:
                     element = queue.pop()
                     for relation in data_view['relations']:
-                        for rel in getattr(element, relation[0], []):
-                            related = getattr(rel, relation[1], [])
+                        element_attribute, relationship_attribute = decomposition_views.get_relation_attributes(relation)
+                        for rel in getattr(element, element_attribute, []):
+                            related = getattr(rel, relationship_attribute, [])
+                            if not related:
+                                continue
+                            if related and not isinstance(related, (list, tuple)):
+                                related = [related]
                             if related and related[0].is_a("IfcDistributionPort"):
                                 continue
                             queue.extend(related)

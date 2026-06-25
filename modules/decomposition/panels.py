@@ -102,10 +102,12 @@ class Panel_Decompositions(bpy.types.Panel):
         
         if len(props.containers_show) > 0:
             row = layout.row(align=True)
-            op = row.operator("decomposition.set_tree_expansion", text="Expand all", icon='DISCLOSURE_TRI_DOWN')
+            op = row.operator("common.set_tree_expansion", text="Expand all", icon='DISCLOSURE_TRI_DOWN')
             op.expand = True
-            op = row.operator("decomposition.set_tree_expansion", text="Collapse children", icon='DISCLOSURE_TRI_RIGHT')
+            op.property = "elements_containers"
+            op = row.operator("common.set_tree_expansion", text="Collapse children", icon='DISCLOSURE_TRI_RIGHT')
             op.expand = False
+            op.property = "elements_containers"
 
             self.layout.template_list(
                 "BIM_UL_decomposition",
