@@ -94,6 +94,7 @@ def get_classes():
         _cat_ops.Operator_save_li_mapping,
         _cat_ops.Operator_add_li_mapping_column,
         _cat_ops.Operator_remove_li_mapping_column,
+        _cat_ops.Operator_move_li_mapping_column,
         _cat_ops.Operator_li_mapping_pick_property,
         _cat_ops.Operator_add_li_mapping_source_item,
         _cat_ops.Operator_remove_li_mapping_source_item,
@@ -109,10 +110,10 @@ def get_classes():
         _cat_panels.BIM_UL_li_support_tables,
         _cat_panels.BIM_UL_li_support_table_rows,
         _cat_panels.BIM_UL_layers,
-        # --- Analisys ---
+        # --- Analysis ---
         _analysis_ops.Operator_analysis_apply_colors,
         _analysis_ops.Operator_analysis_reset_colors,
-        _analysis_panels.Panel_Analisys,
+        _analysis_panels.Panel_Analysis,
         # --- Connections ---
         _conn_ops.Operator_disconnect,
         _conn_ops.Operator_select_object,

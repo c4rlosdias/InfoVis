@@ -65,9 +65,11 @@ class Operator_decomposition_load(bpy.types.Operator):
 
 
 class Operator_decomposition_export(bpy.types.Operator):
-    """Exporta para Excel a árvore de decomposição/montagem (Nests,
-    IfcRelAggregates, containment espacial e grupos) já carregada no painel
-    Decompositions, preservando hierarquia (nível + pai) por linha."""
+    """Export the loaded decomposition/assembly tree to Excel.
+
+    The export includes Nests, IfcRelAggregates, spatial containment, and
+    groups, preserving hierarchy (level + parent) per row.
+    """
     bl_idname  = "decomposition.export_tree"
     bl_label   = "Export decomposition tree"
     bl_options = {"REGISTER", "UNDO"}
@@ -81,15 +83,14 @@ class Operator_decomposition_export(bpy.types.Operator):
         props = context.scene.og_props
         items = list(props.elements_containers)
         if not items:
-            self.report({'WARNING'}, "Nada para exportar. Clique em 'Load decompositions' primeiro.")
+            self.report({'WARNING'}, "Nothing to export. Click 'Load decompositions' first.")
             return {'CANCELLED'}
 
         rows = []
-        # A árvore é montada em pré-ordem (pai sempre adicionado antes dos
-        # filhos), então o último item visto no nível L-1 é sempre o pai do
-        # item atual de nível L. Guardamos só o último (id, name) por nível e
-        # descartamos níveis mais profundos que o atual ao avançar (o ramo
-        # anterior já terminou).
+        # The tree is built in preorder, with parents always added before
+        # children. The last item seen at level L-1 is therefore the parent of
+        # the current level-L item. Keep only the latest (id, name) per level
+        # and discard deeper levels as the iteration advances.
         last_at_level = {}
         for item in items:
             parent_id, parent_name = last_at_level.get(item.level - 1, ('', ''))

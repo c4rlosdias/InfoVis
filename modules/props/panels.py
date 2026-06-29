@@ -98,7 +98,7 @@ class Panel_Properties(bpy.types.Panel):
                     if old_is_a != pset.is_a:
                         if pset.is_a == 'instance':
                             row = layout.row()
-                            row.label(text="Occurence Properties:", icon='HOLDOUT_OFF') 
+                            row.label(text="Occurrence Properties:", icon='HOLDOUT_OFF') 
                             row = layout.row()
                         else:
                             row = layout.row()

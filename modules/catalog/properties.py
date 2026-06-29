@@ -17,12 +17,12 @@ class Class_type(PropertyGroup):
     description  : StringProperty(name='description')
     element_type : StringProperty(name='element type')
     has_children : BoolProperty(name="has children")    
-    is_hidden    : BoolProperty(name="is Hidded", default=True)
+    is_hidden    : BoolProperty(name="is hidden", default=True)
     is_expanded  : BoolProperty(name="Is Expanded", default=True)
     index        : IntProperty(name="index")
     parent       : StringProperty(name="parent")
     level        : IntProperty(name="level index")
-    qtde         : FloatProperty(name="qtde of elements of this type")
+    qtde         : FloatProperty(name="quantity of elements of this type")
     unit         : StringProperty(name="unit of measurement for quantity")
 
 
@@ -33,22 +33,22 @@ class Layer(PropertyGroup):
 
 
 LI_SOURCE_TYPE_ITEMS = [
-    ('ifc_attribute', 'IFC Attribute', 'Atributo direto da entidade IFC'),
-    ('ifc_property', 'IFC Property', 'Propriedade dentro de um Pset'),
-    ('ifc_quantity', 'IFC Quantity', 'Quantidade dentro de um Qto'),
-    ('ifc_class', 'IFC Class', 'Classe/tipo IFC da ocorrência'),
-    ('spatial', 'Spatial', 'Valor derivado da hierarquia espacial'),
-    ('aggregation_parent', 'Aggregation Parent', 'Atributo de um ancestral na cadeia de montagem (Nests/IfcRelAggregates) — use Nível=1 para o pai imediato, 2 para o avô, etc.'),
-    ('computed', 'Computed', 'Valor calculado a partir de outros campos'),
-    ('manual', 'Manual', 'Valor manual ou propriedade customizada'),
-    ('not_applicable', 'Not Applicable', 'Campo sem relação direta com o IFC'),
+    ('ifc_attribute', 'IFC Attribute', 'Direct attribute from the IFC entity'),
+    ('ifc_property', 'IFC Property', 'Property inside a Pset'),
+    ('ifc_quantity', 'IFC Quantity', 'Quantity inside a Qto'),
+    ('ifc_class', 'IFC Class', 'IFC class/type of the occurrence'),
+    ('spatial', 'Spatial', 'Value derived from the spatial hierarchy'),
+    ('aggregation_parent', 'Aggregation Parent', 'Attribute from an assembly ancestor (Nests/IfcRelAggregates); use Level=1 for the direct parent, 2 for the grandparent, etc.'),
+    ('computed', 'Computed', 'Value calculated from other fields'),
+    ('manual', 'Manual', 'Manual value or custom property'),
+    ('not_applicable', 'Not Applicable', 'Field with no direct IFC relationship'),
 ]
 
 
 LI_QUANTITY_MODE_ITEMS = [
-    ('mapping', 'Mapping Table', 'Usa a tabela de mapeamento de quantidades por classe'),
-    ('count', 'Count Occurrences', 'Conta quantas ocorrências existem para o tipo IFC'),
-    ('length', 'Sum Length', 'Soma comprimento para tipos lineares'),
+    ('mapping', 'Mapping Table', 'Uses the quantity mapping table by class'),
+    ('count', 'Count Occurrences', 'Counts how many occurrences exist for the IFC type'),
+    ('length', 'Sum Length', 'Sums length for linear types'),
 ]
 
 
@@ -84,7 +84,6 @@ def _li_picker_properties(self, context):
 class LIMappingColumn(PropertyGroup):
     column_name              : StringProperty(name='column name')
     source_type              : EnumProperty(name='source type', items=LI_SOURCE_TYPE_ITEMS)
-    editable                 : BoolProperty(name='editable', default=True)
     notes                    : StringProperty(name='notes')
     source_ifc_class         : StringProperty(name='source ifc class')
     source_level             : StringProperty(name='source level')
@@ -103,10 +102,10 @@ class LIMappingColumn(PropertyGroup):
     source_items             : CollectionProperty(name='source items', type=LIMappingSourceItem)
     active_source_item_index : IntProperty(name='active source item index', default=0)
 
-    # Seletor guiado: navega pelo dicionário bSDD (resources/subsea_*.json)
-    # em cascata (Discipline -> Element -> Property set -> Property) para
-    # preencher source_pset/source_property sem precisar digitar os nomes
-    # técnicos à mão. Ver Operator_li_mapping_pick_property.
+    # Guided picker: navigates the bSDD dictionary (resources/subsea_*.json)
+    # as a cascade (Discipline -> Element -> Property set -> Property) to fill
+    # source_pset/source_property without typing technical names by hand. See
+    # Operator_li_mapping_pick_property.
     picker_discipline         : EnumProperty(name='Discipline', items=DICTIONARY_DISCIPLINE_ITEMS, default='flexible_pipes')
     picker_object_type        : EnumProperty(name='Element', items=_li_picker_object_types)
     picker_pset               : EnumProperty(name='Property set', items=_li_picker_psets)

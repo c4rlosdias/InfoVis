@@ -25,7 +25,7 @@ def _draw_catalog_type_tree(layout, item, icon):
         split = row.split(factor=0.68, align=True)
         split.label(text=f'Name: {item.name}', icon=icon)
         split = split.split(factor=0.38, align=True)
-        split.label(text=f'Qtde: {item.qtde:g}', icon=icon)
+        split.label(text=f'Quantity: {item.qtde:g}', icon=icon)
         split.label(text=f'Unit: {item.unit}', icon=icon)
 
     if not item.has_children:
@@ -37,7 +37,7 @@ def _draw_catalog_type_tree(layout, item, icon):
 
 class Panel_Catalog(bpy.types.Panel):
     
-    bl_label        = "Catalog"
+    bl_label        = "Products Catalog"
     bl_idname       = "VIEW3D_PT_og_catalog"
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
@@ -117,9 +117,9 @@ class Panel_LI_Mapping(bpy.types.Panel):
             row = box.row()
             row.prop(props, "li_mapping_schema_version", text="Schema")
             row = box.row()
-            row.prop(props, "li_mapping_reference_sheet", text="Planilha")
+            row.prop(props, "li_mapping_reference_sheet", text="Reference Sheet")
             row = box.row()
-            row.prop(props, "li_mapping_description", text="Descrição")
+            row.prop(props, "li_mapping_description", text="Description")
 
             row = box.row()
             row.label(text="resources/li_mapping.json", icon='FILE')
@@ -144,33 +144,31 @@ class Panel_LI_Mapping(bpy.types.Panel):
 
                 detail = box.box()
                 row = detail.row()
-                row.prop(selected, "column_name", text="Coluna")
+                row.prop(selected, "column_name", text="Column")
                 row = detail.row()
-                row.prop(selected, "source_type", text="Origem")
+                row.prop(selected, "source_type", text="Source")
                 row = detail.row()
-                row.prop(selected, "editable", text="Editável")
-                row = detail.row()
-                row.prop(selected, "notes", text="Notas")
+                row.prop(selected, "notes", text="Notes")
 
                 source_box = detail.box()
                 row = source_box.row()
-                row.label(text="Source guiado", icon='PROPERTIES')
+                row.label(text="Guided Source", icon='PROPERTIES')
 
                 if selected.source_type in {'ifc_attribute', 'ifc_property', 'manual'}:
                     row = source_box.row()
-                    row.prop(selected, "source_ifc_class", text="Classe")
+                    row.prop(selected, "source_ifc_class", text="Class")
 
                 if selected.source_type == 'spatial':
                     row = source_box.row()
-                    row.prop(selected, "source_level", text="Nível (classe IFC)")
+                    row.prop(selected, "source_level", text="Level (IFC class)")
 
                 if selected.source_type == 'aggregation_parent':
                     row = source_box.row()
-                    row.prop(selected, "source_level", text="Nível (1=pai imediato, 2=avô, ...)")
+                    row.prop(selected, "source_level", text="Level (1=direct parent, 2=grandparent, ...)")
 
                 if selected.source_type in {'ifc_attribute', 'ifc_class', 'spatial', 'aggregation_parent'}:
                     row = source_box.row()
-                    row.prop(selected, "source_attribute", text="Atributo")
+                    row.prop(selected, "source_attribute", text="Attribute")
 
                 if selected.source_type in {'ifc_attribute', 'aggregation_parent'}:
                     row = source_box.row()
@@ -186,7 +184,7 @@ class Panel_LI_Mapping(bpy.types.Panel):
 
                     picker_box = source_box.box()
                     row = picker_box.row()
-                    row.label(text="Escolher do dicionário bSDD", icon='VIEWZOOM')
+                    row.label(text="Pick from bSDD dictionary", icon='VIEWZOOM')
                     row = picker_box.row()
                     row.prop(selected, "picker_discipline", text="Discipline")
                     row = picker_box.row()
@@ -196,7 +194,7 @@ class Panel_LI_Mapping(bpy.types.Panel):
                     row = picker_box.row()
                     row.prop(selected, "picker_property", text="Property")
                     row = picker_box.row()
-                    row.operator("catag.li_mapping_pick_property", text="Usar esta propriedade", icon='CHECKMARK')
+                    row.operator("catag.li_mapping_pick_property", text="Use this property", icon='CHECKMARK')
 
                 if selected.source_type == 'ifc_class':
                     row = source_box.row()
@@ -205,7 +203,7 @@ class Panel_LI_Mapping(bpy.types.Panel):
                 if selected.source_type in {'ifc_quantity', 'computed'}:
                     row = source_box.row()
                     if selected.source_type == 'ifc_quantity':
-                        row.prop(selected, "source_quantity_mode", text="Modo")
+                        row.prop(selected, "source_quantity_mode", text="Mode")
                     else:
                         row.prop(selected, "source_selected_by", text="Selected By")
 
@@ -229,7 +227,7 @@ class Panel_LI_Mapping(bpy.types.Panel):
 
                 advanced_box = detail.box()
                 row = advanced_box.row()
-                row.label(text="Campos extras", icon='SETTINGS')
+                row.label(text="Extra Fields", icon='SETTINGS')
 
                 advanced_box.template_list(
                     "BIM_UL_li_mapping_source_items",
@@ -249,13 +247,13 @@ class Panel_LI_Mapping(bpy.types.Panel):
                 if 0 <= source_index < len(selected.source_items):
                     source_item = selected.source_items[source_index]
                     row = advanced_box.row()
-                    row.prop(source_item, "key", text="Chave")
+                    row.prop(source_item, "key", text="Key")
                     row = advanced_box.row()
-                    row.prop(source_item, "value", text="Valor")
+                    row.prop(source_item, "value", text="Value")
 
             support_box = box.box()
             row = support_box.row()
-            row.label(text="Tabelas de apoio", icon='PRESET')
+            row.label(text="Support Tables", icon='PRESET')
 
             support_box.template_list(
                 "BIM_UL_li_support_tables",
@@ -272,9 +270,9 @@ class Panel_LI_Mapping(bpy.types.Panel):
                 support_table = props.li_support_tables[support_index]
                 detail = support_box.box()
                 row = detail.row()
-                row.prop(support_table, "table_name", text="Tabela")
+                row.prop(support_table, "table_name", text="Table")
                 row = detail.row()
-                row.prop(support_table, "description", text="Comentário")
+                row.prop(support_table, "description", text="Comment")
 
                 detail.template_list(
                     "BIM_UL_li_support_table_rows",
@@ -294,9 +292,9 @@ class Panel_LI_Mapping(bpy.types.Panel):
                 if 0 <= row_index < len(support_table.rows):
                     support_row = support_table.rows[row_index]
                     row = detail.row()
-                    row.prop(support_row, "key", text="Chave")
+                    row.prop(support_row, "key", text="Key")
                     row = detail.row()
-                    row.prop(support_row, "value", text="Valor")
+                    row.prop(support_row, "value", text="Value")
 
 
 class BIM_UL_products(bpy.types.UIList):
@@ -316,11 +314,24 @@ class BIM_UL_products(bpy.types.UIList):
 
 
 class BIM_UL_li_mapping_columns(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index=0, flt_flag=0):
         if item:
             row = layout.row(align=True)
-            row.label(text=item.column_name or "<sem nome>", icon='SPREADSHEET')
-            row.label(text=item.source_type)
+            label_row = row.row(align=True)
+            label_row.label(text=item.column_name or "<sem nome>", icon='SPREADSHEET')
+            label_row.label(text=item.source_type)
+
+            controls = row.row(align=True)
+            up_row = controls.row(align=True)
+            up_row.enabled = index > 0
+            up = up_row.operator("catag.move_li_mapping_column", text="", icon='TRIA_UP', emboss=False)
+            up.index = index
+            up.direction = 'UP'
+            down_row = controls.row(align=True)
+            down_row.enabled = index < len(data.li_mapping_columns) - 1
+            down = down_row.operator("catag.move_li_mapping_column", text="", icon='TRIA_DOWN', emboss=False)
+            down.index = index
+            down.direction = 'DOWN'
 
 
 class BIM_UL_li_mapping_source_items(bpy.types.UIList):
@@ -335,7 +346,7 @@ class BIM_UL_li_support_tables(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         if item:
             row = layout.row(align=True)
-            row.label(text=item.table_name or "<tabela>", icon='PRESET')
+            row.label(text=item.table_name or "<table>", icon='PRESET')
             row.label(text=f"{len(item.rows)} itens")
 
 

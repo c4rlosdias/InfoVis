@@ -1,20 +1,26 @@
-# Pacote: data/
+# Package: data/
 
-## 📌 Visão Geral
+## Overview
 
-O pacote `data/` gerencia dados, callbacks, eventos e funcionalidades de integração com IFC e bSDD. Coordena sincronização entre a cena Blender e as estruturas de dados da aplicação.
+The `data/` package manages shared data access, callbacks, event handling, and
+IFC/bSDD integration features. It coordinates synchronization between the
+Blender scene, Bonsai's active IFC model, dictionary resources, and the
+application data structures exposed through `scene.og_props`.
 
-O pacote é dividido em **5 submódulos**:
+The package is organized into these main modules:
 
-| Módulo | Linhas | Responsabilidade |
-|--------|--------|------------------|
-| `bsdd.py` | ~88 | Cliente REST bSDD |
-| `catalog.py` | ~193 | Import IFC, Catalog, PropTempl |
-| `cde.py` | ~118 | API CDE (mock/stub) |
-| `tree.py` | ~222 | Árvore, refresh, callbacks |
-| `ifc_utils.py` | ~500 | Utilidades IFC, propriedades, conexões |
+| Module | Responsibility |
+|--------|----------------|
+| `bsdd.py` | REST client for the buildingSMART Data Dictionary |
+| `bsdd_dictionary.py` | Local dictionary helpers for analysis and LI property pickers |
+| `catalog.py` | IFC import helpers, catalog lookup, and property templates |
+| `cde.py` | CDE API mock/stub for future integration |
+| `decomposition_views.py` | Decomposition-view defaults, validation, loading, and saving |
+| `tree.py` | Tree loading, refresh functions, callbacks, and UI tree helpers |
+| `ifc_utils.py` | IFC utilities for properties, units, visibility, hierarchy, and connections |
 
-**`__init__.py`** re-exporta tudo dos submódulos:
+`data/__init__.py` re-exports the main submodules:
+
 ```python
 from .bsdd import *
 from .catalog import *
@@ -23,116 +29,176 @@ from .tree import *
 from .ifc_utils import *
 ```
 
----
+## Module: bsdd.py
 
-## 🌐 Módulo: bsdd.py
+### Class `bSDD`
 
-### Classe `bSDD`
+Static client, implemented with `@classmethod`, for the buildingSMART Data
+Dictionary.
 
-Cliente estático (todos `@classmethod`) para o buildingSMART Data Dictionary.
+Class variables:
 
-**Variáveis de classe:**
-- `data_dic` — lista de dicionários disponíveis
-- `data_info_prop` — informações de propriedades
-- `data_class` — dados de classes
-- `data_prop` — dados de propriedades
-- `endpoint` — URL base da API
-- `uri` — URI do dicionário ativo
-- `is_loaded` — flag de carregamento
+- `data_dic`: available dictionaries.
+- `data_info_prop`: property metadata.
+- `data_class`: class data.
+- `data_prop`: property data.
+- `endpoint`: base API URL.
+- `uri`: active dictionary URI.
+- `is_loaded`: loaded-state flag.
 
-**Métodos:**
+Methods:
 
-| Método | Descrição |
-|--------|-----------|
-| `load_dictionaries()` | Busca versões de dicionários do servidor bSDD |
-| `load_classes(version, use_nested)` | Busca classes de uma versão |
-| `load_properties(version)` | Busca propriedades de uma versão |
-| `get_class(uri, include_properties)` | Busca uma classe específica |
-| `get_class_prop(uri)` | Busca propriedades de uma classe |
-| `get_property(uri)` | Busca uma propriedade individual |
+| Method | Description |
+|--------|-------------|
+| `load_dictionaries()` | Fetches dictionary versions from the bSDD server |
+| `load_classes(version, use_nested)` | Fetches classes for a dictionary version |
+| `load_properties(version)` | Fetches properties for a dictionary version |
+| `get_class(uri, include_properties)` | Fetches one specific class |
+| `get_class_prop(uri)` | Fetches the properties of a class |
+| `get_property(uri)` | Fetches one individual property |
 
-**Exemplo de uso:**
+Example:
+
 ```python
 from data.bsdd import bSDD
 
 if not bSDD.is_loaded:
     bSDD.load_dictionaries()
 
-# Buscar classes de um dicionário
 bSDD.load_classes(version_uri, use_nested=True)
 ```
 
----
+## Module: bsdd_dictionary.py
 
-## 📦 Módulo: catalog.py
+`bsdd_dictionary.py` reads local dictionary JSON resources used by the analysis
+panel and by the LI Mapping bSDD picker.
 
-### Classe `Import_ifc`
+Main responsibilities:
 
-Importa elementos de tipo IFC para o Blender via Bonsai.
+- locate dictionary files in `resources/`;
+- normalize object-type, Pset, and property entries;
+- build enum items for Blender UI fields;
+- provide friendly labels while preserving technical names.
 
-| Método | Descrição |
-|--------|-----------|
-| `import_type_from_ifc()` | Importa tipo de elemento |
-| `import_materials()` | Importa materiais |
-| `import_styles()` | Importa estilos visuais |
-| `import_material_styles()` | Importa estilos de material |
+Key functions:
 
-### Classe `Catalog`
+| Function | Description |
+|----------|-------------|
+| `get_dictionary(discipline_key)` | Loads the selected local dictionary |
+| `get_object_type_entry(discipline_key, object_type_key)` | Returns metadata for one object type |
+| `get_pset_entry(discipline_key, object_type_key, pset_key)` | Returns metadata for one Pset |
+| `get_object_type_items(discipline_key)` | Builds Blender enum items for object types |
+| `get_pset_items(discipline_key, object_type_key)` | Builds Blender enum items for Psets |
+| `get_property_items(discipline_key, object_type_key, pset_key)` | Builds Blender enum items for properties |
 
-Lê o arquivo `resources/ifc_types.json`.
+Relevant resource files:
 
-| Método | Descrição |
-|--------|-----------|
-| `get_ifc_type()` | Retorna tipo IFC do catálogo |
+```text
+resources/subsea_flexible_pipes_2.1_completo.json
+resources/subsea_rigid_pipes_1.0_completo.json
+```
 
-### Classe `PropTempl`
+## Module: catalog.py
 
-Gerencia templates de property sets IFC (`EPset_OG.ifc`).
+### Class `Import_ifc`
 
-| Método | Descrição |
-|--------|-----------|
-| `get_template()` | Obtém template existente |
-| `get_prop()` | Obtém propriedade do template |
-| `add_pset_template(metadata)` | Cria/edita pset template a partir de metadados bSDD |
+Imports IFC type elements into Blender through Bonsai.
 
-**Padrão**: Todas as classes usam `@classmethod`.
+| Method | Description |
+|--------|-------------|
+| `import_type_from_ifc()` | Imports an element type |
+| `import_materials()` | Imports materials |
+| `import_styles()` | Imports visual styles |
+| `import_material_styles()` | Imports material styles |
 
----
+### Class `Catalog`
 
-## 📡 Módulo: cde.py
+Reads `resources/ifc_types.json`.
 
-### Classe `CDE_Api`
+| Method | Description |
+|--------|-------------|
+| `get_ifc_type()` | Returns the IFC type catalog |
 
-Stub/mock da API CDE (Common Data Environment) para integração futura.
+### Class `PropTempl`
+
+Manages IFC property set templates, including `EPset_OG.ifc`.
+
+| Method | Description |
+|--------|-------------|
+| `get_template()` | Gets an existing template |
+| `get_prop()` | Gets a template property |
+| `add_pset_template(metadata)` | Creates or edits a Pset template from bSDD metadata |
+
+Pattern: all classes use `@classmethod`.
+
+## Module: cde.py
+
+### Class `CDE_Api`
+
+Stub/mock CDE API for future Common Data Environment integration.
 
 ```python
 cde = CDE_Api(endpoint="https://api.cde.example.com")
-projects = cde.get_projects()   # HTTP real
-contracts = cde.get_contracts() # Mock (dados hardcoded)
-assets = cde.get_assets()       # Mock
-inventory = cde.get_inventory() # Mock
+projects = cde.get_projects()   # real HTTP call
+contracts = cde.get_contracts() # mocked data
+assets = cde.get_assets()       # mocked data
+inventory = cde.get_inventory() # mocked data
 ```
 
-**Status**: Placeholder para integração futura com CDE real.
+Status: placeholder for a future real CDE integration.
 
----
+## Module: decomposition_views.py
 
-## 🌳 Módulo: tree.py
+`decomposition_views.py` owns the decomposition view configuration used by the
+`Settings` and `Decompositions` panels.
 
-### Funções de Callback
+Configuration file:
+
+```text
+resources/decomposition_view.json
+```
+
+Default views:
+
+| ID | Label | Root class | Main relations |
+|----|-------|------------|----------------|
+| `assets` | `Assets` | `IfcProject` | group assignment, spatial containment, aggregation, nesting |
+| `contracts` | `Contracts` | `IfcProjectOrder` | control assignment, group assignment, aggregation, nesting |
+| `inventory` | `Inventory` | `IfcInventory` | group assignment |
+
+Key functions:
+
+| Function | Description |
+|----------|-------------|
+| `get_config_path()` | Returns the JSON configuration path |
+| `get_preset(key)` | Returns a relation preset |
+| `normalize_relation(relation)` | Normalizes one relation definition |
+| `normalize_view(view)` | Normalizes one decomposition view |
+| `normalize_payload(payload)` | Normalizes a full payload |
+| `load_views()` | Loads configured views from disk |
+| `default_views()` | Returns built-in default views |
+| `payload_from_collection(collection)` | Converts Blender UI collection data to JSON payload |
+| `validate_payload(payload)` | Validates views before saving |
+| `save_payload(payload)` | Writes the normalized payload to disk |
+
+## Module: tree.py
+
+### Callback Functions
 
 #### `call_back()`
-Callback simples que dispara carregamento de propriedades.
+
+Simple callback that triggers property loading.
 
 ```python
 def call_back():
     bpy.ops.props.load_properties()
 ```
 
-**Acionado por**: msgbus (mudança de objeto ativo)
+Triggered by msgbus when the active object changes.
 
 #### `on_active_object_change(scene)`
-Detecta quando o objeto ativo muda e atualiza propriedades.
+
+Detects active-object changes and updates properties.
 
 ```python
 def on_active_object_change(scene):
@@ -143,100 +209,112 @@ def on_active_object_change(scene):
         bpy.ops.props.load_properties()
 ```
 
-**Gatilho**: `bpy.app.handlers.depsgraph_update_post`
+Triggered by `bpy.app.handlers.depsgraph_update_post`.
 
-### Funções de Refresh
+### Refresh Functions
 
-Todas seguem o mesmo padrão:
+The refresh functions follow the same pattern:
 
-```
-1. Obter props = context.scene.og_props
-2. Limpar coleção visível (clear())
-3. Para cada item em coleção completa:
-   a. Se não está oculto (is_hidden == False):
-      - Criar novo item em coleção visível
-      - Copiar todas as propriedades
+```text
+1. Get props = context.scene.og_props
+2. Clear the visible collection
+3. Iterate over the complete collection
+4. Copy non-hidden items into the visible collection
 ```
 
-| Função | Origem → Destino |
-|--------|-----------------|
-| `refresh_classes(context)` | `classes` → `classes_shown` |
-| `refresh_products(context)` | `products` → `products_show` |
-| `refresh_types(context)` | `types` → `types_show` |
-| `refresh_container(context)` | `elements_containers` → `containers_show` |
-| `refresh_tree(context, property)` | Genérica para qualquer par |
+| Function | Source to destination |
+|----------|----------------------|
+| `refresh_classes(context)` | `classes` to `classes_shown` |
+| `refresh_products(context)` | `products` to `products_show` |
+| `refresh_types(context)` | `types` to `types_show` |
+| `refresh_container(context)` | `elements_containers` to `containers_show` |
+| `refresh_tree(context, property)` | Generic refresh for a collection pair |
+| `refresh_layers(context)` | Refreshes the layer collection |
+| `refresh_tree_containers(context)` | Refreshes decomposition tree containers |
 
-### Funções de Decomposição
+### Decomposition Functions
 
-#### `load_contained_elements_by_decomposition(container, name_props, context)`
-Carrega recursivamente a decomposição IFC (spatial/nesting/grouping) em coleção Blender.
+#### `load_contained_elements_by_decomposition(container, view_id, name_props, context)`
 
-**Usa**: `ifcopenshell.api.nest`, `ifcopenshell.api.aggregate`, `ifcopenshell.api.spatial`
+Recursively loads the IFC decomposition for the selected view into Blender
+collections.
+
+Uses configured relationships such as:
+
+- `IfcRelAssignsToGroup`
+- `IfcRelContainedInSpatialStructure`
+- `IfcRelAggregates`
+- `IfcRelNests`
+- `IfcRelAssignsToControl`
 
 #### `draw_tree(layout, item, operators, attributes, property, only_children)`
-Desenha uma árvore hierárquica na UI do Blender.
+
+Draws a hierarchical tree in the Blender UI.
 
 #### `move_to_assembly(parent, children, type)`
-Move elementos IFC via nesting ou aggregation APIs.
 
----
+Moves IFC elements through the nesting or aggregation APIs.
 
-## 🔧 Módulo: ifc_utils.py
+## Module: ifc_utils.py
 
-O maior arquivo utilitário (~500 linhas). Manipula propriedades IFC, visibilidade e conexões.
+`ifc_utils.py` is the main utility module for IFC property handling, visibility,
+hierarchy construction, units, and connections.
 
-### Funções de Tipo de Propriedade
+### Property Type Functions
 
-| Função | Descrição |
-|--------|-----------|
-| `set_prop_type(prop, value)` | Setter polimórfico (str/int/float/bool) |
-| `get_prop_type(prop)` | Getter polimórfico |
+| Function | Description |
+|----------|-------------|
+| `set_prop_type(prop, value_prop)` | Polymorphic setter for string, integer, float, and boolean values |
+| `get_prop_type(prop)` | Polymorphic getter |
 
-### Funções de Unidade
+### Unit Functions
 
-| Função | Descrição |
-|--------|-----------|
-| `get_unit_symbol(unit)` | Retorna símbolo da unidade IFC |
-| `get_unit(ifc_obj, pset_name, prop_name)` | Resolve unidade de uma propriedade |
+| Function | Description |
+|----------|-------------|
+| `get_unit_symbol(unit)` | Returns the IFC unit symbol |
+| `get_unit(ifc_obj, pset_name, prop_name)` | Resolves the unit of a property |
 
-### Funções de Propriedade IFC
+### IFC Property Functions
 
-| Função | Descrição |
-|--------|-----------|
-| `get_property(ifc_obj, pset_name, prop_name)` | Busca/cria property set |
-| `get_pset(ifc_obj, pset_name)` | Busca property set existente |
-| `set_properties(props, ifc_obj, is_a, i)` | Carrega todas as propriedades (tabelas, enums, listas, docs) em coleções Blender |
-| `refresh_props(context)` | Recarrega propriedades do objeto ativo |
+| Function | Description |
+|----------|-------------|
+| `get_property(ifc_obj, pset_name, prop_name)` | Gets or creates a property set |
+| `get_pset(ifc_obj, pset_name)` | Gets an existing property set |
+| `get_pset_items(pset)` | Converts Pset content into UI-friendly items |
+| `set_properties(props, ifc_obj, is_a, i)` | Loads all properties, including tables, enums, lists, and documents |
+| `refresh_props(context)` | Reloads properties for the active object |
 
-### Funções de Visibilidade
+### Visibility Functions
 
-| Função | Descrição |
-|--------|-----------|
-| `set_hide_class(context, index, is_hidden)` | Oculta/mostra subclasses recursivamente |
-| `set_hide_product(context, index, is_hidden)` | Oculta/mostra subprodutos recursivamente |
+| Function | Description |
+|----------|-------------|
+| `set_hide_class(context, index, is_hidden)` | Hides or shows subclasses recursively |
+| `set_hide_product(context, index, is_hidden)` | Hides or shows subproducts recursively |
 
-**Algoritmo de visibilidade:**
+Visibility algorithm:
+
+```text
+For each class after the selected index:
+  If its level is deeper than the selected item's level:
+    Apply the is_hidden state
+  If its level is equal to or above the selected item's level:
+    Stop
 ```
-Para cada classe após o índice:
-  Se nível > nível do índice:
-    Aplica o estado is_hidden
-  Se nível <= nível do índice:
-    Para (limite alcançado)
-```
 
-### Funções de Construção de Hierarquia
+### Hierarchy Construction Functions
 
-| Função | Descrição |
-|--------|-----------|
-| `build_classes(context, classe, c, level, parent, hide)` | Constrói hierarquia de classes em `props.classes` |
-| `build_products(context, classe, c, level, parent, hide, children)` | Constrói hierarquia de produtos em `props.types` |
+| Function | Description |
+|----------|-------------|
+| `build_classes(context, classe, c, level, parent, hide)` | Builds the class hierarchy in `props.classes` |
+| `build_products(context, classe, c, level, parent, hide, children)` | Builds the product/type hierarchy in `props.types` |
 
-**Exemplo `build_classes`:**
+Example input for `build_classes`:
+
 ```python
 classe_dict = {
     "code": "001",
     "name": "Pipe",
-    "descriptionPart": "Tubulação subsuperficial",
+    "descriptionPart": "Subsea pipe",
     "uri": "http://bsdd.buildingsmart.org/...",
     "classType": "IfcPipeSegment",
     "children": [...]
@@ -244,65 +322,48 @@ classe_dict = {
 build_classes(context, classe_dict, 0, 1, "", False)
 ```
 
-### Funções de Conexão
+### Connection Functions
 
-| Função | Descrição |
-|--------|-----------|
-| `add_connections(obj_a, obj_b, obj_c, connect_type)` | Cria relações IFC de conexão |
+| Function | Description |
+|----------|-------------|
+| `add_connections(obj_a, obj_b, obj_c, connect_type)` | Creates IFC connection relationships |
 
-**Tipos de conexão suportados:**
+Supported connection types:
+
 - `IfcRelConnectsPorts`
 - `IfcRelConnectsElements`
 - `IfcRelConnectsWithRealizingElements`
 
----
+## Event Flow
 
-## 📡 Fluxo de Eventos
-
-```
-┌─────────────────────────────────┐
-│ Usuário seleciona objeto Blender│
-└────────────────┬────────────────┘
-                 │
-    ┌────────────▼─────────────┐
-    │ msgbus / Handler:        │
-    │ depsgraph_update_post    │
-    │ (modules/props/operators.py)   │
-                 │
-    ┌────────────▼─────────────────┐
-    │ tree.call_back() ou          │
-    │ tree.on_active_object_change()│
-    └────────────┬─────────────────┘
-                 │
-    ┌────────────▼──────────────────┐
-    │ bpy.ops.props.load_properties()│
-    │ (modules/props/operators.py)   │
-    └────────────┬──────────────────┘
-                 │
-    ┌────────────▼──────────────────┐
-    │ ifc_utils.refresh_props()     │
-    │ (carrega dados IFC)           │
-    └────────────┬──────────────────┘
-                 │
-    ┌────────────▼──────────────┐
-    │ tree.refresh_*()          │
-    │ (atualiza listas visíveis)│
-    └────────────┬──────────────┘
-                 │
-    ┌────────────▼──────────────┐
-    │ Painel redesenhado       │
-    │ (props.classes_shown)    │
-    └──────────────────────────┘
+```text
+User selects a Blender object
+        |
+        v
+msgbus / depsgraph_update_post handler
+        |
+        v
+tree.call_back() or tree.on_active_object_change()
+        |
+        v
+bpy.ops.props.load_properties()
+        |
+        v
+ifc_utils.refresh_props()
+        |
+        v
+tree.refresh_*()
+        |
+        v
+Panels redraw from visible collections
 ```
 
----
+## Registering Handlers
 
-## 🔧 Registrando Handlers
-
-No `__init__.py` (raiz) ao ativar o add-on:
+In the root `__init__.py`, the Add-on subscribes to object changes during
+registration.
 
 ```python
-# Via msgbus (preferido)
 bpy.msgbus.subscribe_rna(
     key=subscribe_to,
     owner=owner,
@@ -311,52 +372,55 @@ bpy.msgbus.subscribe_rna(
 )
 ```
 
----
+## Dependencies
 
-## 📊 Dependências
+### Bonsai and IfcStore Integration
 
-### Integração com IfcStore e Bonsai
 ```python
 from bonsai.bim.ifc import IfcStore
 import bonsai.tool as tool
 ```
 
-### Processamento de Dados
-- **ifcopenshell**: Manipulação IFC
-- **numpy**: Operações matriciais (usado em `ifc_utils.py`)
-- **pandas**: Análise tabular (tabelas de propriedades)
+### Data Processing
 
----
+- `ifcopenshell`: IFC manipulation.
+- `numpy`: matrix and numeric operations used by `ifc_utils.py`.
+- `pandas`: tabular analysis for property tables, quantities, and exports.
 
-## 📝 Boas Práticas
+## Best Practices
 
-### 1. Sempre Limpar Antes de Popular
+### Clear Before Populating
+
 ```python
 props.classes_shown.clear()
 for item in data:
     new = props.classes_shown.add()
 ```
 
-### 2. Verificar Estado Antes de Processar
+### Check State Before Processing
+
 ```python
 if props.classes_loaded:
-    # Usar dados
+    # use loaded data
 else:
-    # Carregamento necessário
+    # load required data first
 ```
 
-### 3. Evitar Loops de Callback
+### Avoid Callback Loops
+
 ```python
 self.updating = True
-# ... fazer mudanças ...
+# apply changes
 self.updating = False
 ```
 
----
+## Integration with Other Packages
 
-## 🔗 Integração com Outros Pacotes
-
-- **`modules/*/operators.py`**: Usa `tree.refresh_*()` e `ifc_utils.*` para atualizar após operações
-- **`modules/*/panels.py`**: Exibe dados de `classes_shown`, `products_show`, etc. Usa `tree.draw_tree()`
-- **`modules/*/properties.py`** e **`modules/og_properties.py`**: Definem as PropertyGroups manipuladas aqui
-- **`__init__.py`**: Registra os handlers de eventos via msgbus usando `tree.call_back`
+- `modules/*/operators.py`: calls `tree.refresh_*()` and `ifc_utils.*` after
+  operations.
+- `modules/*/panels.py`: displays data from `classes_shown`, `types_show`,
+  `containers_show`, and related collections.
+- `modules/*/properties.py` and `modules/og_properties.py`: define the
+  PropertyGroups manipulated by the data layer.
+- Root `__init__.py`: registers handlers through msgbus and connects
+  `tree.call_back`.

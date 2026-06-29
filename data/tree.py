@@ -52,7 +52,7 @@ def refresh_layers(context):
         new_layer.description = element.get_info() or ''
 
 
-# Call back para carregar as propriedades ao mudar o objeto ativo
+# Callback used to load properties when the active object changes.
 def call_back():
     try:
         bpy.ops.props.load_properties()
@@ -67,7 +67,7 @@ def call_back():
     except Exception as e:
         print(f"[call_back] refresh_layers error: {e}")
 
-# Handler para carregar as propriedades ao mudar o objeto ativo
+# Handler used to load properties when the active object changes.
 def on_active_object_change(scene):
     global last_active
     obj = bpy.context.view_layer.objects.active
@@ -139,23 +139,24 @@ def load_contained_elements_by_decomposition(container: ifcopenshell.entity_inst
 
 def draw_tree(layout, item, operators, attributes, property, only_children = False):
 
-    ''' Desenha uma árvore de classes, produtos ou tipos no layout do blender.
-            layout: layout do blender
-            item: item da coleção a ser desenhado
-            operators: operadores a serem adicionados para cada item
-            attributes: atributos a serem mostrados para cada item
-            property: nome da propriedade onde a coleção está armazenada
-            only_children: se True, mostra apenas os operadores para os itens que tem filhos, caso contrário, mostra para todos os itens
-        retorna o layout com a árvore desenhada
+    ''' Draw a class, product, or type tree in the Blender layout.
+            layout: Blender layout
+            item: collection item to draw
+            operators: operators to add for each item
+            attributes: attributes to show for each item
+            property: property name where the collection is stored
+            only_children: if True, show operators only for items with children;
+                           otherwise, show them for all items
+        returns the layout with the rendered tree
     '''
     if not item.is_hidden:
         
         row = layout.row(align=True)
-        # adiciona os ícones de hierarquia
+        # Add hierarchy icons.
         for _ in range(0, item.level - 1):
             row.label(text="", icon="BLANK1")
 
-        # adiciona o ícone de expandir/contrair    
+        # Add the expand/collapse icon.
         if item.has_children:
             if item.is_expanded:
                 op = row.operator("element.contract_tree", text="", emboss=False, icon="DISCLOSURE_TRI_DOWN")
@@ -168,11 +169,11 @@ def draw_tree(layout, item, operators, attributes, property, only_children = Fal
         else:
             row.label(text="", icon="BLANK1")
   
-        # adiciona os atributos do item
+        # Add item attributes.
         for att in attributes:            
             row.label(text=att[0], icon=att[1])  
         
-        # se não for para mostrar apenas os filhos ou se o item não tiver filhos, mostra os operadores
+        # Show operators unless only child items should expose them.
         if not only_children or not item.has_children:
             for opt in operators:
                 op = row.operator(opt['name'], text=opt['text'] if 'text' in opt else "", icon=opt['icon'])

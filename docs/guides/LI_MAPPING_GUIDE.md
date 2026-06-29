@@ -1,37 +1,37 @@
-# Guia Detalhado do LI Mapping
+# Detailed LI Mapping Guide
 
-Este guia documenta todas as opcoes do painel `LI Mapping`, localizado em
-`InfoVis-Catalog > LI Mapping`, e explica como elas afetam o arquivo
-`resources/li_mapping.json` e a exportacao da Lista de Itens (LI) em Excel.
+This guide documents every option in the `LI Mapping` panel, located at
+`InfoVis-Catalog > LI Mapping`, and explains how those options affect
+`resources/li_mapping.json` and the Excel export of the Item List.
 
-## Para que serve
+## Purpose
 
-O `LI Mapping` define como cada coluna da Lista de Itens deve ser preenchida a
-partir do modelo IFC. O painel permite editar o mapeamento sem abrir o JSON
-manualmente, usando campos guiados para atributos IFC, propriedades de Psets,
-quantidades, hierarquia espacial, cadeia de montagem e valores calculados.
+`LI Mapping` defines how each Item List column is filled from the IFC model. The
+panel lets users edit the mapping without opening the JSON manually, using
+guided fields for IFC attributes, Pset properties, quantities, spatial
+hierarchy, assembly chains, support tables, and calculated values.
 
-O fluxo principal e:
+The main workflow is:
 
-1. Abrir um modelo IFC no Blender/Bonsai.
-2. Acessar `InfoVis-Catalog > LI Mapping`.
-3. Clicar em `Load` para carregar `resources/li_mapping.json`.
-4. Revisar ou editar as colunas da LI.
-5. Clicar em `Save` para gravar o JSON.
-6. Clicar em `Export LI` para gerar o `.xlsx`.
+1. Open an IFC model in Blender/Bonsai.
+2. Open `InfoVis-Catalog > LI Mapping`.
+3. Click `Load` to load `resources/li_mapping.json`.
+4. Review or edit the LI columns.
+5. Click `Save` to write the JSON.
+6. Click `Export LI` to generate the `.xlsx`.
 
-Importante: `Export LI` le o arquivo salvo em `resources/li_mapping.json`.
-Se voce alterou algo na interface, clique em `Save` antes de exportar.
+Important: `Export LI` reads the saved `resources/li_mapping.json` file. If you
+changed anything in the UI, click `Save` before exporting.
 
-## Arquivo usado
+## File Used by the Panel
 
-O painel edita este arquivo:
+The panel edits this file:
 
 ```text
 resources/li_mapping.json
 ```
 
-Estrutura principal:
+Main structure:
 
 ```json
 {
@@ -46,156 +46,153 @@ Estrutura principal:
 }
 ```
 
-Chaves reservadas:
+Reserved keys:
 
-| Chave | Uso |
-|-------|-----|
-| `$schema_version` | Versao do formato do mapeamento |
-| `description` | Descricao geral do mapeamento |
-| `reference_sheet` | Nome da planilha ou referencia usada como base |
-| `source_types` | Dicionario explicativo dos tipos de origem; nao e editado pela UI |
-| `columns` | Lista ordenada das colunas exportadas |
+| Key | Use |
+|-----|-----|
+| `$schema_version` | Mapping format version |
+| `description` | General mapping description |
+| `reference_sheet` | Reference sheet or baseline identifier |
+| `source_types` | Explanatory dictionary for source types; preserved but not edited by the UI |
+| `columns` | Ordered list of exported columns |
 
-Qualquer outra chave de primeiro nivel que seja um objeto JSON e tratada como
-`Tabela de apoio`, por exemplo `subsea_flexible_classes`,
-`description_templates` e `quantity_by_class`.
+Any other top-level JSON object is treated as a support table, for example
+`subsea_flexible_classes`, `description_templates`, or `quantity_by_class`.
 
-## Botoes do painel
+## Panel Buttons
 
-| Botao | O que faz |
-|-------|-----------|
-| `Load` | Carrega `resources/li_mapping.json` para a interface e limpa o estado anterior |
-| `Save` | Salva cabecalho, colunas e tabelas de apoio de volta no JSON |
-| `Export LI` | Abre seletor de arquivo e exporta a LI para `.xlsx` |
-| `Add Column` | Cria uma coluna chamada `Nova Coluna`, com origem `manual` |
-| `Remove Column` | Remove a coluna selecionada |
-| `Usar esta propriedade` | Copia o Pset e a propriedade escolhidos no seletor bSDD para a coluna |
-| `Add Field` | Adiciona um campo extra no objeto `source` da coluna selecionada |
-| `Remove Field` | Remove o campo extra selecionado |
-| `Add Row` | Adiciona uma linha na tabela de apoio selecionada |
-| `Remove Row` | Remove a linha selecionada da tabela de apoio |
+| Button | Action |
+|--------|--------|
+| `Load` | Loads `resources/li_mapping.json` into the UI and clears the previous state |
+| `Save` | Saves header fields, columns, and support tables back to the JSON |
+| `Export LI` | Opens a file picker and exports the Item List to `.xlsx` |
+| `Add Column` | Creates a column named `New Column` with source type `manual` |
+| `Remove Column` | Removes the selected column |
+| `Use this property` | Copies the selected bSDD Pset and property into the selected column |
+| `Add Field` | Adds an extra field to the selected column's `source` object |
+| `Remove Field` | Removes the selected extra field |
+| `Add Row` | Adds a row to the selected support table |
+| `Remove Row` | Removes the selected support-table row |
 
-Nao ha botao para criar uma nova tabela de apoio vazia. Pela interface, voce
-edita as tabelas ja existentes no JSON. Para criar uma tabela inteiramente nova,
-adicione-a manualmente em `resources/li_mapping.json`, clique em `Load`, edite
-as linhas se necessario e depois clique em `Save`.
+There is no button for creating a new empty support table. To create a new
+table, add it manually to `resources/li_mapping.json`, click `Load`, edit rows
+if needed, then click `Save`.
 
-## Cabecalho do mapeamento
+## Mapping Header
 
-Depois de clicar em `Load`, o painel mostra tres campos gerais.
+After `Load`, the panel shows three general fields.
 
-| Campo na UI | Chave no JSON | Descricao |
-|-------------|---------------|-----------|
-| `Schema` | `$schema_version` | Versao do schema do mapeamento |
-| `Planilha` | `reference_sheet` | Identificador da planilha de referencia |
-| `Descricao` | `description` | Observacao geral sobre o mapeamento |
+| UI field | JSON key | Description |
+|----------|----------|-------------|
+| `Schema` | `$schema_version` | Mapping schema version |
+| `Reference Sheet` | `reference_sheet` | Reference sheet identifier |
+| `Description` | `description` | General note about the mapping |
 
-## Lista de colunas
+## Column List
 
-A lista central mostra todas as colunas configuradas em `columns`.
+The central list shows every configured item in `columns`.
 
-Cada item da lista exibe:
+Each list item shows:
 
-| Campo exibido | Origem |
-|---------------|--------|
-| nome da coluna | `column` |
-| tipo de origem | `source_type` |
+| Displayed field | Source |
+|-----------------|--------|
+| column name | `column` |
+| source type | `source_type` |
 
-A ordem da lista e a ordem da exportacao. A primeira coluna da lista vira a
-primeira coluna do Excel.
+The list order is the export order. The first column in the list becomes the
+first column in Excel.
 
-## Campos comuns de uma coluna
+## Common Column Fields
 
-Ao selecionar uma coluna, o painel exibe campos comuns antes do bloco
-`Source guiado`.
+When a column is selected, the panel shows common fields before `Guided Source`.
 
-| Campo na UI | Chave no JSON | Uso |
-|-------------|---------------|-----|
-| `Coluna` | `column` | Nome da coluna no Excel |
-| `Origem` | `source_type` | Estrategia usada para preencher a coluna |
-| `Editavel` | `editable` | Indica se a coluna pode ser editada depois; atualmente e metadado da LI |
-| `Notas` | `notes` | Observacoes para quem mantem o mapeamento |
+| UI field | JSON key | Use |
+|----------|----------|-----|
+| `Column` | `column` | Column name in Excel |
+| `Source` | `source_type` | Strategy used to fill the column |
+| `Notes` | `notes` | Maintenance notes for the mapping |
 
-Exemplo:
+Example:
 
 ```json
 {
-  "column": "Qtde",
+  "column": "Quantity",
   "source_type": "ifc_quantity",
   "source": {
     "mapping_table": "quantity_by_class",
     "quantity_mode": "mapping"
   },
-  "editable": true,
-  "notes": "Soma comprimento para classes lineares; conta ocorrencias nas demais."
+  "notes": "Sums length for linear classes; counts occurrences for the others."
 }
 ```
 
-## Como a exportacao cria linhas
+## How Export Rows Are Created
 
-Ao exportar, o InfoVis percorre os `IfcTypeProduct` do modelo IFC atual.
+During export, InfoVis iterates over the current model's `IfcTypeProduct`
+entities.
 
-Regras importantes:
+Important rules:
 
-- cada linha exportada representa um `IfcTypeProduct` que possui pelo menos uma
-  ocorrencia;
-- a maioria dos valores e lida da primeira ocorrencia daquele tipo e, se nao
-  houver valor, do proprio tipo IFC;
-- colunas de quantidade podem considerar todas as ocorrencias do tipo;
-- a exportacao usa a ordem das colunas no JSON;
-- se nenhuma linha puder ser gerada, o operador mostra aviso de que nao ha
-  linhas de LI para o modelo atual.
+- each exported row represents an `IfcTypeProduct` with at least one
+  occurrence;
+- most values are read from the first occurrence of that type and, if empty,
+  from the IFC type itself;
+- quantity columns can use all occurrences of the type;
+- the export uses the column order defined in the JSON;
+- if no row can be generated, the operator reports that no LI rows are
+  available for the current model.
 
-## Tipos de origem
+## Source Types
 
-O campo `Origem` controla quais campos aparecem em `Source guiado` e como o
-valor sera resolvido.
+The `Source` field controls which fields appear in `Guided Source` and how the
+exporter resolves the value.
 
-| Origem | Uso |
-|--------|-----|
-| `ifc_attribute` | Le atributo direto da ocorrencia ou do tipo IFC |
-| `ifc_property` | Le uma propriedade dentro de um Pset |
-| `ifc_quantity` | Calcula quantidade por contagem, comprimento ou tabela |
-| `ifc_class` | Le uma classe/chave IFC e traduz por tabela de apoio |
-| `spatial` | Busca valor em ancestral da hierarquia espacial |
-| `aggregation_parent` | Busca valor em pai/avo da cadeia de montagem |
-| `computed` | Calcula valor por metodo ou template |
-| `manual` | Coluna manual ou Pset customizado opcional |
-| `not_applicable` | Coluna sem correspondencia IFC; exporta vazio |
+| Source type | Use |
+|-------------|-----|
+| `ifc_attribute` | Reads a direct attribute from the occurrence or IFC type |
+| `ifc_property` | Reads a property inside a Pset |
+| `ifc_quantity` | Calculates quantity by count, length, or a support table |
+| `ifc_class` | Reads an IFC class/key and translates it through a support table |
+| `spatial` | Reads a value from an ancestor in the spatial/decomposition hierarchy |
+| `aggregation_parent` | Reads a value from a parent or grandparent in the assembly chain |
+| `computed` | Calculates a value by method or template |
+| `manual` | Represents a manual or optional custom Pset column |
+| `not_applicable` | Represents a column with no IFC source; exports empty |
 
-## Origem: ifc_attribute
+## Source: ifc_attribute
 
-Use `ifc_attribute` para ler atributos diretos de entidades IFC.
+Use `ifc_attribute` to read direct IFC entity attributes.
 
-Campos exibidos:
+Displayed fields:
 
-| Campo na UI | Chave em `source` | Uso na exportacao |
-|-------------|-------------------|-------------------|
-| `Classe` | `ifc_class` | Metadado salvo no JSON; o exportador atual nao filtra por esse campo |
-| `Atributo` | `attribute` | Atributo principal a ler |
-| `Fallback` | `fallback_attribute` | Atributo alternativo se o principal vier vazio |
-| `Format` | `format` | Metadado salvo no JSON; o exportador atual nao aplica formatacao |
+| UI field | Key in `source` | Export use |
+|----------|-----------------|------------|
+| `Class` | `ifc_class` | Metadata saved in JSON; the current exporter does not filter by it |
+| `Attribute` | `attribute` | Main attribute to read |
+| `Fallback` | `fallback_attribute` | Alternative attribute if the main value is empty |
+| `Format` | `format` | Metadata saved in JSON; the current exporter does not apply formatting |
 
-Como resolve:
+Resolution order:
 
-1. tenta ler `attribute` na ocorrencia;
-2. se vazio, tenta ler `attribute` no tipo IFC;
-3. se vazio e houver `fallback_attribute`, repete a busca pelo fallback;
-4. se `attribute` for `is_a`, retorna a classe IFC normalizada, sem prefixo
-   `Ifc` e sem sufixo `Type`.
+1. Read `attribute` from the occurrence.
+2. If empty, read `attribute` from the IFC type.
+3. If still empty and `fallback_attribute` exists, repeat the search for the
+   fallback.
+4. If `attribute` is `is_a`, return the normalized IFC class without the `Ifc`
+   prefix and without the `Type` suffix.
 
-Exemplos de atributos:
+Attribute examples:
 
-| Atributo | Resultado esperado |
-|----------|--------------------|
-| `Name` | nome da ocorrencia ou tipo |
-| `Description` | descricao |
-| `Tag` | tag IFC |
-| `ObjectType` | tipo de objeto definido no IFC |
-| `GlobalId` | identificador global IFC |
-| `is_a` | classe IFC normalizada |
+| Attribute | Expected result |
+|-----------|-----------------|
+| `Name` | occurrence or type name |
+| `Description` | description |
+| `Tag` | IFC tag |
+| `ObjectType` | IFC object type |
+| `GlobalId` | IFC global identifier |
+| `is_a` | normalized IFC class |
 
-Exemplo JSON:
+JSON example:
 
 ```json
 {
@@ -205,139 +202,136 @@ Exemplo JSON:
     "attribute": "Name",
     "fallback_attribute": "Tag"
   },
-  "editable": true,
   "notes": ""
 }
 ```
 
-## Origem: ifc_property
+## Source: ifc_property
 
-Use `ifc_property` para ler uma propriedade de um Pset.
+Use `ifc_property` to read a property from a Pset.
 
-Campos exibidos:
+Displayed fields:
 
-| Campo na UI | Chave em `source` | Uso na exportacao |
-|-------------|-------------------|-------------------|
-| `Classe` | `ifc_class` | Metadado salvo no JSON; o exportador atual nao filtra por esse campo |
-| `Pset` | `pset` | Nome tecnico do property set |
-| `Property` | `property` | Nome tecnico da propriedade |
-| `Allowed Values` | `allowed_values` | Metadado salvo no JSON; o exportador atual nao valida valores |
+| UI field | Key in `source` | Export use |
+|----------|-----------------|------------|
+| `Class` | `ifc_class` | Metadata saved in JSON; the current exporter does not filter by it |
+| `Pset` | `pset` | Technical property set name |
+| `Property` | `property` | Technical property name |
+| `Allowed Values` | `allowed_values` | Metadata saved in JSON; the current exporter does not validate values |
 
-Como resolve:
+Resolution order:
 
-1. procura o Pset na ocorrencia;
-2. se nao encontrar valor, procura o Pset no tipo IFC;
-3. retorna o primeiro valor nao vazio;
-4. se nao encontrar, exporta vazio.
+1. Search for the Pset on the occurrence.
+2. If no value is found, search for the Pset on the IFC type.
+3. Return the first non-empty value.
+4. If no value is found, export an empty cell.
 
-Exemplo JSON:
+JSON example:
 
 ```json
 {
-  "column": "Comprimento Nominal",
+  "column": "Nominal Length",
   "source_type": "ifc_property",
   "source": {
     "pset": "Pset_FlexiblePipeSegment",
     "property": "NominalLength"
   },
-  "editable": true,
   "notes": ""
 }
 ```
 
-## Origem: manual
+## Source: manual
 
-Use `manual` para colunas que a LI precisa ter, mas que podem nao existir no
-modelo IFC padrao. A UI e a resolucao sao as mesmas de `ifc_property`.
+Use `manual` for LI columns that must exist but may not exist in the standard
+IFC model. The UI and resolution behavior are the same as `ifc_property`.
 
-Campos exibidos:
+Displayed fields:
 
-| Campo na UI | Chave em `source` | Uso |
-|-------------|-------------------|-----|
-| `Classe` | `ifc_class` | Metadado salvo no JSON |
-| `Pset` | `pset` | Pset customizado ou futuro |
-| `Property` | `property` | Propriedade customizada ou futura |
-| `Allowed Values` | `allowed_values` | Metadado para controle de valores esperados |
+| UI field | Key in `source` | Use |
+|----------|-----------------|-----|
+| `Class` | `ifc_class` | Metadata saved in JSON |
+| `Pset` | `pset` | Custom or future Pset |
+| `Property` | `property` | Custom or future property |
+| `Allowed Values` | `allowed_values` | Metadata for expected values |
 
-Comportamento:
+Behavior:
 
-- se o Pset/propriedade existir no IFC, o valor e exportado;
-- se nao existir, a coluna sai vazia para preenchimento posterior;
-- esse tipo e adequado para campos de aquisicao, suprimentos, status ou
-  revisoes que ainda nao estejam modelados.
+- if the Pset/property exists in the IFC, the value is exported;
+- if it does not exist, the column is exported empty for later filling;
+- this type is suitable for procurement, supply, status, revision, or other
+  fields that are not modeled yet.
 
-Exemplo JSON:
+JSON example:
 
 ```json
 {
-  "column": "Observacao",
+  "column": "Observation",
   "source_type": "manual",
   "source": {
     "pset": "Pset_LI_Extra",
     "property": "Observation"
   },
-  "editable": true,
-  "notes": "Campo de preenchimento manual se nao existir no IFC."
+  "notes": "Manual field if it does not exist in the IFC."
 }
 ```
 
-## Seletor bSDD para ifc_property e manual
+## bSDD Picker for ifc_property and manual
 
-Quando a origem e `ifc_property` ou `manual`, aparece a area
-`Escolher do dicionario bSDD`.
+When the source is `ifc_property` or `manual`, the `Pick from bSDD dictionary`
+area appears.
 
-Campos:
+Fields:
 
-| Campo | Opcoes |
-|-------|--------|
-| `Discipline` | `Flexible Pipes` ou `Rigid Pipes` |
-| `Element` | classes do dicionario selecionado, vindas de `resources/subsea_*_completo.json` |
-| `Property set` | Psets associados ao elemento selecionado |
-| `Property` | propriedades associadas ao Pset selecionado |
+| Field | Options |
+|-------|---------|
+| `Discipline` | `Flexible Pipes` or `Rigid Pipes` |
+| `Element` | classes from the selected dictionary, read from `resources/subsea_*_completo.json` |
+| `Property set` | Psets associated with the selected element |
+| `Property` | properties associated with the selected Pset |
 
-Botao:
+Button:
 
-| Botao | Resultado |
-|-------|-----------|
-| `Usar esta propriedade` | define `source_type` como `ifc_property`, copia `Property set` para `source.pset` e `Property` para `source.property` |
+| Button | Result |
+|--------|--------|
+| `Use this property` | sets `source_type` to `ifc_property`, copies `Property set` to `source.pset`, and copies `Property` to `source.property` |
 
-Se o nome da coluna estiver vazio ou como `Nova Coluna`, o botao tambem troca o
-nome da coluna para o nome da propriedade escolhida.
+If the column name is empty or `New Column`, the button also changes the column
+name to the selected property name.
 
-O seletor usa os arquivos:
+The picker uses these files:
 
 ```text
 resources/subsea_flexible_pipes_2.1_completo.json
 resources/subsea_rigid_pipes_1.0_completo.json
 ```
 
-## Origem: spatial
+## Source: spatial
 
-Use `spatial` para buscar informacoes na hierarquia espacial ou de decomposicao.
+Use `spatial` to read information from the spatial or decomposition hierarchy.
 
-Campos exibidos:
+Displayed fields:
 
-| Campo na UI | Chave em `source` | Uso |
-|-------------|-------------------|-----|
-| `Nivel (classe IFC)` | `level` | Classe IFC do ancestral a procurar, como `IfcSite` ou `IfcBuilding` |
-| `Atributo` | `attribute` | Atributo a ler do ancestral encontrado |
+| UI field | Key in `source` | Use |
+|----------|-----------------|-----|
+| `Level (IFC class)` | `level` | IFC ancestor class to find, such as `IfcSite` or `IfcBuilding` |
+| `Attribute` | `attribute` | Attribute to read from the matched ancestor |
 
-Como resolve:
+Resolution order:
 
-1. monta uma cadeia de ancestrais a partir da ocorrencia;
-2. percorre relacoes `ContainedInStructure`, `Decomposes` e `Nests`;
-3. procura o primeiro ancestral cuja classe seja igual a `level`;
-4. retorna o atributo configurado nesse ancestral;
-5. se nao encontrar, exporta vazio.
+1. Build an ancestor chain from the occurrence.
+2. Traverse `ContainedInStructure`, `Decomposes`, and `Nests`.
+3. Find the first ancestor whose class equals `level`.
+4. Return the configured attribute from that ancestor.
+5. If no match is found, export an empty cell.
 
-Campos extras uteis:
+Useful extra fields:
 
-| Chave extra | Uso |
-|-------------|-----|
-| `fallback_levels` | Lista JSON de classes alternativas a procurar depois de `level` |
-| `fallback_attribute` | Atributo alternativo, embora nao apareca como campo guiado nessa origem |
+| Extra key | Use |
+|-----------|-----|
+| `fallback_levels` | JSON list of alternative classes to search after `level` |
+| `fallback_attribute` | Alternative attribute, although it is not exposed as a guided field for this source |
 
-Exemplo JSON:
+JSON example:
 
 ```json
 {
@@ -348,35 +342,34 @@ Exemplo JSON:
     "attribute": "Name",
     "fallback_levels": ["IfcBuilding"]
   },
-  "editable": false,
   "notes": ""
 }
 ```
 
-## Origem: aggregation_parent
+## Source: aggregation_parent
 
-Use `aggregation_parent` para ler atributos de um ancestral na cadeia de
-montagem, considerando apenas relacoes de aninhamento/decomposicao.
+Use `aggregation_parent` to read attributes from an ancestor in the assembly
+chain, considering only nesting and decomposition relationships.
 
-Campos exibidos:
+Displayed fields:
 
-| Campo na UI | Chave em `source` | Uso |
-|-------------|-------------------|-----|
-| `Nivel (1=pai imediato, 2=avo, ...)` | `level` | Posicao do ancestral na cadeia |
-| `Atributo` | `attribute` | Atributo a ler |
-| `Fallback` | `fallback_attribute` | Atributo alternativo se o principal vier vazio |
+| UI field | Key in `source` | Use |
+|----------|-----------------|-----|
+| `Level (1=direct parent, 2=grandparent, ...)` | `level` | Ancestor position in the chain |
+| `Attribute` | `attribute` | Attribute to read |
+| `Fallback` | `fallback_attribute` | Alternative attribute if the main value is empty |
 
-Como resolve:
+Resolution order:
 
-1. sobe a cadeia usando `Nests` e depois `Decomposes`;
-2. nao usa `ContainedInStructure` nem grupos espaciais;
-3. interpreta `level=1` como pai imediato, `level=2` como avo, e assim por
-   diante;
-4. le `attribute` do ancestral encontrado;
-5. se vazio, tenta `fallback_attribute`;
-6. se nao houver ancestral naquele nivel, exporta vazio.
+1. Walk up the chain through `Nests` and then `Decomposes`.
+2. Do not use `ContainedInStructure` or spatial groups.
+3. Interpret `level=1` as the immediate parent, `level=2` as the grandparent,
+   and so on.
+4. Read `attribute` from the matched ancestor.
+5. If empty, try `fallback_attribute`.
+6. If no ancestor exists at that level, export an empty cell.
 
-Exemplo JSON:
+JSON example:
 
 ```json
 {
@@ -386,122 +379,118 @@ Exemplo JSON:
     "level": "2",
     "attribute": "Name"
   },
-  "editable": false,
-  "notes": "Avo na cadeia de montagem."
+  "notes": "Grandparent in the assembly chain."
 }
 ```
 
-## Origem: ifc_class
+## Source: ifc_class
 
-Use `ifc_class` para derivar uma classe de negocio a partir de atributo IFC e
-traduzir o valor por uma tabela de apoio.
+Use `ifc_class` to derive a business class from an IFC attribute and translate
+the value through a support table.
 
-Campos exibidos:
+Displayed fields:
 
-| Campo na UI | Chave em `source` | Uso |
-|-------------|-------------------|-----|
-| `Atributo` | `attribute` | Atributo usado para formar a chave da classe |
-| `Mapping Table` | `mapping_table` | Nome da tabela de apoio usada para traduzir a chave |
+| UI field | Key in `source` | Use |
+|----------|-----------------|-----|
+| `Attribute` | `attribute` | Attribute used to form the class key |
+| `Mapping Table` | `mapping_table` | Support table used to translate the key |
 
-Como resolve:
+Resolution order:
 
-1. le `attribute` da ocorrencia;
-2. se vazio, le `attribute` do tipo IFC;
-3. se ainda vazio, usa a classe IFC normalizada do tipo;
-4. procura esse valor na tabela de apoio indicada por `mapping_table`;
-5. se encontrar, exporta o valor mapeado;
-6. se nao encontrar, exporta a propria chave.
+1. Read `attribute` from the occurrence.
+2. If empty, read `attribute` from the IFC type.
+3. If still empty, use the normalized IFC class from the type.
+4. Look up the value in the support table referenced by `mapping_table`.
+5. If found, export the mapped value.
+6. If not found, export the key itself.
 
-Campo extra util:
+Useful extra field:
 
-| Chave extra | Uso |
-|-------------|-----|
-| `fallback_attribute` | Atributo alternativo para formar a chave, embora nao apareca como campo guiado nessa origem |
+| Extra key | Use |
+|-----------|-----|
+| `fallback_attribute` | Alternative attribute to form the key, although it is not exposed as a guided field for this source |
 
-Exemplo com tabela:
+Example with table:
 
 ```json
 {
-  "column": "Classe",
+  "column": "Class",
   "source_type": "ifc_class",
   "source": {
     "attribute": "ObjectType",
     "mapping_table": "subsea_flexible_classes"
   },
-  "editable": false,
   "notes": ""
 }
 ```
 
-Tabela de apoio correspondente:
+Matching support table:
 
 ```json
 {
   "subsea_flexible_classes": {
-    "FlexiblePipeSegment": "Tramo",
-    "EndFitting": "Conector"
+    "FlexiblePipeSegment": "Pipe section",
+    "EndFitting": "Connector"
   }
 }
 ```
 
-## Origem: ifc_quantity
+## Source: ifc_quantity
 
-Use `ifc_quantity` para calcular a quantidade da linha da LI.
+Use `ifc_quantity` to calculate the LI row quantity.
 
-Campo exibido sempre:
+Always visible field:
 
-| Campo na UI | Chave em `source` | Uso |
-|-------------|-------------------|-----|
-| `Modo` | `quantity_mode` | Estrategia de quantidade |
+| UI field | Key in `source` | Use |
+|----------|-----------------|-----|
+| `Mode` | `quantity_mode` | Quantity strategy |
 
-Opcoes de `Modo`:
+`Mode` options:
 
-| Modo na UI | Valor JSON | Resultado |
-|------------|------------|-----------|
-| `Mapping Table` | `mapping` | Usa uma tabela de apoio para decidir se conta ou soma comprimento |
-| `Count Occurrences` | `count` | Conta ocorrencias do tipo IFC |
-| `Sum Length` | `length` | Soma comprimento por `get_qtde()` |
+| UI mode | JSON value | Result |
+|---------|------------|--------|
+| `Mapping Table` | `mapping` | Uses a support table to decide whether to count or sum length |
+| `Count Occurrences` | `count` | Counts IFC type occurrences |
+| `Sum Length` | `length` | Sums length through `get_qtde()` |
 
-Quando `Modo` e `Mapping Table`, aparecem tambem:
+When `Mode` is `Mapping Table`, the panel also shows:
 
-| Campo na UI | Chave em `source` | Uso |
-|-------------|-------------------|-----|
-| `Mapping Table` | `mapping_table` | Nome da tabela com regra por classe |
-| `Selected By` | `selected_by` | Nome de uma coluna ja calculada que tambem pode selecionar a regra |
+| UI field | Key in `source` | Use |
+|----------|-----------------|-----|
+| `Mapping Table` | `mapping_table` | Table with class-specific rules |
+| `Selected By` | `selected_by` | Name of an already calculated column that may also select the rule |
 
-Como resolve em `mapping`:
+Resolution order in `mapping` mode:
 
-1. busca a tabela indicada em `mapping_table`;
-2. calcula uma chave de classe pelo `ObjectType` da ocorrencia ou classe IFC;
-3. tambem le o valor da coluna indicada por `selected_by`, se existir;
-4. procura regra na tabela nesta ordem: chave de classe, valor selecionado,
-   `_default`;
-5. se a regra tiver `quantity` igual a `Length`, soma comprimento;
-6. caso contrario, conta ocorrencias.
+1. Read the table referenced by `mapping_table`.
+2. Calculate a class key from the occurrence `ObjectType` or IFC class.
+3. Also read the value of the column named by `selected_by`, when present.
+4. Search for a rule in this order: class key, selected value, `_default`.
+5. If the rule has `quantity` equal to `Length`, sum length.
+6. Otherwise, count occurrences.
 
-Regra de comprimento atual:
+Current length rule:
 
-- para `IfcPipeSegmentType`, soma `NominalLength` das ocorrencias no Pset
+- for `IfcPipeSegmentType`, sum `NominalLength` from occurrences in
   `OGSubPset_FlexiblePipeSegmentOccurence`;
-- para outros tipos, `get_qtde()` retorna contagem de ocorrencias.
+- for other types, `get_qtde()` returns the occurrence count.
 
-Exemplo JSON:
+JSON example:
 
 ```json
 {
-  "column": "Qtde",
+  "column": "Quantity",
   "source_type": "ifc_quantity",
   "source": {
     "mapping_table": "quantity_by_class",
     "quantity_mode": "mapping",
-    "selected_by": "Classe"
+    "selected_by": "Class"
   },
-  "editable": true,
   "notes": ""
 }
 ```
 
-Tabela de apoio:
+Support table:
 
 ```json
 {
@@ -518,81 +507,79 @@ Tabela de apoio:
 }
 ```
 
-## Origem: computed
+## Source: computed
 
-Use `computed` para valores calculados. O comportamento depende do campo
-`Method` ou da combinacao `Template Table` + `Selected By`.
+Use `computed` for calculated values. Behavior depends on `Method` or on the
+combination of `Template Table` and `Selected By`.
 
-Campos exibidos:
+Displayed fields:
 
-| Campo na UI | Chave em `source` | Uso |
-|-------------|-------------------|-----|
-| `Selected By` | `selected_by` | Nome de coluna ja calculada usada para escolher template |
-| `Template Table` | `template_table` | Nome da tabela de apoio com templates |
-| `Derived From` | `derived_from` | Nome de coluna base para alguns metodos |
-| `Method` | `method` | Metodo especial de calculo |
-| `Format` | `format` | Metadado salvo no JSON; o exportador atual nao aplica formatacao |
+| UI field | Key in `source` | Use |
+|----------|-----------------|-----|
+| `Selected By` | `selected_by` | Already calculated column used to choose a template |
+| `Template Table` | `template_table` | Support table with templates |
+| `Derived From` | `derived_from` | Base column for some methods |
+| `Method` | `method` | Special calculation method |
+| `Format` | `format` | Metadata saved in JSON; the current exporter does not apply formatting |
 
 ### Method: quantity_unit_symbol
 
-Deriva a unidade de uma coluna de quantidade.
+Derives the unit from a quantity column.
 
-Campos esperados:
+Expected fields:
 
-| Campo | Valor |
+| Field | Value |
 |-------|-------|
 | `Method` | `quantity_unit_symbol` |
-| `Derived From` | nome da coluna de quantidade, por exemplo `Qtde` |
+| `Derived From` | name of the quantity column, for example `Quantity` |
 
-Como resolve:
+Resolution order:
 
-1. le o valor ja calculado em `derived_from`;
-2. se estiver vazio, exporta vazio;
-3. se a coluna derivada usa `quantity_mode=count`, retorna `un`;
-4. se usa `quantity_mode=length`, retorna `m`;
-5. se usa `mapping`, consulta `quantity_by_class`;
-6. quando possivel, tenta obter a unidade IFC real do Qto;
-7. se nao conseguir ler a unidade, usa `m` para comprimento e `un` para
-   contagem.
+1. Read the already calculated value in `derived_from`.
+2. If it is empty, export an empty cell.
+3. If the derived column uses `quantity_mode=count`, return `un`.
+4. If it uses `quantity_mode=length`, return `m`.
+5. If it uses `mapping`, inspect `quantity_by_class`.
+6. When possible, try to obtain the real IFC Qto unit.
+7. If no unit can be read, use `m` for length and `un` for count.
 
-Exemplo:
+Example:
 
 ```json
 {
-  "column": "Unidade",
+  "column": "Unit",
   "source_type": "computed",
   "source": {
-    "derived_from": "Qtde",
+    "derived_from": "Quantity",
     "method": "quantity_unit_symbol"
   },
-  "editable": false,
   "notes": ""
 }
 ```
 
 ### Method: spatial_name_part
 
-Extrai uma informacao do `Name` da ocorrencia ou de um ancestral que contenha
-um separador.
+Extracts information from the occurrence `Name` or from an ancestor whose
+`Name` contains a separator.
 
-Campos esperados:
+Expected fields:
 
-| Campo | Uso |
+| Field | Use |
 |-------|-----|
 | `Method` | `spatial_name_part` |
-| `separator` | campo extra; separador usado no `Name`; padrao `/` |
-| `part_index` | campo extra opcional; indice da parte apos `split` |
+| `separator` | extra field; separator used in `Name`; default `/` |
+| `part_index` | optional extra field; index after `split` |
 
-Comportamento:
+Behavior:
 
-- procura primeiro na ocorrencia;
-- depois procura nos ancestrais por `ContainedInStructure`, `Decomposes` e
+- search the occurrence first;
+- then search ancestors through `ContainedInStructure`, `Decomposes`, and
   `Nests`;
-- se encontrar um `Name` com o separador e nao houver `part_index`, retorna o
-  nome inteiro;
-- se houver `part_index`, retorna somente a parte indicada.
+- if a `Name` contains the separator and no `part_index` is set, return the
+  full name;
+- if `part_index` is set, return only the indexed part.
 
-Exemplo:
+Example:
 
 ```json
 {
@@ -603,148 +590,144 @@ Exemplo:
     "separator": "/",
     "part_index": 0
   },
-  "editable": false,
   "notes": ""
 }
 ```
 
 ### Template Table + Selected By
 
-Quando `method` nao e um metodo especial, o computed pode renderizar um template
-de texto.
+When `method` is not a special method, `computed` can render a text template.
 
-Campos esperados:
+Expected fields:
 
-| Campo | Uso |
+| Field | Use |
 |-------|-----|
-| `Selected By` | nome da coluna usada como chave, por exemplo `Classe` |
-| `Template Table` | nome da tabela de apoio, por exemplo `description_templates` |
+| `Selected By` | column name used as the key, for example `Class` |
+| `Template Table` | support table name, for example `description_templates` |
 
-Como resolve:
+Resolution order:
 
-1. le o valor ja calculado da coluna `selected_by`;
-2. usa esse valor para escolher um template na tabela;
-3. se nao encontrar, usa `_default`;
-4. substitui placeholders no template;
-5. exporta o texto final.
+1. Read the already calculated value of the `selected_by` column.
+2. Use that value to choose a template in the table.
+3. If no match exists, use `_default`.
+4. Replace placeholders in the template.
+5. Export the final text.
 
-Placeholders aceitos:
+Accepted placeholders:
 
-| Placeholder | Resultado |
-|-------------|-----------|
-| `{attr.Name}` | atributo direto da ocorrencia ou tipo |
-| `{attr.Tag}` | tag da ocorrencia ou tipo |
-| `{Pset_Nome.Propriedade}` | valor de propriedade em Pset da ocorrencia ou tipo |
+| Placeholder | Result |
+|-------------|--------|
+| `{attr.Name}` | direct attribute from the occurrence or type |
+| `{attr.Tag}` | occurrence or type tag |
+| `{Pset_Name.Property}` | Pset property value from the occurrence or type |
 
-Exemplo:
+Example:
 
 ```json
 {
-  "column": "Descricao",
+  "column": "Description",
   "source_type": "computed",
   "source": {
-    "selected_by": "Classe",
+    "selected_by": "Class",
     "template_table": "description_templates"
   },
-  "editable": true,
   "notes": ""
 }
 ```
 
-Tabela de apoio:
+Support table:
 
 ```json
 {
   "description_templates": {
-    "Tramo": "Tramo {attr.Tag}; comprimento {Pset_FlexiblePipeSegment.NominalLength} m",
+    "Pipe section": "Pipe section {attr.Tag}; length {Pset_FlexiblePipeSegment.NominalLength} m",
     "_default": "{attr.Description}"
   }
 }
 ```
 
-## Origem: not_applicable
+## Source: not_applicable
 
-Use `not_applicable` para colunas de controle que devem existir na LI, mas nao
-tem origem no IFC.
+Use `not_applicable` for control columns that must exist in the LI but have no
+IFC source.
 
-Campos guiados:
+Guided fields:
 
-- nenhum campo de `Source guiado` e exibido;
-- e possivel registrar metadados em `Campos extras`, mas a exportacao sempre
-  retorna vazio para essa origem.
+- no `Guided Source` field is displayed;
+- metadata can be registered in `Extra Fields`, but the export always returns
+  an empty value for this source.
 
-Exemplo:
+Example:
 
 ```json
 {
   "column": "Status",
   "source_type": "not_applicable",
   "source": null,
-  "editable": true,
-  "notes": "Campo de controle da planilha."
+  "notes": "Spreadsheet control field."
 }
 ```
 
-## Campos extras
+## Extra Fields
 
-`Campos extras` permite adicionar pares `Chave` / `Valor` ao objeto `source` da
-coluna selecionada.
+`Extra Fields` adds `Key` / `Value` pairs to the selected column's `source`
+object.
 
-Use para:
+Use it for:
 
-- chaves suportadas pelo exportador mas nao expostas como campo guiado;
-- parametros especificos de metodos `computed`;
-- listas, objetos ou valores escalares que precisam ser salvos no JSON.
+- exporter-supported keys that are not exposed as guided fields;
+- parameters required by `computed` methods;
+- lists, objects, or scalar values that must be saved in JSON.
 
-Regras:
+Rules:
 
-- se `Valor` for JSON valido, ele sera salvo como JSON;
-- se nao for JSON valido, ele sera salvo como texto;
-- campos extras sao adicionados depois dos campos guiados e podem sobrescrever
-  uma chave guiada com o mesmo nome;
-- chaves vazias sao ignoradas ao salvar.
+- if `Value` is valid JSON, it is saved as JSON;
+- otherwise, it is saved as text;
+- extra fields are added after guided fields and can overwrite a guided key
+  with the same name;
+- empty keys are ignored during save.
 
-Exemplos:
+Examples:
 
-| Chave | Valor | Uso |
-|-------|-------|-----|
-| `separator` | `/` | separador para `spatial_name_part` |
-| `part_index` | `0` | indice da parte extraida pelo metodo |
-| `fallback_levels` | `["IfcBuilding", "IfcSite"]` | niveis espaciais alternativos |
-| `fallback_attribute` | `Tag` | atributo alternativo em origens que nao exibem esse campo |
-| `allowed_values` | `["A", "B", "C"]` | lista de valores esperados |
+| Key | Value | Use |
+|-----|-------|-----|
+| `separator` | `/` | separator for `spatial_name_part` |
+| `part_index` | `0` | index extracted by the method |
+| `fallback_levels` | `["IfcBuilding", "IfcSite"]` | alternative spatial levels |
+| `fallback_attribute` | `Tag` | fallback attribute for sources that do not expose this field |
+| `allowed_values` | `["A", "B", "C"]` | expected values list |
 
-## Tabelas de apoio
+## Support Tables
 
-A area `Tabelas de apoio` edita objetos de primeiro nivel do JSON que nao sejam
-chaves reservadas.
+The `Support Tables` area edits first-level JSON objects that are not
+reserved keys.
 
-Campos de uma tabela:
+Table fields:
 
-| Campo na UI | Chave no JSON | Uso |
-|-------------|---------------|-----|
-| `Tabela` | nome da chave de primeiro nivel | Nome usado por `mapping_table` ou `template_table` |
-| `Comentario` | `_comment` | Comentario salvo dentro da tabela |
+| UI field | JSON key | Use |
+|----------|----------|-----|
+| `Table` | top-level key name | Name referenced by `mapping_table` or `template_table` |
+| `Comment` | `_comment` | Comment saved inside the table |
 
-Campos de uma linha:
+Row fields:
 
-| Campo na UI | JSON | Uso |
-|-------------|------|-----|
-| `Chave` | chave do objeto | Valor usado para lookup |
-| `Valor` | valor da chave | Pode ser texto, numero, lista ou objeto JSON |
+| UI field | JSON | Use |
+|----------|------|-----|
+| `Key` | object key | Lookup value |
+| `Value` | key value | May be text, number, list, or JSON object |
 
-Exemplo de tabela simples:
+Simple table example:
 
 ```json
 {
   "subsea_flexible_classes": {
-    "FlexiblePipeSegment": "Tramo",
-    "EndFitting": "Conector"
+    "FlexiblePipeSegment": "Pipe section",
+    "EndFitting": "Connector"
   }
 }
 ```
 
-Exemplo de tabela com objetos:
+Table with objects:
 
 ```json
 {
@@ -761,18 +744,18 @@ Exemplo de tabela com objetos:
 }
 ```
 
-Quando editar valores complexos pela UI, escreva JSON valido no campo `Valor`.
+When editing complex values in the UI, write valid JSON in `Value`.
 
-Exemplo de `Valor` para uma linha:
+Example `Value` for a row:
 
 ```json
 {"qto": "Qto_FlexiblePipeSegment", "quantity": "Length"}
 ```
 
-## Tabela de campos por origem
+## Field Matrix by Source Type
 
-| Origem | Campos guiados salvos em `source` |
-|--------|-----------------------------------|
+| Source type | Guided fields saved in `source` |
+|-------------|---------------------------------|
 | `ifc_attribute` | `ifc_class`, `attribute`, `fallback_attribute`, `format` |
 | `ifc_property` | `ifc_class`, `pset`, `property`, `allowed_values` |
 | `manual` | `ifc_class`, `pset`, `property`, `allowed_values` |
@@ -781,9 +764,9 @@ Exemplo de `Valor` para uma linha:
 | `ifc_class` | `attribute`, `mapping_table` |
 | `ifc_quantity` | `quantity_mode`, `mapping_table`, `selected_by` |
 | `computed` | `selected_by`, `template_table`, `derived_from`, `method`, `format` |
-| `not_applicable` | nenhum campo guiado |
+| `not_applicable` | no guided field |
 
-## Exemplo completo de coluna
+## Complete Column Example
 
 ```json
 {
@@ -793,61 +776,59 @@ Exemplo de `Valor` para uma linha:
     "level": "2",
     "attribute": "Name"
   },
-  "editable": false,
-  "notes": "Avo na cadeia de montagem."
+  "notes": "Grandparent in the assembly chain."
 }
 ```
 
-## Exemplo completo de fluxo
+## Complete Workflow Example
 
-Para adicionar uma coluna que leia uma propriedade do bSDD:
+To add a column that reads a bSDD property:
 
-1. Clique em `Load`.
-2. Clique em `Add Column`.
-3. Em `Coluna`, informe o nome que deve aparecer no Excel.
-4. Em `Origem`, selecione `IFC Property`.
-5. Em `Escolher do dicionario bSDD`, escolha `Discipline`.
-6. Escolha `Element`.
-7. Escolha `Property set`.
-8. Escolha `Property`.
-9. Clique em `Usar esta propriedade`.
-10. Revise `Editavel` e `Notas`.
-11. Clique em `Save`.
-12. Clique em `Export LI`.
+1. Click `Load`.
+2. Click `Add Column`.
+3. In `Column`, enter the name that should appear in Excel.
+4. In `Source`, select `IFC Property`.
+5. In `Pick from bSDD dictionary`, choose `Discipline`.
+6. Choose `Element`.
+7. Choose `Property set`.
+8. Choose `Property`.
+9. Click `Use this property`.
+10. Review `Notes`.
+11. Click `Save`.
+12. Click `Export LI`.
 
-## Checklist antes de exportar
+## Pre-Export Checklist
 
-- O modelo IFC esta aberto no Bonsai/Blender.
-- Existem `IfcTypeProduct` com ocorrencias no modelo.
-- As alteracoes do painel foram salvas com `Save`.
-- Colunas que dependem de outras colunas aparecem depois das colunas base.
-- `Selected By` usa exatamente o nome de uma coluna anterior.
-- `Mapping Table` e `Template Table` apontam para tabelas existentes.
-- Valores complexos em tabelas de apoio estao em JSON valido.
-- Colunas `computed` com `quantity_unit_symbol` possuem `Derived From`.
+- The IFC model is open in Bonsai/Blender.
+- The model has `IfcTypeProduct` entities with occurrences.
+- UI changes were saved with `Save`.
+- Columns that depend on other columns appear after their base columns.
+- `Selected By` exactly matches the name of an earlier column.
+- `Mapping Table` and `Template Table` point to existing tables.
+- Complex support-table values are valid JSON.
+- `computed` columns using `quantity_unit_symbol` have `Derived From`.
 
-## Solucao de problemas
+## Troubleshooting
 
-| Sintoma | Verifique |
-|---------|-----------|
-| `Export LI` nao reflete a alteracao feita na tela | Clique em `Save` antes de exportar |
-| Exportacao gera aviso de nenhuma linha | O IFC precisa ter `IfcTypeProduct` com ocorrencias |
-| Coluna sai vazia | Confirme `source_type`, Pset/propriedade, atributo ou nivel configurado |
-| `Selected By` nao funciona | A coluna referenciada precisa existir e ser calculada antes |
-| Tabela de apoio nao e usada | Confira se `mapping_table` ou `template_table` tem o mesmo nome da tabela |
-| Valor complexo virou texto | O campo `Valor` precisa ser JSON valido |
-| Unidade sai `un` quando deveria sair `m` | Confira `quantity_by_class` e a regra `quantity: Length` |
-| Propriedade bSDD nao aparece no seletor | Verifique `Discipline`, `Element` e se o dicionario JSON possui a propriedade |
+| Symptom | Check |
+|---------|-------|
+| `Export LI` does not reflect a UI change | Click `Save` before exporting |
+| Export reports that no row was generated | The IFC must have `IfcTypeProduct` entities with occurrences |
+| A column is empty | Confirm `source_type`, Pset/property, attribute, or configured level |
+| `Selected By` does not work | The referenced column must exist and be calculated earlier |
+| A support table is not used | Confirm that `mapping_table` or `template_table` matches the table name |
+| A complex value became text | The `Value` field must contain valid JSON |
+| Unit is `un` but should be `m` | Check `quantity_by_class` and the `quantity: Length` rule |
+| bSDD property does not appear in the picker | Check `Discipline`, `Element`, and whether the dictionary JSON contains the property |
 
-## Observacoes de manutencao
+## Maintenance Notes
 
-- A UI preserva `source_types`, mas nao edita essa chave.
-- `Save` remove e recria as tabelas de apoio a partir do que esta carregado na
-  interface.
-- `ifc_class`, `format` e `allowed_values` sao salvos em algumas origens, mas
-  parte deles atua hoje como metadado; o exportador atual nao usa esses campos
-  para filtrar, formatar ou validar.
-- Colunas `computed` podem depender de valores ja calculados em `row_values`;
-  por isso, a ordem das colunas e relevante.
-- Para campos ainda nao suportados pela UI, use `Campos extras` ou edite o JSON
-  diretamente.
+- The UI preserves `source_types`, but does not edit it.
+- `Save` removes and recreates support tables from the data loaded in the UI.
+- `ifc_class`, `format`, and `allowed_values` are saved in some source types,
+  but some of them currently act as metadata; the current exporter does not use
+  them for filtering, formatting, or validation.
+- `computed` columns can depend on values already calculated in `row_values`,
+  so column order matters.
+- For fields that are not supported by the UI yet, use `Extra Fields` or edit
+  the JSON directly.

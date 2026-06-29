@@ -34,18 +34,17 @@ _GUIDED_SOURCE_FIELDS = {
     'allowed_values': 'source_allowed_values',
 }
 
-# 'quantity_mode' é o único campo guiado que é EnumProperty (os demais são
-# StringProperty) e não tem opção vazia — por isso precisa de tratamento
-# separado em _reset_guided_source_fields (não dá pra setattr('') nele).
+# 'quantity_mode' is the only guided field that is an EnumProperty (the others
+# are StringProperty fields) and it has no empty option, so it needs special
+# handling in _reset_guided_source_fields.
 _ENUM_GUIDED_FIELDS_DEFAULTS = {
     'source_quantity_mode': 'mapping',
 }
 
-# Quais campos guiados (chaves de _GUIDED_SOURCE_FIELDS) fazem sentido salvar
-# para cada source_type — espelha exatamente o que modules/catalog/panels.py
-# exibe na UI por tipo. Evita que campos irrelevantes (ex.: quantity_mode
-# numa coluna ifc_class) acabem gravados no JSON só porque o Enum nunca fica
-# vazio.
+# Guided fields (keys from _GUIDED_SOURCE_FIELDS) that are meaningful for each
+# source_type. This mirrors what modules/catalog/panels.py displays in the UI
+# for each type and prevents irrelevant fields (for example quantity_mode in an
+# ifc_class column) from being saved just because the Enum is never empty.
 _RELEVANT_SOURCE_FIELDS = {
     'ifc_attribute': {'ifc_class', 'attribute', 'fallback_attribute', 'format'},
     'ifc_property': {'ifc_class', 'pset', 'property', 'allowed_values'},
@@ -147,7 +146,6 @@ def _load_li_mapping_into_props(props):
         column = props.li_mapping_columns.add()
         column.column_name = column_data.get('column', '')
         column.source_type = column_data.get('source_type', 'manual')
-        column.editable = column_data.get('editable', True)
         column.notes = column_data.get('notes', '')
 
         source_data = column_data.get('source') or {}
@@ -193,7 +191,6 @@ def _save_li_mapping_from_props(props):
             'column': column.column_name,
             'source_type': column.source_type,
             'source': _build_source_from_column(column),
-            'editable': column.editable,
             'notes': column.notes,
         })
 
@@ -248,13 +245,18 @@ class Operator_save_li_mapping(bpy.types.Operator):
     def execute(self, context):
         props = context.scene.og_props
 
+        if not props.li_mapping_loaded:
+            self.report({'WARNING'}, "Load LI mapping before saving")
+            return {'CANCELLED'}
+
         try:
             _save_li_mapping_from_props(props)
         except Exception as exc:
             self.report({'ERROR'}, f"Failed to save LI mapping: {exc}")
             return {'CANCELLED'}
 
-        props.li_mapping_loaded = True
+        _clear_li_mapping(props)
+        props.li_mapping_loaded = False
         self.report({'INFO'}, "LI mapping saved")
         return {'FINISHED'}
 
@@ -267,9 +269,8 @@ class Operator_add_li_mapping_column(bpy.types.Operator):
     def execute(self, context):
         props = context.scene.og_props
         column = props.li_mapping_columns.add()
-        column.column_name = "Nova Coluna"
+        column.column_name = "New Column"
         column.source_type = 'manual'
-        column.editable = True
         column.notes = ''
         props.active_li_mapping_index = len(props.li_mapping_columns) - 1
         props.li_mapping_loaded = True
@@ -294,9 +295,41 @@ class Operator_remove_li_mapping_column(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class Operator_move_li_mapping_column(bpy.types.Operator):
+    bl_idname = "catag.move_li_mapping_column"
+    bl_label = "move LI mapping column"
+    bl_options = {"REGISTER", "UNDO"}
+
+    index : bpy.props.IntProperty(name="index", default=-1)
+    direction : bpy.props.EnumProperty(
+        name="direction",
+        items=[
+            ('UP', "Up", "Move column up"),
+            ('DOWN', "Down", "Move column down"),
+        ],
+        default='UP',
+    )
+
+    def execute(self, context):
+        props = context.scene.og_props
+        count = len(props.li_mapping_columns)
+
+        if self.index < 0 or self.index >= count:
+            self.report({'WARNING'}, "No LI mapping column selected")
+            return {'CANCELLED'}
+
+        target_index = self.index - 1 if self.direction == 'UP' else self.index + 1
+        if target_index < 0 or target_index >= count:
+            return {'CANCELLED'}
+
+        props.li_mapping_columns.move(self.index, target_index)
+        props.active_li_mapping_index = target_index
+        props.li_mapping_loaded = True
+        return {'FINISHED'}
+
+
 class Operator_li_mapping_pick_property(bpy.types.Operator):
-    """Copia a Property/Pset escolhidos no seletor guiado (dicionário bSDD)
-    para os campos reais usados na exportação da LI (source_pset/source_property)."""
+    """Copy the guided bSDD Pset/Property selection to the LI source fields."""
     bl_idname = "catag.li_mapping_pick_property"
     bl_label = "use selected property"
     bl_options = {"REGISTER", "UNDO"}
@@ -311,17 +344,17 @@ class Operator_li_mapping_pick_property(bpy.types.Operator):
 
         column = props.li_mapping_columns[index]
         if not column.picker_pset or not column.picker_property:
-            self.report({'WARNING'}, "Selecione Element, Property set e Property antes de usar")
+            self.report({'WARNING'}, "Select Element, Property set, and Property before applying")
             return {'CANCELLED'}
 
         column.source_type = 'ifc_property'
         column.source_pset = column.picker_pset
         column.source_property = column.picker_property
 
-        if not column.column_name or column.column_name == "Nova Coluna":
+        if not column.column_name or column.column_name == "New Column":
             column.column_name = column.picker_property
 
-        self.report({'INFO'}, f"{column.picker_pset}.{column.picker_property} aplicado à coluna")
+        self.report({'INFO'}, f"{column.picker_pset}.{column.picker_property} applied to the column")
         return {'FINISHED'}
 
 
@@ -425,6 +458,31 @@ def get_qtde(type):
     return qtde
 
 
+def _get_occurrence_quantity(occurrence, qto_name, quantity_name):
+    if occurrence is None or not qto_name or not quantity_name:
+        return None
+
+    qtos = ifcopenshell.util.element.get_psets(occurrence, should_inherit=False)
+    qto_data = qtos.get(qto_name, {})
+    value = qto_data.get(quantity_name)
+    return value if value not in (None, '') else None
+
+
+def _sum_occurrence_quantities(occurrences, qto_name, quantity_name):
+    values = []
+    for occurrence in occurrences:
+        value = _get_occurrence_quantity(occurrence, qto_name, quantity_name)
+        if value in (None, ''):
+            continue
+        try:
+            value = float(value)
+        except (TypeError, ValueError):
+            continue
+        values.append(value)
+
+    return sum(values) if values else None
+
+
 def _load_li_mapping_data():
     with open(_get_li_mapping_path(), 'r', encoding='utf-8') as file:
         return json.load(file)
@@ -439,8 +497,61 @@ def _get_representative_occurrence(type_entity):
     return elements[0] if elements else None
 
 
-def _get_occurrence_list(type_entity):
+def _get_occurrence_list(type_entity, occurrence=None, occurrences=None):
+    if type_entity is None:
+        if occurrences is not None:
+            return occurrences
+        return [occurrence] if occurrence is not None else []
     return ifcopenshell.util.element.get_types(type_entity) or []
+
+
+def _get_entity_id(entity):
+    if entity is None:
+        return None
+    return entity.id() if hasattr(entity, 'id') else id(entity)
+
+
+def _has_type_assignment(entity):
+    try:
+        return ifcopenshell.util.element.get_type(entity) is not None
+    except Exception:
+        return bool(getattr(entity, 'IsTypedBy', None))
+
+
+def _get_untyped_realizing_elements(model, excluded_ids=None):
+    elements = []
+    seen_ids = set()
+    excluded_ids = excluded_ids or set()
+
+    connection_rels = []
+    for rel_type in ('IfcRelConnectsWithRealizingElements', 'IfcRelConnectsWithRealizing'):
+        try:
+            connection_rels.extend(model.by_type(rel_type))
+        except RuntimeError:
+            continue
+
+    for rel in connection_rels:
+        for entity in getattr(rel, 'RealizingElements', None) or []:
+            if entity is None or not entity.is_a('IfcElement') or _has_type_assignment(entity):
+                continue
+
+            entity_id = _get_entity_id(entity)
+            if entity_id in seen_ids or entity_id in excluded_ids:
+                continue
+
+            seen_ids.add(entity_id)
+            elements.append(entity)
+
+    return elements
+
+
+def _group_occurrences_by_name(occurrences):
+    groups = {}
+    for occurrence in occurrences:
+        name = (getattr(occurrence, 'Name', None) or '').strip()
+        key = name or f"__id__:{_get_entity_id(occurrence)}"
+        groups.setdefault(key, []).append(occurrence)
+    return groups.values()
 
 
 def _normalize_class_name(entity_name):
@@ -534,12 +645,12 @@ def _get_spatial_value(type_entity, occurrence, source):
 
 
 def _get_aggregation_parent_chain(entity):
-    """Sobe a cadeia de pais só via Nests/Decomposes (montagem/agregação —
-    IfcRelNests / IfcRelAggregates), um nível por vez. Ao contrário de
-    _get_parent_spatial_chain, NÃO segue ContainedInStructure/IsGroupedBy,
-    então não mistura container espacial (Site/Building) na cadeia.
+    """Walk only the Nests/Decomposes assembly chain, one level at a time.
 
-    chain[0] = pai imediato, chain[1] = avô, etc.
+    Unlike _get_parent_spatial_chain, this does not follow
+    ContainedInStructure/IsGroupedBy, so spatial containers are not mixed into
+    the assembly chain. chain[0] is the direct parent, chain[1] the grandparent,
+    and so on.
     """
     chain = []
     current = entity
@@ -566,13 +677,13 @@ def _get_aggregation_parent_chain(entity):
 
 
 def _resolve_aggregation_parent(occurrence, source):
-    """Lê um atributo de um ancestral específico na cadeia de montagem.
+    """Read an attribute from a specific ancestor in the assembly chain.
 
     source:
-      level              : nível do ancestral (1 = pai imediato, 2 = avô, ...).
-                            Default 1.
-      attribute          : atributo a ler do ancestral (default "Name").
-      fallback_attribute : atributo alternativo se o principal vier vazio.
+      level              : ancestor level (1 = direct parent, 2 = grandparent).
+                            Defaults to 1.
+      attribute          : ancestor attribute to read (defaults to "Name").
+      fallback_attribute : alternate attribute if the main one is empty.
     """
     try:
         level = int(source.get('level', 1))
@@ -592,20 +703,17 @@ def _resolve_aggregation_parent(occurrence, source):
 
 
 def _resolve_spatial_name_part(occurrence, source):
-    """Extrai informação do Name do primeiro ancestral (via Nests/Decomposes/
-    ContainedInStructure) cujo nome contenha o separador informado.
+    """Extract information from the Name of the first matching ancestor.
 
-    Casos como este projeto: a ocorrência (ex.: PipePullingHead) está aninhada
-    via Nests dentro de um IfcPipeSegment "filho", que por sua vez está
-    aninhado em um IfcPipeSegment "raiz" cujo Name codifica a rota da linha
-    (ex.: "P-52/7-RO-25D-RJS"), e só esse segmento raiz tem ContainedInStructure
-    até o IfcSite — ou seja, a hierarquia espacial real (IfcSite/IfcBuilding)
-    não diferencia plataforma/poço, mas o Name do segmento raiz sim.
+    The search walks Nests/Decomposes/ContainedInStructure until it finds a Name
+    containing the configured separator. This handles models where the actual
+    spatial hierarchy does not distinguish platform/well, but the root segment
+    Name encodes the line route, for example "P-52/7-RO-25D-RJS".
 
     source:
-      separator   : separador usado no Name (default "/")
-      part_index  : índice da parte a retornar após o split; se omitido,
-                    retorna o Name inteiro (sem dividir)
+      separator   : separator used in the Name (defaults to "/").
+      part_index  : split part index to return; if omitted, returns the full
+                    Name without splitting.
     """
     separator = source.get('separator', '/')
     part_index = source.get('part_index')
@@ -645,8 +753,9 @@ def _get_class_key(type_entity, occurrence, source):
     attribute = source.get('attribute', 'ObjectType')
     fallback_attribute = source.get('fallback_attribute')
     value = _coalesce_entity_attribute([occurrence, type_entity], attribute, fallback_attribute)
-    if value in (None, ''):
-        value = _normalize_class_name(type_entity.is_a())
+    fallback_entity = type_entity or occurrence
+    if value in (None, '') and fallback_entity is not None:
+        value = _normalize_class_name(fallback_entity.is_a())
     return value or ''
 
 
@@ -656,11 +765,19 @@ def _resolve_ifc_class(type_entity, occurrence, source, mapping_data):
     return mapping_table.get(class_key, class_key)
 
 
-def _resolve_ifc_quantity(type_entity, occurrence, source, mapping_data, row_values):
+def _resolve_ifc_quantity(type_entity, occurrence, source, mapping_data, row_values, occurrences=None):
     quantity_mode = source.get('quantity_mode', 'mapping')
     if quantity_mode == 'count':
-        return len(_get_occurrence_list(type_entity))
+        return len(_get_occurrence_list(type_entity, occurrence, occurrences))
     if quantity_mode == 'length':
+        if type_entity is None:
+            occurrence_list = _get_occurrence_list(type_entity, occurrence, occurrences)
+            quantity = _sum_occurrence_quantities(
+                occurrence_list,
+                source.get('qto'),
+                source.get('quantity', 'Length'),
+            )
+            return quantity if quantity is not None else len(occurrence_list)
         return get_qtde(type_entity)
 
     mapping_table = mapping_data.get(source.get('mapping_table'), {})
@@ -671,11 +788,19 @@ def _resolve_ifc_quantity(type_entity, occurrence, source, mapping_data, row_val
     quantity_name = quantity_rule.get('quantity', 'Count')
 
     if quantity_name.lower() == 'length':
+        if type_entity is None:
+            occurrence_list = _get_occurrence_list(type_entity, occurrence, occurrences)
+            quantity = _sum_occurrence_quantities(
+                occurrence_list,
+                quantity_rule.get('qto'),
+                quantity_name,
+            )
+            return quantity if quantity is not None else len(occurrence_list)
         return get_qtde(type_entity)
-    return len(_get_occurrence_list(type_entity))
+    return len(_get_occurrence_list(type_entity, occurrence, occurrences))
 
 
-def _resolve_computed(type_entity, occurrence, source, mapping_data, row_values):
+def _resolve_computed(type_entity, occurrence, source, mapping_data, row_values, occurrences=None):
     method = source.get('method')
     if method == 'quantity_unit_symbol':
         qtd_value = row_values.get(source.get('derived_from', ''), '')
@@ -701,8 +826,8 @@ def _resolve_computed(type_entity, occurrence, source, mapping_data, row_values)
         quantity_rule = quantity_table.get(class_key) or quantity_table.get('_default', {})
         quantity_name = quantity_rule.get('quantity', 'Count')
         if quantity_name.lower() == 'length':
-            occurrences = _get_occurrence_list(type_entity)
-            sample = occurrences[0] if occurrences else occurrence
+            occurrence_list = _get_occurrence_list(type_entity, occurrence, occurrences)
+            sample = occurrence_list[0] if occurrence_list else occurrence
             if sample is not None:
                 qto_name = quantity_rule.get('qto')
                 if qto_name:
@@ -755,7 +880,7 @@ def _render_template(template, type_entity, occurrence):
     return re.sub(r'\{([^{}]+)\}', _replace, template)
 
 
-def _resolve_column_value(column_data, type_entity, occurrence, mapping_data, row_values):
+def _resolve_column_value(column_data, type_entity, occurrence, mapping_data, row_values, occurrences=None):
     source_type = column_data.get('source_type')
     source = column_data.get('source') or {}
     entities = [occurrence, type_entity]
@@ -776,10 +901,10 @@ def _resolve_column_value(column_data, type_entity, occurrence, mapping_data, ro
         return _resolve_ifc_class(type_entity, occurrence, source, mapping_data)
 
     if source_type == 'ifc_quantity':
-        return _resolve_ifc_quantity(type_entity, occurrence, source, mapping_data, row_values)
+        return _resolve_ifc_quantity(type_entity, occurrence, source, mapping_data, row_values, occurrences)
 
     if source_type == 'computed':
-        return _resolve_computed(type_entity, occurrence, source, mapping_data, row_values)
+        return _resolve_computed(type_entity, occurrence, source, mapping_data, row_values, occurrences)
 
     if source_type == 'not_applicable':
         return ''
@@ -787,21 +912,40 @@ def _resolve_column_value(column_data, type_entity, occurrence, mapping_data, ro
     return ''
 
 
+def _build_li_row(type_entity, occurrence, mapping_data, occurrences=None):
+    row_values = {}
+    for column_data in mapping_data.get('columns', []):
+        column_name = column_data.get('column', '')
+        row_values[column_name] = _resolve_column_value(
+            column_data,
+            type_entity,
+            occurrence,
+            mapping_data,
+            row_values,
+            occurrences,
+        )
+    return row_values
+
+
 def _build_li_rows(model, mapping_data):
     rows = []
+    typed_occurrence_ids = set()
 
     for type_entity in model.by_type('IfcTypeProduct'):
         occurrences = _get_occurrence_list(type_entity)
         if not occurrences:
             continue
 
-        occurrence = occurrences[0]
-        row_values = {}
-        for column_data in mapping_data.get('columns', []):
-            column_name = column_data.get('column', '')
-            row_values[column_name] = _resolve_column_value(column_data, type_entity, occurrence, mapping_data, row_values)
+        typed_occurrence_ids.update(
+            entity_id
+            for entity_id in (_get_entity_id(entity) for entity in occurrences)
+            if entity_id is not None
+        )
+        rows.append(_build_li_row(type_entity, occurrences[0], mapping_data))
 
-        rows.append(row_values)
+    untyped_realizing_elements = _get_untyped_realizing_elements(model, typed_occurrence_ids)
+    for occurrence_group in _group_occurrences_by_name(untyped_realizing_elements):
+        rows.append(_build_li_row(None, occurrence_group[0], mapping_data, occurrence_group))
 
     return rows
             

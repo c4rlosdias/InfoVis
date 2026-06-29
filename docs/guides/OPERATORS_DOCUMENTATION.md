@@ -1,200 +1,262 @@
-# Operadores - modules/*/operators.py
+# Operators: modules/*/operators.py
 
-## 📌 Visão Geral
+## Overview
 
-Os operadores estão distribuídos por domínio funcional dentro de `modules/`. Cada domínio possui seu próprio `operators.py` com a lógica de negócio específica.
+Blender operators are distributed by functional domain inside `modules/`. Each
+domain has its own `operators.py` with the business logic for that part of the
+Add-on.
 
-| Módulo | Responsabilidade |
-|--------|------------------|
-| `modules/common/operators.py` | Utilitários compartilhados |
-| `modules/dictionary/operators.py` | Operadores bSDD |
-| `modules/decomposition/operators.py` | Decomposição IFC |
-| `modules/catalog/operators.py` | Catálogo de tipos |
-| `modules/connections/operators.py` | Conexões IFC |
-| `modules/props/operators.py` | Propriedades e gráficos |
+| Module | Responsibility |
+|--------|----------------|
+| `modules/common/operators.py` | Shared utilities, tree expansion, object selection, labels, and error popups |
+| `modules/dictionary/operators.py` | bSDD dictionary and IDS operators |
+| `modules/decomposition/operators.py` | IFC decomposition loading, selection, export, movement, and ordering |
+| `modules/catalog/operators.py` | Catalog types, quantities, LI mapping, layer reports, and LI export |
+| `modules/connections/operators.py` | IFC connection creation and removal |
+| `modules/props/operators.py` | IFC property editing, document handling, tables, and charts |
+| `modules/settings/operators.py` | IFC viewport labels and decomposition-view configuration |
+| `modules/analysis/operators.py` | Viewport analysis coloring and reset |
 
-Todas as classes são registradas centralmente em `modules/__init__.py` via `get_classes()`.
+All operator classes are registered centrally through `modules/__init__.py` and
+`get_classes()`.
 
----
+## modules/common/operators.py
 
-## 🔧 Módulo: modules/common/operators.py
+Shared utility functions and operators used by multiple modules.
 
-Funções e operadores utilitários compartilhados por todos os módulos.
+### Functions
 
-### Funções
+| Function | Description |
+|----------|-------------|
+| `_pset_name_variants(pset_name)` | Builds possible Pset name variants for lookup |
+| `_get_ifc_label_value(entity, field_name)` | Reads an attribute or `Pset.Property` for viewport labels |
+| `_draw_ifc_label()` | Draws IFC labels in the 3D Viewport |
+| `register_ifc_label_overlay()` | Registers the viewport label draw handler |
+| `unregister_ifc_label_overlay()` | Removes the viewport label draw handler |
+| `reorder_element(context, index, chg)` | Reorders nested IFC elements |
+| `_open_in_browser(url)` | Opens a URL or file URI in the browser/OS |
+| `get_options(self, context)` | EnumProperty callback for dynamic items |
 
-| Função | Descrição |
-|--------|-----------|
-| `reorder_element(context, index, chg)` | Reordena elementos IFC aninhados |
-| `_open_in_browser(url)` | Abre URL no navegador (cross-platform) |
-| `get_options(self, context)` | Callback para `dynamic_items` em EnumProperty |
+### Operators
 
-### Operadores
-
-| Classe | bl_idname | Descrição |
-|--------|-----------|-----------|
-| `Operator_expand_tree` | `element.expand_tree` | Expande nó da árvore |
-| `Operator_contract_tree` | `element.contract_tree` | Contrai nó da árvore |
-| `ErrorMessage` | `og.error_message` | Popup de mensagem de erro |
+| Class | `bl_idname` | Description |
+|-------|-------------|-------------|
+| `Operator_expand_tree` | `element.expand_tree` | Expands one tree item |
+| `Operator_contract_tree` | `element.contract_tree` | Collapses one tree item |
+| `ErrorMessage` | `og.error_message` | Displays an error popup |
+| `Operator_select_object` | `element.select_object` | Selects an IFC object in Blender |
+| `Operator_common_set_tree_expansion` | `common.set_tree_expansion` | Expands or collapses the decomposition tree |
 
 ### PropertyGroup
 
-- **`Columns`** — `name` (StringProperty) + `selected` (BoolProperty) — para seleção de colunas em gráficos
+- `Columns`: `name` (`StringProperty`) and `selected` (`BoolProperty`) for chart
+  column selection.
 
----
+## modules/dictionary/operators.py
 
-## 🌐 Módulo: modules/dictionary/operators.py
+Operators for bSDD integration and IDS export.
 
-Operadores de integração com o bSDD (buildingSMART Data Dictionary).
+| Class | `bl_idname` | Description |
+|-------|-------------|-------------|
+| `Operator_clear_properties` | `object.clear_prop` | Clears the selected property list |
+| `Operator_assign_all` | `object.assign_all` | Selects all properties |
+| `Operator_unassign_all` | `object.unassign_all` | Clears all property selections |
+| `Operator_get_properties` | `bsdd.get_prop` | Fetches bSDD properties |
+| `Operator_uri` | `object.uri` | Opens a URI in the browser |
+| `Operator_get_classes` | `bsdd.get_class` | Fetches bSDD classes |
+| `Operator_add_properties` | `object.add_prop` | Adds Pset templates from bSDD metadata |
+| `Operator_get_prop_info` | `property.get_prop_info` | Fetches property metadata |
+| `Operator_get_class_info` | `bsdd.get_class_info` | Fetches class metadata |
+| `Operator_get_class_prop` | `bsdd.get_class_prop` | Fetches class properties |
+| `Operator_export_ids` | `ids.export` | Exports an IDS XML file |
 
-### Operadores
+Dependencies:
 
-| Classe | bl_idname | Descrição |
-|--------|-----------|-----------|
-| `Operator_clear_properties` | `object.clear_prop` | Limpa propriedades do objeto |
-| `Operator_assign_all` | `object.assign_all` | Seleciona todas as propriedades |
-| `Operator_unassign_all` | `object.unassign_all` | Desmarca todas as propriedades |
-| `Operator_get_properties` | `bsdd.get_prop` | Busca propriedades do bSDD |
-| `Operator_uri` | `object.uri` | Abre URI no navegador |
-| `Operator_get_classes` | `bsdd.get_class` | Busca classes do bSDD |
-| `Operator_add_properties` | `object.add_prop` | Adiciona pset templates do bSDD |
-| `Operator_get_prop_info` | `property.get_prop_info` | Busca metadados de propriedade |
-| `Operator_get_class_info` | `bsdd.get_class_info` | Busca metadados de classe |
-| `Operator_get_class_prop` | `bsdd.get_class_prop` | Busca propriedades de classe |
-| `Operator_export_ids` | `ids.export` | Exporta arquivo IDS (XML) |
+- `tqdm`: progress bars.
+- `ifctester.ids`: IDS validation/export support.
+- `data.bsdd`: bSDD client.
+- `data.catalog`: property templates.
+- `data.ifc_utils`: hierarchy and property helpers.
 
-### Dependências
-- `tqdm` — barras de progresso
-- `ifctester.ids` — validação IDS
-- `data.bsdd` — cliente bSDD
-- `data.catalog` — templates de propriedade
-- `data.ifc_utils` — construção de hierarquias
+## modules/decomposition/operators.py
 
----
+Operators for IFC decomposition views.
 
-## 🏗️ Módulo: modules/decomposition/operators.py
+| Class | `bl_idname` | Description |
+|-------|-------------|-------------|
+| `Operator_decomposition_load` | `decomposition.load` | Loads the IFC decomposition tree |
+| `Operator_decomposition_export` | `decomposition.export_tree` | Exports the current decomposition tree to `.xlsx` |
+| `Operator_decomposition_select_element` | `decomposition.select_element` | Selects one element |
+| `Operator_decomposition_select_components` | `decomposition.select_components` | Selects an element and its children recursively |
+| `Operator_decomposition_move` | `decomposition.move` | Moves an element to the selected parent with nesting or aggregation |
+| `Operator_decomposition_chg_order` | `decomposition.chg_order` | Reorders leaf elements |
 
-Operadores para decomposição de projetos IFC.
+Dependencies:
 
-### Operadores
+- `data.tree`: `load_contained_elements_by_decomposition()`,
+  `refresh_tree()`, and tree drawing/selection helpers.
 
-| Classe | bl_idname | Descrição |
-|--------|-----------|-----------|
-| `Operator_decomposition_load` | `decomposition.load` | Carrega árvore de decomposição IFC |
-| `Operator_decomposition_select_element` | `decomposition.select_element` | Seleciona elemento individual |
-| `Operator_decomposition_select_components` | `decomposition.select_components` | Seleciona elemento + filhos recursivamente |
-| `Operator_decomposition_move` | `decomposition.move` | Move elemento para novo pai (nest/aggregate) |
-| `Operator_decomposition_chg_order` | `decomposition.chg_order` | Reordena elementos |
+## modules/catalog/operators.py
 
-### Dependências
-- `data.tree` — `load_contained_elements_by_decomposition()`, `refresh_tree()`
+Operators for IFC product type catalogs, quantities, layer reports, and LI
+Mapping.
 
----
+### LI Mapping Operators
 
-## 📦 Módulo: modules/catalog/operators.py
+| Class | `bl_idname` | Description |
+|-------|-------------|-------------|
+| `Operator_load_li_mapping` | `catag.load_li_mapping` | Loads `resources/li_mapping.json` into `scene.og_props` |
+| `Operator_save_li_mapping` | `catag.save_li_mapping` | Saves the UI state back to `resources/li_mapping.json` |
+| `Operator_add_li_mapping_column` | `catag.add_li_mapping_column` | Adds one LI column |
+| `Operator_remove_li_mapping_column` | `catag.remove_li_mapping_column` | Removes the selected LI column |
+| `Operator_li_mapping_pick_property` | `catag.li_mapping_pick_property` | Copies the selected bSDD Pset/property into the selected column |
+| `Operator_add_li_mapping_source_item` | `catag.add_li_mapping_source_item` | Adds an extra `source` key/value field |
+| `Operator_remove_li_mapping_source_item` | `catag.remove_li_mapping_source_item` | Removes the selected extra `source` field |
+| `Operator_add_li_support_table_row` | `catag.add_li_support_table_row` | Adds a row to a support table |
+| `Operator_remove_li_support_table_row` | `catag.remove_li_support_table_row` | Removes a support-table row |
+| `Operator_export_li` | `catag.export_li` | Exports the Item List to `.xlsx` |
 
-Operadores para o catálogo de tipos de produtos IFC.
+### Catalog Operators
 
-### Operadores
+| Class | `bl_idname` | Description |
+|-------|-------------|-------------|
+| `Operator_load_products` | `catag.load_products` | Loads `IfcTypeProduct` entities grouped by `ElementType` |
+| `Operator_catalog_show_layers` | `catag.show_layers` | Generates and opens the HTML layer report |
+| `Operator_catalog_select_layer` | `catag.select_layer` | Selects a layer/component object |
+| `Operator_catalog_select_elements` | `catag.select_elements` | Selects all instances of a type |
+| `Operator_export_qtds` | `catag.export_qtds` | Exports type quantities to `.xlsx` |
 
-| Classe | bl_idname | Descrição |
-|--------|-----------|-----------|
-| `Operator_load_products` | `catag.load_products` | Carrega produtos IFC agrupados por ElementType |
-| `Operator_catalog_select_type` | `catag.select_type` | Seleciona objeto de tipo |
-| `Operator_catalog_select_elements` | `catag.select_elements` | Seleciona todas as instâncias de um tipo |
-| `Operator_catalog_show_layers` | `catag.show_layers` | Gera relatório HTML de camadas |
-| `Operator_catalog_select_layer` | `catag.select_layer` | Seleciona objeto de uma camada |
+### LI Mapping Helper Functions
 
-### Funções
+| Function | Description |
+|----------|-------------|
+| `_get_li_mapping_path()` | Returns the mapping JSON path |
+| `_load_li_mapping_into_props(props)` | Loads JSON columns and support tables into UI collections |
+| `_save_li_mapping_from_props(props)` | Writes UI collections back to JSON |
+| `_build_source_from_column(column)` | Builds the JSON `source` object from guided and extra fields |
+| `_resolve_column_value(...)` | Resolves one exported cell value |
+| `_build_li_rows(model, mapping_data)` | Builds all exported Item List rows |
+| `_resolve_ifc_quantity(...)` | Resolves count or length quantities |
+| `_resolve_computed(...)` | Resolves computed values and templates |
+| `_render_template(...)` | Replaces attribute and Pset placeholders |
 
-| Função | Descrição |
-|--------|-----------|
-| `update_predefined_types()` | Atualiza ObjectType/PredefinedType em elementos IFC em lote |
+Dependencies:
 
-### Dependências
-- `data.catalog` — `Import_ifc`, `Catalog`
-- `data.ifc_utils` — `build_products()`
-- `data.tree` — `refresh_products()`, `refresh_types()`
+- `data.catalog`: catalog lookup and IFC import helpers.
+- `data.ifc_utils`: hierarchy, products, and units.
+- `data.tree`: type refresh.
+- `pandas` and `openpyxl`: spreadsheet export.
+- `ifcopenshell`: IFC traversal and property reading.
 
----
+## modules/connections/operators.py
 
-## 🔌 Módulo: modules/connections/operators.py
+Operators for IFC connection management.
 
-Operadores para gerenciamento de conexões IFC.
+| Class | `bl_idname` | Description |
+|-------|-------------|-------------|
+| `Operator_disconnect` | `conn.disconnect` | Removes an IFC connection relationship |
+| `Operator_select_object` | `conn.select_object` | Stores a selected object in a WindowManager pointer |
+| `Operator_add_connect` | `conn.add_connect` | Creates a connection relationship between objects |
 
-### Operadores
+Pattern:
 
-| Classe | bl_idname | Descrição |
-|--------|-----------|-----------|
-| `Operator_disconnect` | `conn.disconnect` | Remove relação de conexão IFC |
-| `Operator_select_object` | `conn.select_object` | Seletor de objeto (eyedropper) |
-| `Operator_add_connect` | `conn.add_connect` | Cria conexão IFC entre objetos |
+- Uses `WindowManager` pointer properties for object selection.
+- Supports `IfcRelConnectsPorts`, `IfcRelConnectsElements`, and
+  `IfcRelConnectsWithRealizingElements`.
 
-### Padrão
-Usa `WindowManager` pointer properties para seleção de objetos.
+## modules/props/operators.py
 
----
+Operators for IFC property editing, document handling, table display, and chart
+generation.
 
-## 📊 Módulo: modules/props/operators.py
+| Class | `bl_idname` | Description |
+|-------|-------------|-------------|
+| `Operator_props_edit` | `props.edit` | Edits a property value, including scalar, list, enum, and table values |
+| `Operator_props_load` | `props.load_properties` | Loads properties for the active object |
+| `Operator_props_expand` | `props.expand` | Toggles Pset expansion |
+| `Operator_docs_expand` | `docs.expand` | Toggles the document section |
+| `Operator_props_graph` | `props.graph` | Generates a matplotlib chart from table/CSV data |
+| `Operator_props_invert` | `props.invert` | Inverts X/Y axes in graph settings |
+| `Operator_document_edit` | `props.doc_edit` | Edits IFC document references |
+| `Operator_document_load` | `props.load_doc` | Opens a file picker for document paths |
+| `Operator_document_open` | `props.open_doc` | Opens a document in the browser/OS |
+| `Operator_show_table` | `props.show_table` | Toggles table visibility |
 
-Operadores para edição de propriedades IFC e geração de gráficos.
+Analysis libraries:
 
-### Operadores
+- `pandas`: tabular data processing.
+- `matplotlib`: 2D chart generation.
+- `numpy`: vectorized operations.
+- `scipy.interpolate`: curve interpolation.
 
-| Classe | bl_idname | Descrição |
-|--------|-----------|-----------|
-| `Operator_props_edit` | `props.edit` | Edita valor de propriedade (single, list, enum) |
-| `Operator_props_load` | `props.load_properties` | Carrega propriedades do objeto ativo |
-| `Operator_props_expand` | `props.expand` | Toggle expandir/contrair pset |
-| `Operator_docs_expand` | `docs.expand` | Toggle seção de documentos |
-| `Operator_props_graph` | `props.graph` | Gera gráfico matplotlib de dados tabela/CSV |
-| `Operator_props_invert` | `props.invert` | Inverte eixos X/Y |
-| `Operator_document_edit` | `props.doc_edit` | Edita referências de documentos IFC |
-| `Operator_document_load` | `props.load_doc` | File browser para caminhos de documentos |
-| `Operator_document_open` | `props.open_doc` | Abre documento no navegador/OS |
-| `Operator_show_table` | `props.show_table` | Toggle visibilidade de tabela |
+Pattern:
 
-### Bibliotecas de Análise
-- **pandas**: Processamento de dados tabulares
-- **matplotlib**: Geração de gráficos 2D
-- **numpy**: Operações vetorizadas
-- **scipy.interpolate**: Interpolação de curvas
+- Uses `invoke_props_dialog` for chart configuration.
+- Uses `Columns` collections for selecting chart columns.
 
-### Padrão
-Usa `invoke_props_dialog` para configuração de gráficos com seleção de colunas.
+## modules/settings/operators.py
 
----
+Operators for viewport IFC labels and decomposition-view configuration.
 
-## 🔄 Fluxo Típico
+| Class | `bl_idname` | Description |
+|-------|-------------|-------------|
+| `Operator_add_ifc_label_attr` | `settings.add_ifc_label_attr` | Adds an IFC attribute label field |
+| `Operator_add_ifc_label_property` | `settings.add_ifc_label_property` | Adds the selected `Pset.Property` label field |
+| `Operator_remove_ifc_label_attr` | `settings.remove_ifc_label_attr` | Removes a label field |
+| `Operator_load_decomposition_views` | `settings.load_decomposition_views` | Loads views from `resources/decomposition_view.json` |
+| `Operator_save_decomposition_views` | `settings.save_decomposition_views` | Validates and saves views |
+| `Operator_reset_decomposition_views` | `settings.reset_decomposition_views` | Loads default views into the UI |
+| `Operator_add_decomposition_view` | `settings.add_decomposition_view` | Adds a new decomposition view |
+| `Operator_duplicate_decomposition_view` | `settings.duplicate_decomposition_view` | Duplicates the selected view |
+| `Operator_remove_decomposition_view` | `settings.remove_decomposition_view` | Removes the selected view |
+| `Operator_add_decomposition_relation` | `settings.add_decomposition_relation` | Adds a relation to the selected view |
+| `Operator_remove_decomposition_relation` | `settings.remove_decomposition_relation` | Removes the selected relation |
 
+Dependencies:
+
+- `data.decomposition_views`: normalization, defaults, validation, and saving.
+
+## modules/analysis/operators.py
+
+Operators for coloring the 3D Viewport based on IFC property values.
+
+| Class | `bl_idname` | Description |
+|-------|-------------|-------------|
+| `Operator_analysis_apply_colors` | `analysis.apply_colors` | Applies analysis colors and legend entries |
+| `Operator_analysis_reset_colors` | `analysis.reset_colors` | Restores original object colors |
+
+Dependencies:
+
+- `modules/analysis/service.py`: value collection, validation, color palettes,
+  gradients, legend entries, and reset behavior.
+
+## Typical Flow
+
+```text
+1. User selects an IFC object or clicks a panel button
+        |
+2. Operator runs, for example bsdd.get_class or props.load_properties
+        |
+3. Authentication is checked when the operation requires editor access
+        |
+4. Data is extracted through ifcopenshell and Bonsai
+        |
+5. pandas/numpy/scipy process tabular or numeric data when needed
+        |
+6. data.ifc_utils and data.tree build or refresh collections
+        |
+7. modules/og_properties.py state is updated
+        |
+8. modules/*/panels.py redraws the UI
 ```
-1. Usuário seleciona arquivo IFC ou clica em botão
-   |
-2. Operador disparado (ex: bsdd.get_class)
-   |
-3. auth.is_authenticated() verificado (se necessário)
-   |
-4. Extrai dados com ifcopenshell
-   |
-5. Processa com pandas/numpy se necessário
-   |
-6. Constrói hierarquias com ifc_utils.build_classes/build_products
-   |
-7. Atualiza propriedades (modules/og_properties.py)
-   |
-8. Renderiza na UI (modules/*/panels.py)
-```
 
----
+## Expected bSDD Class JSON Shape
 
-## 📦 Estruturas de Dados
-
-### Classe JSON esperada (bSDD)
 ```json
 {
   "code": "001",
   "name": "Flexible Pipe",
-  "descriptionPart": "Descri\u00e7\u00e3o",
+  "descriptionPart": "Description",
   "uri": "http://bsdd.buildingsmart.org/...",
   "classType": "IfcPipeSegmentFlexible",
   "children": [
@@ -206,29 +268,32 @@ Usa `invoke_props_dialog` para configuração de gráficos com seleção de colu
 }
 ```
 
----
+## Debugging
 
-## 🐛 Debugging
+### Print Classes
 
-### Imprimir Classes
 ```python
 props = context.scene.og_props
 for classe in props.classes:
-    print(f"{classe.name} (level: {classe.level_index})")
+    print(f"{classe.name} (level: {classe.level})")
 ```
 
-### Inspecionar Propriedades IFC
+### Inspect IFC Properties
+
 ```python
 import ifcopenshell.util.element as element
+
 element_obj = ifc_file[123]
 props_dict = element.get_psets(element_obj)
 ```
 
----
+## Integration with Other Packages
 
-## 🔗 Integração com Outros Pacotes
-
-- **`data/`**: Fornece `bSDD`, `Catalog`, `tree`, `ifc_utils` — toda a camada de dados
-- **`modules/*/properties.py`** e **`modules/og_properties.py`**: Definem `Class_info`, `Class_type`, `OG_Properties` e outras estruturas de dados
-- **`modules/*/panels.py`**: Consomem dados construidos aqui para renderizar na UI
-- **`__init__.py`**: Registra todos os operadores para o Blender
+- `data/`: provides `bSDD`, `Catalog`, `tree`, `ifc_utils`, and decomposition
+  view helpers.
+- `modules/*/properties.py` and `modules/og_properties.py`: define
+  `Class_info`, `Class_type`, `OG_Properties`, LI mapping structures, and other
+  UI data containers.
+- `modules/*/panels.py`: calls operators from UI buttons and renders the
+  resulting state.
+- Root `__init__.py`: registers all operators for Blender.

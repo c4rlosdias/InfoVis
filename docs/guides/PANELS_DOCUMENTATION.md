@@ -1,24 +1,27 @@
-# Painéis — modules/*/panels.py
+# Panels: modules/*/panels.py
 
-## 📌 Visão Geral
+## Overview
 
-Os painéis de interface (UI) do add-on estão distribuídos nos módulos de domínio dentro de `modules/`. Cada módulo contém seu próprio `panels.py` com os painéis, UILists e layouts relevantes àquele domínio.
+The Add-on UI panels are distributed across the domain modules inside
+`modules/`. Each module contains its own `panels.py` with the panels, UILists,
+and layouts for that domain.
 
-| Módulo | Responsabilidade |
-|--------|------------------|
-| `modules/dictionary/panels.py` | Painel bSDD + UILists de classes |
-| `modules/decomposition/panels.py` | Painel de decomposição + UILists |
-| `modules/catalog/panels.py` | Painel de catálogo + UILists |
-| `modules/connections/panels.py` | Painel de conexões |
-| `modules/props/panels.py` | Painel de propriedades |
-| `modules/settings/panels.py` | Painéis de configurações e informações |
+| Module | Responsibility |
+|--------|----------------|
+| `modules/dictionary/panels.py` | bSDD panel and class/property UILists |
+| `modules/decomposition/panels.py` | Decomposition panel and tree UILists |
+| `modules/catalog/panels.py` | Catalog panel, LI Mapping panel, product UILists, LI UILists, and layer UIList |
+| `modules/connections/panels.py` | Connection panel |
+| `modules/props/panels.py` | IFC properties panel |
+| `modules/types/panels.py` | Constructive type panel |
+| `modules/settings/panels.py` | Settings panel, IFC label UIList, and decomposition-view UILists |
+| `modules/analysis/panels.py` | Analysis coloring panel |
 
----
-
-## 🎨 Funções Auxiliares
+## Helper Functions
 
 ### `_label_multiline(context, text, parent)`
-Quebra texto longo em múltiplas linhas na interface.
+
+Splits long text into multiple UI labels.
 
 ```python
 def _label_multiline(context, text, parent):
@@ -30,209 +33,334 @@ def _label_multiline(context, text, parent):
 ```
 
 ### `get_product_attribute(context, index, attribute)`
-Obtém um atributo específico de um produto por índice.
 
----
+Returns a specific product attribute by index.
 
-## 🖼️ Painéis
+### `_draw_catalog_type_tree(layout, item, icon)`
 
-### Categorias
+Draws one catalog tree item, including indentation, expand/collapse controls,
+quantity, unit, selection action, and layer-report action.
 
-Os painéis estão organizados em **4 categorias** na sidebar do Blender:
+### `_active_decomposition_view(props)` and `_active_decomposition_relation(props, view)`
 
-| Categoria | Painéis |
-|-----------|---------|
-| `O&G-Dictionary` | Panel_Connect, Panel_Settings |
-| `O&G-Occurrence` | Panel_Decompositions, Panel_Connect_Elements, Panel_Properties |
-| `O&G-Catalog` | Panel_Catalog |
-| `O&G-Info` | Panel_Info |
+Return the active decomposition view and relation in the settings panel.
 
-### 🔐 Autenticação
+## Sidebar Categories
 
-Todos os painéis verificam `auth.is_authenticated()` antes de desenhar conteúdo editor:
+The panels are organized into these Blender 3D Viewport sidebar categories:
+
+| Category | Panels |
+|----------|--------|
+| `InfoVis-Dictionary` | `Subsea Classes` |
+| `InfoVis-Occurrence` | `Decompositions`, `Properties`, `Constructive Type`, `Connect Elements` |
+| `InfoVis-Catalog` | `Catalog`, `LI Mapping` |
+| `InfoVis-Analisys` | `Analisys` |
+| `InfoVis-Settings` | `Settings` |
+
+## Authentication
+
+Panels and operators that mutate IFC data check editor authentication through
+`auth.is_authenticated()`. Read-only sections remain available, while editing
+controls are hidden or disabled until the user logs in through the Add-on
+preferences.
+
+Typical pattern:
 
 ```python
 from ... import auth
 
-class Panel_Connect(bpy.types.Panel):
+class SomePanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         if not auth.is_authenticated():
-            layout.label(text="Login necess\u00e1rio")
+            layout.label(text="Login required")
             return
-        # ... conte\u00fado normal
+        # editable content
 ```
 
----
+## Panel_Connect: Subsea Classes
 
-### Panel_Connect — Subsea Classes (`modules/dictionary/panels.py`)
+Defined in `modules/dictionary/panels.py`.
 
-| Propriedade | Valor |
-|-------------|-------|
-| **bl_idname** | `VIEW3D_PT_og_connect` |
-| **bl_category** | `O&G-Dictionary` |
-| **bl_order** | 0 |
-| **Modo** | Object Mode |
-| **Padrão** | Fechado |
+| Property | Value |
+|----------|-------|
+| `bl_idname` | `VIEW3D_PT_og_connect` |
+| `bl_category` | `InfoVis-Dictionary` |
+| `bl_label` | `Subsea Classes` |
+| `bl_order` | `0` |
+| Mode | Object Mode |
+| Default | Closed |
 
-**Funcionalidades:**
-1. Botão "get classes from bSDD" → operador `bsdd.get_class`
-2. Lista de classes com `BIM_UL_classes`
-3. Botões "Get Class Information" / "Get Class Properties"
-4. Informações da classe ativa (definição, propriedades)
-5. Botão "Add Properties" para criar pset templates
-6. Export IDS
+Features:
 
----
+1. Selects a bSDD dictionary.
+2. Runs `bsdd.get_class` through `get classes from bSDD`.
+3. Displays classes with `BIM_UL_classes`.
+4. Opens class URIs in the browser.
+5. Loads class metadata with `Get Class Information`.
+6. Loads class properties with `Get Class Properties`.
+7. Displays selected property metadata.
+8. Adds selected properties as Pset templates.
+9. Exports IDS files.
 
-### Panel_Decompositions — Decomposição do Projeto (`modules/decomposition/panels.py`)
+## Panel_Decompositions
 
-| Propriedade | Valor |
-|-------------|-------|
-| **bl_idname** | `VIEW3D_PT_og_decompositions` |
-| **bl_category** | `O&G-Occurrence` |
-| **bl_order** | 0 |
+Defined in `modules/decomposition/panels.py`.
 
-**Funcionalidades:**
-1. Carrega decomposição IFC do projeto
-2. Árvore hierárquica desenhada via `tree.draw_tree()`
-3. Seleção de elementos individuais ou com filhos
-4. Move elementos entre containers (nest/aggregate)
-5. Reordenação de elementos
+| Property | Value |
+|----------|-------|
+| `bl_idname` | `VIEW3D_PT_og_decompositions` |
+| `bl_category` | `InfoVis-Occurrence` |
+| `bl_label` | `Decompositions` |
 
----
+Features:
 
-### Panel_Connect_Elements — Conexões (`modules/connections/panels.py`)
+1. Loads the configured IFC decomposition tree.
+2. Uses the selected `Tree Type`.
+3. Draws a hierarchy through `tree.draw_tree()`.
+4. Expands or collapses all items.
+5. Exports the tree to `.xlsx`.
+6. Selects individual elements or elements with children.
+7. Moves elements between parents when authenticated.
+8. Reorders leaf elements when authenticated.
 
-| Propriedade | Valor |
-|-------------|-------|
-| **bl_idname** | `VIEW3D_PT_connect_elements` |
-| **bl_category** | `O&G-Occurrence` |
+## Panel_Connect_Elements
 
-**Funcionalidades:**
-1. Lista de conexões do objeto ativo
-2. Seleção de objetos para conectar (eyedropper)
-3. Criar/remover conexões IFC
+Defined in `modules/connections/panels.py`.
 
----
+| Property | Value |
+|----------|-------|
+| `bl_idname` | `VIEW3D_PT_connect_elements` |
+| `bl_category` | `InfoVis-Occurrence` |
+| `bl_label` | `Connect Elements` |
 
-### Panel_Catalog — Catálogo de Tipos (`modules/catalog/panels.py`)
+Features:
 
-| Propriedade | Valor |
-|-------------|-------|
-| **bl_idname** | `VIEW3D_PT_og_catalog` |
-| **bl_category** | `O&G-Catalog` |
+1. Lists connections for the active object.
+2. Lets the user pick objects through eyedropper-style selection.
+3. Creates IFC connection relationships.
+4. Removes existing connections.
 
-**Funcionalidades:**
-1. Lista de tipos de produtos IFC (`BIM_UL_products`)
-2. Seleção de tipo / instâncias
-3. Visualização de camadas (`BIM_UL_layers`)
-4. Relatório HTML de camadas
+Supported connection relationship types include:
 
----
+- `IfcRelConnectsPorts`
+- `IfcRelConnectsElements`
+- `IfcRelConnectsWithRealizingElements`
 
-### Panel_Properties — Propriedades (`modules/props/panels.py`)
+## Panel_Catalog
 
-| Propriedade | Valor |
-|-------------|-------|
-| **bl_idname** | `VIEW3D_PT_og_properties` |
-| **bl_category** | `O&G-Occurrence` |
+Defined in `modules/catalog/panels.py`.
 
-**Funcionalidades:**
-1. Exibe property sets do objeto ativo
-2. Edição de valores (single, list, enum, table)
-3. Seção de documentos IFC com edição
-4. Geração de gráficos matplotlib
-5. Toggle tabela / inversão de eixos
+| Property | Value |
+|----------|-------|
+| `bl_idname` | `VIEW3D_PT_og_catalog` |
+| `bl_category` | `InfoVis-Catalog` |
+| `bl_label` | `Catalog` |
 
----
+Features:
 
-### Panel_Settings — Configurações de Dicionário (`modules/settings/panels.py`)
+1. Runs `catag.load_products` through `Load type products`.
+2. Displays type products in `BIM_UL_products`.
+3. Shows quantity and unit for leaf items.
+4. Selects all instances of a type.
+5. Opens an HTML layer report.
+6. Displays layers with `BIM_UL_layers`.
+7. Exports quantities with `Export Quantities`.
 
-| Propriedade | Valor |
-|-------------|-------|
-| **bl_idname** | `VIEW3D_PT_og_settings` |
-| **bl_category** | `O&G-Info` |
+## Panel_LI_Mapping
 
-**Funcionalidades:**
-1. Seleção de dicionário bSDD
-2. Configurações de endpoint
+Defined in `modules/catalog/panels.py`.
 
----
+| Property | Value |
+|----------|-------|
+| `bl_idname` | `VIEW3D_PT_og_li_mapping` |
+| `bl_category` | `InfoVis-Catalog` |
+| `bl_label` | `LI Mapping` |
 
-### Panel_Info — Informações (`modules/settings/panels.py`)
+Features:
 
-| Propriedade | Valor |
-|-------------|-------|
-| **bl_idname** | `VIEW3D_PT_og_info` |
-| **bl_category** | `O&G-Info` |
+1. Loads `resources/li_mapping.json` with `Load`.
+2. Saves changes back to the JSON with `Save`.
+3. Exports the Item List with `Export LI`.
+4. Edits mapping header fields: `Schema`, `Planilha`, and `Descricao`.
+5. Displays LI columns with `BIM_UL_li_mapping_columns`.
+6. Adds or removes columns.
+7. Edits common column fields: `Coluna`, `Origem`, and `Notas`.
+8. Shows guided source fields according to `source_type`.
+9. Provides a bSDD picker for `ifc_property` and `manual` sources.
+10. Adds/removes extra source fields through `BIM_UL_li_mapping_source_items`.
+11. Edits support tables through `BIM_UL_li_support_tables` and
+    `BIM_UL_li_support_table_rows`.
 
-**Funcionalidades:**
-1. Versão do add-on
-2. Informações gerais
+Guided source behavior:
 
----
+| Source type | Fields displayed |
+|-------------|------------------|
+| `ifc_attribute` | `Classe`, `Atributo`, `Fallback`, `Format` |
+| `ifc_property` | `Classe`, `Pset`, `Property`, `Allowed Values`, bSDD picker |
+| `manual` | `Classe`, `Pset`, `Property`, `Allowed Values`, bSDD picker |
+| `spatial` | `Nivel (classe IFC)`, `Atributo` |
+| `aggregation_parent` | `Nivel (1=pai imediato, 2=avo, ...)`, `Atributo`, `Fallback` |
+| `ifc_class` | `Atributo`, `Mapping Table` |
+| `ifc_quantity` | `Modo`, and when mapping: `Mapping Table`, `Selected By` |
+| `computed` | `Selected By`, `Template Table`, `Derived From`, `Method`, `Format` |
+| `not_applicable` | no guided source field |
 
-## 📋 UIList Classes
+## Panel_Properties
 
-| Classe | Uso |
-|--------|-----|
-| `BIM_UL_ifc_properties` | Propriedades IFC |
-| `BIM_UL_property_class` | Classes de propriedade |
-| `BIM_UL_classes` | Classes bSDD (com indentação hierárquica) |
-| `BIM_UL_class_prop` | Propriedades de classe |
-| `BIM_UL_decomposition` | Decomposição IFC |
-| `BIM_UL_tree` | Árvore genérica |
-| `BIM_UL_products` | Produtos/tipos |
-| `BIM_UL_layers` | Camadas de produto |
+Defined in `modules/props/panels.py`.
 
-### Padrão de UIList
+| Property | Value |
+|----------|-------|
+| `bl_idname` | `VIEW3D_PT_og_properties` |
+| `bl_category` | `InfoVis-Occurrence` |
+| `bl_label` | `Properties` |
+
+Features:
+
+1. Shows property sets for the active object.
+2. Loads properties with `props.load_properties`.
+3. Separates occurrence properties and inherited type properties.
+4. Toggles property descriptions.
+5. Edits scalar, list, enum, and table values when authenticated.
+6. Shows and edits IFC document references when authenticated.
+7. Opens document URLs or local paths.
+8. Generates charts from CSV/table data.
+9. Toggles table visibility and axis inversion.
+10. Adds `Pset.Property` fields to viewport IFC labels.
+
+## Panel_Types: Constructive Type
+
+Defined in `modules/types/panels.py`.
+
+| Property | Value |
+|----------|-------|
+| `bl_idname` | `VIEW3D_PT_types` |
+| `bl_category` | `InfoVis-Occurrence` |
+| `bl_label` | `Constructive Type` |
+
+Features:
+
+1. Shows the constructive IFC type related to the active object.
+2. Displays `ElementType`, type name, and description.
+3. Shows type documents.
+4. Selects all occurrences of the same type.
+5. Opens the layer report for the type.
+6. Selects type layers/components.
+7. Selects the IFC type object.
+
+## Panel_Info: Settings
+
+Defined in `modules/settings/panels.py`.
+
+| Property | Value |
+|----------|-------|
+| `bl_idname` | `VIEW3D_PT_og_info` |
+| `bl_category` | `InfoVis-Settings` |
+| `bl_label` | `Settings` |
+
+Features:
+
+1. Toggles `Show IFC label`.
+2. Edits `Fields to display` with `BIM_UL_ifc_label_attrs`.
+3. Adds IFC attributes to labels.
+4. Removes label fields.
+5. Adjusts label display text and offset.
+6. Loads decomposition views.
+7. Saves decomposition views.
+8. Resets views to defaults.
+9. Adds, duplicates, or removes views.
+10. Edits view ID, label, root IFC class, and relation rows.
+
+## Panel_Analisys
+
+Defined in `modules/analysis/panels.py`.
+
+| Property | Value |
+|----------|-------|
+| `bl_idname` | `VIEW3D_PT_og_analisys` |
+| `bl_category` | `InfoVis-Analisys` |
+| `bl_label` | `Analisys` |
+
+Features:
+
+1. Selects `Discipline`, `Element`, `Property set`, and `Property`.
+2. Shows object type and property set metadata.
+3. Selects color mode:
+   - distinct values;
+   - exact value;
+   - numeric range.
+4. Suggests numeric range bounds when possible.
+5. Applies analysis colors.
+6. Resets colors.
+7. Displays a legend and status text.
+
+## UIList Classes
+
+| Class | Use |
+|-------|-----|
+| `BIM_UL_ifc_properties` | IFC property entries |
+| `BIM_UL_property_class` | Property classes |
+| `BIM_UL_classes` | bSDD classes with hierarchy indentation |
+| `BIM_UL_class_prop` | Class properties |
+| `BIM_UL_decomposition` | IFC decomposition items |
+| `BIM_UL_tree` | Generic tree list |
+| `BIM_UL_products` | Product/type tree |
+| `BIM_UL_layers` | Type layers/components |
+| `BIM_UL_li_mapping_columns` | LI mapping columns |
+| `BIM_UL_li_mapping_source_items` | LI mapping extra source fields |
+| `BIM_UL_li_support_tables` | LI mapping support tables |
+| `BIM_UL_li_support_table_rows` | Rows inside a LI support table |
+| `BIM_UL_ifc_label_attrs` | Viewport label fields |
+| `BIM_UL_decomposition_views` | Decomposition views |
+| `BIM_UL_decomposition_view_relations` | Relations for one decomposition view |
+
+### UIList Pattern
+
 ```python
 class BIM_UL_classes(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        # Indenta\u00e7\u00e3o baseada em level_index
-        # \u00cdcone de expans\u00e3o se has_children
-        # Nome do item
+        # indentation based on item.level
+        # expansion icon when item.has_children
+        # item name and action buttons
 ```
 
----
+## Interaction Flow
 
-## 🔄 Fluxo de Interação
-
-```
-Usuário clica "get classes from bSDD"
+```text
+User clicks "get classes from bSDD"
         |
         v
-Operador "bsdd.get_class" executado
+Operator bsdd.get_class runs
         |
         v
-Conecta ao servidor bSDD
+Connects to the bSDD server
         |
         v
-ifc_utils.build_classes() constrói hierarquia
+ifc_utils.build_classes() builds the hierarchy
         |
         v
-tree.refresh_classes() filtra para classes_shown
+tree.refresh_classes() filters visible classes
         |
         v
-Panel redesenhado (draw())
+Panel redraws
         |
         v
-Lista atualizada via BIM_UL_classes
+BIM_UL_classes shows the updated list
 ```
 
----
+## Layout Patterns
 
-## 💡 Padrões de Código
+### Box Layout
 
-### Criar Layout com Box
 ```python
 box = layout.box()
 row = box.row(align=True)
-row.label(text="T\u00edtulo", icon='INFO')
+row.label(text="Title", icon='INFO')
 ```
 
 ### Template List
+
 ```python
 self.layout.template_list(
     "BIM_UL_classes",
@@ -245,19 +373,22 @@ self.layout.template_list(
 )
 ```
 
-### Operador com Propriedade
+### Operator with Property
+
 ```python
 op = row.operator("bsdd.get_class_info", text="Info")
 op.uri = active_class.uri
 ```
 
----
+## Integration with Other Modules
 
-## 🔗 Integração com Outros Módulos
-
-- **`modules/og_properties.py`**: Define `OG_Properties` (og_props) e callbacks usados nos painéis
-- **`modules/*/properties.py`**: PropertyGroups de domínio referenciadas pelas UILists
-- **`modules/*/operators.py`**: Operadores chamados pelos botões dos painéis (mesmo domínio)
-- **`data/tree`**: Fornece `draw_tree()`, `refresh_*()` para árvores
-- **`data/ifc_utils`**: Funções de utilidade IFC
-- **`auth`**: Verifica autenticação antes de exibir conteúdo protegido
+- `modules/og_properties.py`: defines `OG_Properties` and callbacks used by
+  panels.
+- `modules/*/properties.py`: defines domain PropertyGroups referenced by
+  UILists.
+- `modules/*/operators.py`: provides the operators called by panel buttons.
+- `data/tree.py`: provides `draw_tree()` and `refresh_*()` helpers.
+- `data/ifc_utils.py`: provides IFC utility functions.
+- `data/decomposition_views.py`: provides settings data for decomposition
+  views.
+- `auth`: checks authentication before protected editing controls are shown.

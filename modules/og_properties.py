@@ -383,11 +383,11 @@ class OG_Properties(PropertyGroup):
     analysis_legend          : CollectionProperty(name='Analysis legend', type=AnalysisLegendItem)
 
     # Viewport overlays
-    show_ifc_label              : BoolProperty(name='Show IFC label', description='Mostrar nome do elemento IFC na viewport ao selecionar', default=True)
+    show_ifc_label              : BoolProperty(name='Show IFC label', description='Show the IFC element name in the viewport when selected', default=True)
     ifc_label_attributes        : CollectionProperty(name='IFC label attributes', type=IFC_Label_Attribute)
     active_ifc_label_attr_index : IntProperty(name='active attribute index', default=0)
-    label_offset_x              : FloatProperty(name='Offset X', description='Deslocamento horizontal do label em relação ao objeto (px)', default=80.0, min=-500.0, max=500.0)
-    label_offset_y              : FloatProperty(name='Offset Y', description='Deslocamento vertical do label em relação ao objeto (px)', default=80.0, min=-500.0, max=500.0)
+    label_offset_x              : FloatProperty(name='Offset X', description='Horizontal label offset from the object (px)', default=80.0, min=-500.0, max=500.0)
+    label_offset_y              : FloatProperty(name='Offset Y', description='Vertical label offset from the object (px)', default=80.0, min=-500.0, max=500.0)
 
     # Element Connections
     connect_type             : EnumProperty(

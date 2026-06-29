@@ -16,17 +16,17 @@ from ...data.bsdd_dictionary import (
     get_property_items,
 )
 
-# Alias mantido por compatibilidade com quem já importava esses nomes daqui
-# (ex.: modules/og_properties.py). A leitura/parsing do dicionário em si vive
-# em data/bsdd_dictionary.py, compartilhada com o seletor de propriedades do
-# módulo catalog (LI mapping).
+# Alias kept for compatibility with code that already imported these names from
+# this module (for example modules/og_properties.py). The dictionary
+# reading/parsing itself lives in data/bsdd_dictionary.py and is shared with the
+# catalog module property picker (LI Mapping).
 ANALYSIS_DISCIPLINE_ITEMS = DICTIONARY_DISCIPLINE_ITEMS
 get_analysis_dictionary = get_dictionary
 
 _VALUE_CACHE = {}
 
-# Cache para a lista retornada ao `EnumProperty(items=...)` de valores (ver
-# nota equivalente em data/bsdd_dictionary.py sobre por que isso é necessário).
+# Cache for the list returned to the value `EnumProperty(items=...)`; see the
+# equivalent note in data/bsdd_dictionary.py for why this is necessary.
 _VALUE_ITEMS_CACHE = {}
 
 _MUTED_COLOR = (0.35, 0.35, 0.35, 1.0)
@@ -123,16 +123,14 @@ def _get_entity_object_type(entity):
 
 
 def _pset_name_variants(pset_name):
-    """Nomes de pset alternativos para o mesmo pset do dicionário bSDD.
+    """Alternative Pset names for the same bSDD dictionary Pset.
 
-    Os JSONs de dicionário (resources/subsea_*_completo.json) usam a grafia
-    correta "Occurrence", mas os arquivos IFC reais deste projeto são
-    exportados com o erro de digitação "Occurence" (um só "r") em todo pset
-    de ocorrência — ex.: OGSubPset_LineComponentOccurrence (dicionário) vs.
-    OGSubPset_LineComponentOccurence (IFC real). modules/catalog/operators.py
-    já lida com isso pontualmente (get_qtde usa a grafia errada direto).
-    Aqui tentamos as duas variantes para não depender de qual delas o
-    arquivo carregado realmente usa.
+    The dictionary JSON files (resources/subsea_*_completo.json) use the
+    correct spelling "Occurrence", but real IFC files in this project are
+    exported with the typo "Occurence" (single "r") in every occurrence Pset,
+    for example OGSubPset_LineComponentOccurrence in the dictionary versus
+    OGSubPset_LineComponentOccurence in the IFC. Try both variants so the
+    loaded file can use either spelling.
     """
     variants = [pset_name]
     if "Occurrence" in pset_name:

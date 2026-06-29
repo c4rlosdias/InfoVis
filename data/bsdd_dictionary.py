@@ -1,9 +1,8 @@
-"""Leitura/cache dos dicionários bSDD do projeto (resources/subsea_*_completo.json).
+"""Read/cache the project bSDD dictionaries (resources/subsea_*_completo.json).
 
-Compartilhado entre `modules/analysis` (coloração por propriedade) e
-`modules/catalog` (seletor guiado de Pset/Property na LI mapping), para que
-os dois módulos naveguem pelo mesmo catálogo de classes/psets/properties sem
-duplicar o parsing do JSON.
+Shared by `modules/analysis` (property-based coloring) and `modules/catalog`
+(guided Pset/Property picker in LI Mapping), so both modules navigate the same
+class/Pset/property catalog without parsing the JSON twice.
 """
 
 import json
@@ -31,13 +30,12 @@ DICTIONARY_DISCIPLINE_ITEMS = [
 
 _DICTIONARY_CACHE = {}
 
-# Caches para as listas retornadas aos `EnumProperty(items=...)` dinâmicos.
-# A API do Blender exige que algo em Python mantenha uma referência forte às
-# tuplas/strings devolvidas pelo callback de `items`; se uma lista nova é
-# criada e descartada a cada chamada, o GC pode liberá-la entre o callback e
-# o desenho do dropdown, deixando o array C com ponteiros inválidos e
-# causando travamentos intermitentes do Blender. Guardando a lista aqui (e
-# reaproveitando-a enquanto a chave não muda) evitamos esse risco.
+# Caches for lists returned by dynamic `EnumProperty(items=...)` callbacks.
+# Blender requires Python to keep a strong reference to tuples/strings returned
+# by `items`; if a new list is created and discarded on each call, GC may free
+# it between the callback and dropdown drawing, leaving the C array with invalid
+# pointers and causing intermittent Blender crashes. Keeping the list here, and
+# reusing it while the key is unchanged, avoids that risk.
 _OBJECT_TYPE_ITEMS_CACHE = {}
 _PSET_ITEMS_CACHE = {}
 _PROPERTY_ITEMS_CACHE = {}
@@ -90,19 +88,20 @@ def _base_object_type(code):
 
 
 def get_dictionary(discipline_key):
-    """Carrega (com cache) o dicionário bSDD da disciplina, já parseado.
+    """Load and cache the parsed bSDD dictionary for a discipline.
 
-    Retorna um dict com:
+    Returns a dict with:
       - "object_types": {key: {"label", "description", "psets": {pset_key: {
             "label", "technical_name", "source" ("type"/"occurrence"),
             "properties": {prop_key: {"label","description","data_type","units"}}
         }}}}
       - "parent_types": {object_type_key: parent_object_type_key}
 
-    Classes de ocorrência (ex.: "AnchoringCollar") e sua contraparte "*Type"
-    (ex.: "AnchoringCollarType") são mescladas sob a mesma chave (o sufixo
-    "Type" é removido), já que ambas descrevem o mesmo ObjectType — uma com
-    os psets de ocorrência, outra com os psets do IfcTypeProduct.
+    Occurrence classes (for example "AnchoringCollar") and their "*Type"
+    counterparts (for example "AnchoringCollarType") are merged under the same
+    key by removing the "Type" suffix, because both describe the same
+    ObjectType: one with occurrence Psets and the other with IfcTypeProduct
+    Psets.
     """
     if discipline_key not in _DISCIPLINE_DEFS:
         discipline_key = next(iter(_DISCIPLINE_DEFS.keys()))
@@ -139,10 +138,10 @@ def get_dictionary(discipline_key):
         if not object_type_key:
             continue
 
-        # Classes do tipo "Material" (ex.: CompositeMaterial, MetallicMaterial)
-        # descrevem materiais associados via IfcRelAssociatesMaterial, não
-        # ocorrências próprias na cena. Nenhuma seleção desse tipo jamais
-        # encontraria um objeto a colorir/mapear, então não entram na lista.
+        # "Material" classes (for example CompositeMaterial, MetallicMaterial)
+        # describe materials associated through IfcRelAssociatesMaterial, not
+        # scene occurrences. Selecting one would never find an object to color
+        # or map, so they are not listed.
         if class_data.get("classType") == "Material":
             continue
 
@@ -170,9 +169,9 @@ def get_dictionary(discipline_key):
                 {
                     "label": _friendly_pset_label(pset_name),
                     "technical_name": pset_name,
-                    # de qual classe esse pset veio: "type" = só existe no
-                    # IfcTypeProduct (mesmo valor p/ todas as ocorrências
-                    # daquele tipo); "occurrence" = pode variar por ocorrência.
+                    # Source class for this Pset: "type" = exists only on the
+                    # IfcTypeProduct (same value for every occurrence of that
+                    # type); "occurrence" = may vary by occurrence.
                     "source": "type" if is_type_class else "occurrence",
                     "properties": {},
                 },
@@ -209,7 +208,7 @@ def get_pset_entry(discipline_key, object_type_key, pset_key):
 
 
 def get_object_type_items(discipline_key):
-    """Lista cacheada de (key, label, tooltip) para um EnumProperty de ObjectType."""
+    """Cached (key, label, tooltip) list for an ObjectType EnumProperty."""
     cached = _OBJECT_TYPE_ITEMS_CACHE.get(discipline_key)
     if cached is not None:
         return cached
@@ -223,11 +222,11 @@ def get_object_type_items(discipline_key):
 
 
 def get_pset_items(discipline_key, object_type_key):
-    """Lista cacheada de (key, label, tooltip) para um EnumProperty de Pset.
+    """Cached (key, label, tooltip) list for a Pset EnumProperty.
 
-    O label vem prefixado com "[Type]"/"[Occurrence]" para deixar claro se o
-    valor é compartilhado por todas as ocorrências do ObjectType (Type) ou
-    pode variar por objeto (Occurrence).
+    The label is prefixed with "[Type]"/"[Occurrence]" to make it clear whether
+    the value is shared by every ObjectType occurrence (Type) or may vary by
+    object (Occurrence).
     """
     key = (discipline_key, object_type_key)
     cached = _PSET_ITEMS_CACHE.get(key)
@@ -241,8 +240,8 @@ def get_pset_items(discipline_key, object_type_key):
             level = "Type" if pset_data.get("source") == "type" else "Occurrence"
             label = f"[{level}] {pset_data['label']}"
             tooltip = (
-                f"Nível: {level} | nome técnico: {pset_data['technical_name']}"
-                + (" (mesmo valor em todas as ocorrências deste Element)" if level == "Type" else "")
+                f"Level: {level} | technical name: {pset_data['technical_name']}"
+                + (" (same value for every occurrence of this Element)" if level == "Type" else "")
             )
             items.append((pset_key, label, tooltip))
     _PSET_ITEMS_CACHE[key] = items
@@ -250,7 +249,7 @@ def get_pset_items(discipline_key, object_type_key):
 
 
 def get_property_items(discipline_key, object_type_key, pset_key):
-    """Lista cacheada de (key, label, tooltip) para um EnumProperty de Property."""
+    """Cached (key, label, tooltip) list for a Property EnumProperty."""
     key = (discipline_key, object_type_key, pset_key)
     cached = _PROPERTY_ITEMS_CACHE.get(key)
     if cached is not None:

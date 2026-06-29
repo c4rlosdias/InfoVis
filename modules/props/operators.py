@@ -177,7 +177,7 @@ class Operator_props_graph(bpy.types.Operator):
     max_y      : bpy.props.FloatProperty(name='Max Y Axis') 
     mult_x     : bpy.props.FloatProperty(name='Grid Interval X')         
     mult_y     : bpy.props.FloatProperty(name='Grid Interval Y')     
-    interpoled : bpy.props.BoolProperty(name='Intepoled Curve')
+    interpoled : bpy.props.BoolProperty(name='Interpolated Curve')
     columns    : bpy.props.CollectionProperty(name='columns', type=Columns)
     intpl_type : bpy.props.EnumProperty(
         items=[
@@ -185,7 +185,7 @@ class Operator_props_graph(bpy.types.Operator):
             ('linear', 'linear', 'linear')
         ],
         name='type',
-        description='Get interpoled type'
+        description='Get interpolation type'
     )
 
     table : dict
@@ -199,7 +199,7 @@ class Operator_props_graph(bpy.types.Operator):
         layout = self.layout
         cols = self.df.columns.to_list()
         
-        # se tem documento anexado
+        # If an attached document exists.
         if self.prop_index == -1:
             if props.show_table:
                 icon = 'TRIA_DOWN_BAR'
@@ -254,13 +254,13 @@ class Operator_props_graph(bpy.types.Operator):
         dynamic_items.clear()
         self.columns.clear()
 
-        # cria um dicionario com as propriedades e valores
+        # Build a dictionary with properties and values.
         props = context.scene.og_props
-        # se o documento esta associado a propriedade
+        # If the document is associated with a property.
         if self.pset_index > -1:
             for pset in props.prop_metadata:            
                 if pset.index == self.pset_index:    
-                    # se não for documento externo
+                    # If it is not an external document.
                     if self.prop_index == -1:           
                         self.csv = pset.document
                     else:
@@ -272,7 +272,7 @@ class Operator_props_graph(bpy.types.Operator):
                                     self.table[col].append(get_prop_type(prop)) 
                                 else:
                                     self.table[col] = [get_prop_type(prop)]
-            # cria o dataframe
+            # Build the dataframe.
             if self.prop_index == -1:
                 if os.path.exists(self.csv): 
                     self.df = pd.read_csv(self.csv) 
@@ -282,7 +282,7 @@ class Operator_props_graph(bpy.types.Operator):
             else:
                 self.df = pd.DataFrame(self.table)
 
-        # se o documento está aasociado ao elemento
+        # If the document is associated with the element.
         else:
             if os.path.exists(self.document): 
                 self.df = pd.read_csv(self.document)
@@ -291,7 +291,7 @@ class Operator_props_graph(bpy.types.Operator):
                 return {"CANCELLED"}
 
 
-        # imprime a opcao de colunas para o eixo x
+        # Populate column options for the X axis.
         for c in self.df.columns.to_list():
             if (c,c,c) not in dynamic_items:
                 dynamic_items.append((c,c,c))
@@ -306,7 +306,7 @@ class Operator_props_graph(bpy.types.Operator):
                 self.df = self.df.drop(columns=item.name) 
 
         cols = self.df.columns.to_list()
-        # Criar gráfico com Matplotlib
+        # Create the Matplotlib chart.
         fig, ax = plt.subplots()              
         x = self.x_axis if self.x_axis != '' else cols[0]
         if self.order_x:
@@ -322,7 +322,7 @@ class Operator_props_graph(bpy.types.Operator):
                 else:
                     lines.append(ax.plot(self.df[x],self.df[col], label=col))
       
-        # configura o grafico
+        # Configure the chart.
         ax.set_title(self.title)
         ax.set_xlabel(x)      
         ax.grid(True) 
@@ -340,13 +340,13 @@ class Operator_props_graph(bpy.types.Operator):
 
         fig.legend()
 
-        # Salvar imagem em memória
+        # Save the image in memory.
         buffer = BytesIO()        
         plt.savefig(buffer, format='png')
         buffer.seek(0)
         img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
 
-        # Criar HTML com a imagem embutida
+        # Create HTML with the embedded image.
         html = f"""
         <html>
         <head><title>BIM Report</title></head>
@@ -357,7 +357,7 @@ class Operator_props_graph(bpy.types.Operator):
         </html>
         """
 
-        # Salvar HTML e abrir no navegador
+        # Save the HTML and open it in the browser.
         html_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "graphic.html")
         with open(html_path, "w") as f:
             f.write(html)
@@ -410,7 +410,7 @@ class Operator_document_load(bpy.types.Operator):
     bl_label   = "load reference document"
     bl_options = {"REGISTER", "UNDO"} 
     filepath   : bpy.props.StringProperty(subtype='FILE_PATH')
-    index      : bpy.props.IntProperty(name='índex')
+    index      : bpy.props.IntProperty(name='index')
     doc_index : bpy.props.IntProperty(name="doc index")
 
     def invoke(self, context, event):
@@ -440,11 +440,11 @@ class Operator_document_open(bpy.types.Operator):
             self.report({'ERROR'}, 'Location is empty!')
             return {"CANCELLED"}
         try:
-            # Se for URL, abre no navegador
+            # If it is a URL, open it in the browser.
             if location.startswith(('http://', 'https://', 'ftp://')):
                 _open_in_browser(location)
                 return {"FINISHED"}
-            # Se for arquivo local
+            # If it is a local file.
             abs_path = os.path.abspath(os.path.normpath(location))
             if os.path.exists(abs_path):
                 _open_in_browser(Path(abs_path).as_uri())
