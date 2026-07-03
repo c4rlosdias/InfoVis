@@ -18,7 +18,7 @@ InfoVis organizes its tools into Blender sidebar tabs:
 | `InfoVis-Occurrence` | `Connect Elements` | View, create, and remove IFC connections |
 | `InfoVis-Catalog` | `Catalog` | Load product types, quantities, and layer reports |
 | `InfoVis-Catalog` | `LI Mapping` | Configure the Item List mapping and export the LI spreadsheet |
-| `InfoVis-Analisys` | `Analisys` | Color objects by properties, exact values, or numeric ranges |
+| `InfoVis-Analysis` | `Analysis` | Color objects by properties, exact values, or numeric ranges |
 | `InfoVis-Settings` | `Settings` | Configure IFC labels and decomposition views |
 
 Open the sidebar with `N` in the 3D Viewport, then select one of the
@@ -58,7 +58,7 @@ To authenticate:
 
 1. Open `Edit > Preferences > Add-ons`.
 2. Find the `InfoVis` Add-on.
-3. In `Autenticacao para status de editor`, enter the password configured for
+3. In `Editor status authentication`, enter the password configured for
    the project.
 4. Click `Login`.
 
@@ -80,7 +80,7 @@ editor access.
    needed.
 7. Use `InfoVis-Catalog > LI Mapping` to review the Item List mapping before
    exporting the LI spreadsheet.
-8. Use `InfoVis-Analisys > Analisys` to color the viewport by property, exact
+8. Use `InfoVis-Analysis > Analysis` to color the viewport by property, exact
    value, or numeric range.
 
 ## InfoVis-Dictionary: Subsea Classes
@@ -268,8 +268,8 @@ unit.
 ## InfoVis-Catalog: LI Mapping
 
 The `LI Mapping` panel edits `resources/li_mapping.json` and uses that mapping
-to generate an Item List spreadsheet in Excel. LI is kept as the project term
-for `Lista de Itens`.
+to generate an Item List spreadsheet in Excel. LI is kept as the project
+acronym for Item List.
 
 The mapping defines how each exported Item List column is filled from the IFC
 model. It can read direct IFC attributes, Pset properties, quantities, spatial
@@ -331,9 +331,9 @@ Any other top-level JSON object is treated as a support table, for example
 | `Load` | Loads `resources/li_mapping.json` into the UI and clears the previous state |
 | `Save` | Saves header fields, columns, and support tables back to the JSON |
 | `Export LI` | Opens a file picker and exports the Item List to `.xlsx` |
-| `Add Column` | Creates a `Nova Coluna` column with source type `manual` |
+| `Add Column` | Creates a `New Column` column with source type `manual` |
 | `Remove Column` | Removes the selected column |
-| `Usar esta propriedade` | Copies the selected bSDD Pset and property into the selected column |
+| `Use this property` | Copies the selected bSDD Pset and property into the selected column |
 | `Add Field` | Adds an extra field to the selected column's `source` object |
 | `Remove Field` | Removes the selected extra field |
 | `Add Row` | Adds a row to the selected support table |
@@ -350,8 +350,8 @@ After `Load`, the panel shows three general fields.
 | UI field | JSON key | Description |
 |----------|----------|-------------|
 | `Schema` | `$schema_version` | Mapping schema version |
-| `Planilha` | `reference_sheet` | Reference sheet identifier |
-| `Descricao` | `description` | General note about the mapping |
+| `Reference Sheet` | `reference_sheet` | Reference sheet identifier |
+| `Description` | `description` | General note about the mapping |
 
 ### Column List and Export Order
 
@@ -367,13 +367,13 @@ the first column in the spreadsheet.
 
 ### Common Column Fields
 
-When a column is selected, the panel shows common fields before `Source guiado`.
+When a column is selected, the panel shows common fields before `Guided Source`.
 
 | UI field | JSON key | Use |
 |----------|----------|-----|
-| `Coluna` | `column` | Column name in Excel |
-| `Origem` | `source_type` | Strategy used to fill the column |
-| `Notas` | `notes` | Maintenance notes for the mapping |
+| `Column` | `column` | Column name in Excel |
+| `Source` | `source_type` | Strategy used to fill the column |
+| `Notes` | `notes` | Maintenance notes for the mapping |
 
 Example:
 
@@ -407,7 +407,7 @@ Key rules:
 
 ### Source Types
 
-The `Origem` field controls which fields appear in `Source guiado` and how the
+The `Source` field controls which fields appear in `Guided Source` and how the
 exporter resolves the value.
 
 | Source type | Use |
@@ -428,8 +428,8 @@ Use `ifc_attribute` to read direct IFC entity attributes.
 
 | UI field | Key in `source` | Export use |
 |----------|-----------------|------------|
-| `Classe` | `ifc_class` | Metadata saved in JSON; the current exporter does not filter by it |
-| `Atributo` | `attribute` | Main attribute to read |
+| `Class` | `ifc_class` | Metadata saved in JSON; the current exporter does not filter by it |
+| `Attribute` | `attribute` | Main attribute to read |
 | `Fallback` | `fallback_attribute` | Alternative attribute if the main value is empty |
 | `Format` | `format` | Metadata saved in JSON; the current exporter does not apply formatting |
 
@@ -473,7 +473,7 @@ Use `ifc_property` to read a property from a Pset.
 
 | UI field | Key in `source` | Export use |
 |----------|-----------------|------------|
-| `Classe` | `ifc_class` | Metadata saved in JSON; the current exporter does not filter by it |
+| `Class` | `ifc_class` | Metadata saved in JSON; the current exporter does not filter by it |
 | `Pset` | `pset` | Technical property set name |
 | `Property` | `property` | Technical property name |
 | `Allowed Values` | `allowed_values` | Metadata saved in JSON; the current exporter does not validate values |
@@ -506,7 +506,7 @@ IFC model. The UI and resolution behavior are the same as `ifc_property`.
 
 | UI field | Key in `source` | Use |
 |----------|-----------------|-----|
-| `Classe` | `ifc_class` | Metadata saved in JSON |
+| `Class` | `ifc_class` | Metadata saved in JSON |
 | `Pset` | `pset` | Custom or future Pset |
 | `Property` | `property` | Custom or future property |
 | `Allowed Values` | `allowed_values` | Metadata for expected values |
@@ -534,7 +534,7 @@ Example:
 
 ### bSDD Picker for ifc_property and manual
 
-When the source is `ifc_property` or `manual`, the `Escolher do dicionario bSDD`
+When the source is `ifc_property` or `manual`, the `Pick from bSDD dictionary`
 area appears.
 
 | Field | Options |
@@ -546,9 +546,9 @@ area appears.
 
 | Button | Result |
 |--------|--------|
-| `Usar esta propriedade` | sets `source_type` to `ifc_property`, copies `Property set` to `source.pset`, and copies `Property` to `source.property` |
+| `Use this property` | sets `source_type` to `ifc_property`, copies `Property set` to `source.pset`, and copies `Property` to `source.property` |
 
-If the column name is empty or `Nova Coluna`, the button also changes the column
+If the column name is empty or `New Column`, the button also changes the column
 name to the selected property name.
 
 The picker uses:
@@ -564,8 +564,8 @@ Use `spatial` to read information from the spatial or decomposition hierarchy.
 
 | UI field | Key in `source` | Use |
 |----------|-----------------|-----|
-| `Nivel (classe IFC)` | `level` | IFC ancestor class to find, such as `IfcSite` or `IfcBuilding` |
-| `Atributo` | `attribute` | Attribute to read from the matched ancestor |
+| `Level (IFC class)` | `level` | IFC ancestor class to find, such as `IfcSite` or `IfcBuilding` |
+| `Attribute` | `attribute` | Attribute to read from the matched ancestor |
 
 Resolution order:
 
@@ -604,8 +604,8 @@ chain, considering only nesting and decomposition relationships.
 
 | UI field | Key in `source` | Use |
 |----------|-----------------|-----|
-| `Nivel (1=pai imediato, 2=avo, ...)` | `level` | Ancestor position in the chain |
-| `Atributo` | `attribute` | Attribute to read |
+| `Level (1=direct parent, 2=grandparent, ...)` | `level` | Ancestor position in the chain |
+| `Attribute` | `attribute` | Attribute to read |
 | `Fallback` | `fallback_attribute` | Alternative attribute if the main value is empty |
 
 Resolution order:
@@ -639,7 +639,7 @@ the value through a support table.
 
 | UI field | Key in `source` | Use |
 |----------|-----------------|-----|
-| `Atributo` | `attribute` | Attribute used to form the class key |
+| `Attribute` | `attribute` | Attribute used to form the class key |
 | `Mapping Table` | `mapping_table` | Support table used to translate the key |
 
 Resolution order:
@@ -690,9 +690,9 @@ Always visible field:
 
 | UI field | Key in `source` | Use |
 |----------|-----------------|-----|
-| `Modo` | `quantity_mode` | Quantity strategy |
+| `Mode` | `quantity_mode` | Quantity strategy |
 
-`Modo` options:
+`Mode` options:
 
 | UI mode | JSON value | Result |
 |---------|------------|--------|
@@ -700,7 +700,7 @@ Always visible field:
 | `Count Occurrences` | `count` | Counts IFC type occurrences |
 | `Sum Length` | `length` | Sums length through `get_qtde()` |
 
-When `Modo` is `Mapping Table`, the panel also shows:
+When `Mode` is `Mapping Table`, the panel also shows:
 
 | UI field | Key in `source` | Use |
 |----------|-----------------|-----|
@@ -892,8 +892,8 @@ IFC source.
 
 Guided fields:
 
-- no `Source guiado` field is displayed;
-- metadata can be registered in `Campos extras`, but the export always returns
+- no `Guided Source` field is displayed;
+- metadata can be registered in `Extra Fields`, but the export always returns
   an empty value for this source.
 
 Example:
@@ -909,7 +909,7 @@ Example:
 
 ### Extra Fields
 
-`Campos extras` adds `Key` / `Value` pairs to the selected column's `source`
+`Extra Fields` adds `Key` / `Value` pairs to the selected column's `source`
 object.
 
 Use it for:
@@ -938,22 +938,22 @@ Examples:
 
 ### Support Tables
 
-The `Tabelas de apoio` area edits first-level JSON objects that are not
+The `Support Tables` area edits first-level JSON objects that are not
 reserved keys.
 
 Table fields:
 
 | UI field | JSON key | Use |
 |----------|----------|-----|
-| `Tabela` | top-level key name | Name referenced by `mapping_table` or `template_table` |
-| `Comentario` | `_comment` | Comment saved inside the table |
+| `Table` | top-level key name | Name referenced by `mapping_table` or `template_table` |
+| `Comment` | `_comment` | Comment saved inside the table |
 
 Row fields:
 
 | UI field | JSON | Use |
 |----------|------|-----|
-| `Chave` | object key | Lookup value |
-| `Valor` | key value | May be text, number, list, or JSON object |
+| `Key` | object key | Lookup value |
+| `Value` | key value | May be text, number, list, or JSON object |
 
 Simple table example:
 
@@ -983,9 +983,9 @@ Table with objects:
 }
 ```
 
-When editing complex values in the UI, write valid JSON in `Valor`.
+When editing complex values in the UI, write valid JSON in `Value`.
 
-Example `Valor` for a row:
+Example `Value` for a row:
 
 ```json
 {"qto": "Qto_FlexiblePipeSegment", "quantity": "Length"}
@@ -1025,14 +1025,14 @@ To add a column that reads a bSDD property:
 
 1. Click `Load`.
 2. Click `Add Column`.
-3. In `Coluna`, enter the name to appear in Excel.
-4. In `Origem`, select `IFC Property`.
-5. In `Escolher do dicionario bSDD`, choose `Discipline`.
+3. In `Column`, enter the name to appear in Excel.
+4. In `Source`, select `IFC Property`.
+5. In `Pick from bSDD dictionary`, choose `Discipline`.
 6. Choose `Element`.
 7. Choose `Property set`.
 8. Choose `Property`.
-9. Click `Usar esta propriedade`.
-10. Review `Notas`.
+9. Click `Use this property`.
+10. Review `Notes`.
 11. Click `Save`.
 12. Click `Export LI`.
 
@@ -1056,7 +1056,7 @@ To add a column that reads a bSDD property:
 | A column is empty | Confirm `source_type`, Pset/property, attribute, or configured level |
 | `Selected By` does not work | The referenced column must exist and be calculated earlier |
 | A support table is not used | Confirm that `mapping_table` or `template_table` matches the table name |
-| A complex value became text | The `Valor` field must contain valid JSON |
+| A complex value became text | The `Value` field must contain valid JSON |
 | Unit is `un` but should be `m` | Check `quantity_by_class` and the `quantity: Length` rule |
 | bSDD property does not appear in the picker | Check `Discipline`, `Element`, and whether the dictionary JSON contains the property |
 
@@ -1069,12 +1069,12 @@ To add a column that reads a bSDD property:
   them for filtering, formatting, or validation.
 - `computed` columns can depend on values already calculated in `row_values`,
   so column order matters.
-- For fields that are not supported by the UI yet, use `Campos extras` or edit
+- For fields that are not supported by the UI yet, use `Extra Fields` or edit
   the JSON directly.
 
-## InfoVis-Analisys: Analisys
+## InfoVis-Analysis: Analysis
 
-The `Analisys` panel colors 3D Viewport objects based on IFC properties.
+The `Analysis` panel colors 3D Viewport objects based on IFC properties.
 
 1. Choose `Discipline`.
 2. Choose `Element`.
@@ -1112,6 +1112,19 @@ Example:
 Pset_FlexiblePipeSegment.NominalLength
 ```
 
+### Config Profile
+
+Use `Export` in `Config profile` to create a portable `.json` with:
+
+- IFC label settings.
+- Decomposition views.
+- LI mapping.
+- Non-sensitive add-on preferences.
+
+Use `Import` to load that profile in another Blender installation. The import
+updates `resources/decomposition_view.json` and `resources/li_mapping.json`, then
+refreshes the corresponding editors in the UI.
+
 ## Generated and Edited Files
 
 | Action | Output |
@@ -1124,6 +1137,8 @@ Pset_FlexiblePipeSegment.NominalLength
 | `Properties > graph` | `graphic.html` in the project root |
 | `LI Mapping > Save` | `resources/li_mapping.json` |
 | `Settings > Decomposition views > Save` | `resources/decomposition_view.json` |
+| `Settings > Config profile > Export` | `.json` file chosen by the user |
+| `Settings > Config profile > Import` | `resources/li_mapping.json` and `resources/decomposition_view.json` |
 
 ## Troubleshooting
 

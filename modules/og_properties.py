@@ -23,7 +23,7 @@ from .analysis.service import (
 
 
 class IFC_Label_Attribute(PropertyGroup):
-    """Um atributo IFC a ser exibido na viewport overlay."""
+    """IFC attribute displayed in the viewport overlay."""
     attr_name : StringProperty(name='Attribute', default='Name')
     display_name : StringProperty(name='Display text', default='')
 

@@ -5,8 +5,8 @@ from .service import get_numeric_bounds, get_object_type_entry, get_pset_entry
 
 class Panel_Analysis(bpy.types.Panel):
 
-    bl_label        = "Analysis"
-    bl_idname       = "VIEW3D_PT_og_analisys"
+    bl_label        = "Color Mapping Analysis"
+    bl_idname       = "VIEW3D_PT_og_color_mapping_analysis"
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"

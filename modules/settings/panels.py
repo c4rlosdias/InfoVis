@@ -61,10 +61,10 @@ def _active_decomposition_relation(props, view):
     return None
 
 
-class Panel_Info(bpy.types.Panel):
+class Panel_Settings(bpy.types.Panel):
     
     bl_label        = "Settings"
-    bl_idname       = "VIEW3D_PT_og_info"
+    bl_idname       = "VIEW3D_PT_og_settings"
     bl_space_type   = 'VIEW_3D'
     bl_region_type  = 'UI'
     bl_context      = "objectmode"
@@ -78,27 +78,43 @@ class Panel_Info(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-        row.label(text="InfoVis - alpha - V 0.1.2", icon='MOD_LINEART')
-        row = layout.row()
-        row.label(text="26.05.14")
+        row.label(text="InfoVis - alpha - V 0.1.3", icon='MOD_LINEART')        
         layout.separator()
-        layout = self.layout
-        props = context.scene.og_props
-        row = layout.row()
-        row.label(text="Show IFC labels")
-        layout.separator()
-        row = layout.row()
-        icon = 'HIDE_OFF' if props.show_ifc_label else 'HIDE_ON'
-        row.prop(props, 'show_ifc_label', icon=icon, toggle=True)
 
+        props = context.scene.og_props
+
+        self.draw_config_profile(layout)
         layout.separator()
-        row = layout.row()
+
+        split = layout.split(factor=0.42, align=True)
+        label_col = split.column(align=True)
+        decomposition_col = split.column(align=True)
+
+        self.draw_label_settings(label_col, props)
+        self.draw_decomposition_settings(decomposition_col, props)
+
+    def draw_config_profile(self, layout):
+        box = layout.box()
+        row = box.row(align=True)
+        row.label(text="Config profile:", icon='PRESET')
+        row.operator("settings.export_config_profile", text="Export", icon='EXPORT')
+        row.operator("settings.import_config_profile", text="Import", icon='IMPORT')
+
+    def draw_label_settings(self, layout, props):
+        box = layout.box()
+        row = box.row(align=True)
+        row.label(text="Show IFC labels")
+        icon = 'HIDE_OFF' if props.show_ifc_label else 'HIDE_ON'
+        row.prop(props, 'show_ifc_label', text="", icon=icon, toggle=True)
+
+        box.separator()
+        row = box.row()
         row.label(text="Fields to display:", icon='LINENUMBERS_ON')
-        row = layout.row(align=True)
+        row = box.row(align=True)
         split = row.split(factor=0.58, align=True)
         split.label(text="Field")
         split.label(text="Display text")
-        row = layout.row()
+        row = box.row()
         col_list = row.column()
         col_list.template_list(
             "BIM_UL_ifc_label_attrs", "",
@@ -111,26 +127,27 @@ class Panel_Info(bpy.types.Panel):
         col_btn.operator("settings.add_ifc_label_property", icon='PROPERTIES', text="")
         col_btn.operator("settings.remove_ifc_label_attr", icon='REMOVE', text="")
 
-        layout.separator()
-        row = layout.row(align=True)
+        box.separator()
+        row = box.row(align=True)
         row.label(text="Label offset (px):", icon='ARROW_LEFTRIGHT')
-        row = layout.row(align=True)
+        row = box.row(align=True)
         row.prop(props, 'label_offset_x')
         row.prop(props, 'label_offset_y')
 
-        layout.separator()
-        row = layout.row()
+    def draw_decomposition_settings(self, layout, props):
+        box = layout.box()
+        row = box.row()
         row.label(text="Decomposition views:", icon='NODETREE')
-        row = layout.row(align=True)
+        row = box.row(align=True)
         row.operator("settings.load_decomposition_views", text="Load")
         row.operator("settings.save_decomposition_views", text="Save")
         row.operator("settings.reset_decomposition_views", text="Defaults")
 
         if not props.decomposition_views_loaded:
-            row = layout.row()
+            row = box.row()
             row.label(text="Load decomposition_view.json to edit the views.", icon='INFO')
 
-        row = layout.row()
+        row = box.row()
         col_list = row.column()
         col_list.template_list(
             "BIM_UL_decomposition_views", "",
@@ -145,15 +162,16 @@ class Panel_Info(bpy.types.Panel):
 
         active_view = _active_decomposition_view(props)
         if active_view:
-            box = layout.box()
-            box.prop(active_view, "id")
-            box.prop(active_view, "label")
-            box.prop(active_view, "root_ifc_class")
-
             box.separator()
-            row = box.row()
+            details_col = box.column(align=True)
+            details_col.prop(active_view, "id")
+            details_col.prop(active_view, "label")
+            details_col.prop(active_view, "root_ifc_class")
+
+            details_col.separator()
+            row = details_col.row()
             row.label(text="IFC relation attributes:", icon='PROPERTIES')
-            row = box.row()
+            row = details_col.row()
             rel_list = row.column()
             rel_list.template_list(
                 "BIM_UL_decomposition_view_relations", "",
@@ -167,7 +185,7 @@ class Panel_Info(bpy.types.Panel):
 
             active_relation = _active_decomposition_relation(props, active_view)
             if active_relation:
-                col = box.column(align=True)
+                col = details_col.column(align=True)
                 col.prop(active_relation, "element_attribute")
                 col.prop(active_relation, "relationship_type")
                 col.prop(active_relation, "relationship_attribute")

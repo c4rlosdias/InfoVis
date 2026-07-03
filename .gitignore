@@ -18,6 +18,10 @@ __pycache__/
 /files
 .releases
 /releases
+.outputs
+/outputs
+.claude
+.agents
 
 # Distribution / packaging
 .Python

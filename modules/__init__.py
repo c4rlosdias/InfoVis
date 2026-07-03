@@ -145,8 +145,10 @@ def get_classes():
         _settings_ops.Operator_remove_decomposition_view,
         _settings_ops.Operator_add_decomposition_relation,
         _settings_ops.Operator_remove_decomposition_relation,
+        _settings_ops.Operator_export_config_profile,
+        _settings_ops.Operator_import_config_profile,
         _settings_panels.BIM_UL_ifc_label_attrs,
         _settings_panels.BIM_UL_decomposition_views,
         _settings_panels.BIM_UL_decomposition_view_relations,
-        _settings_panels.Panel_Info,
+        _settings_panels.Panel_Settings,
     ]

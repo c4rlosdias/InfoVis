@@ -211,10 +211,14 @@ Operators for viewport IFC labels and decomposition-view configuration.
 | `Operator_remove_decomposition_view` | `settings.remove_decomposition_view` | Removes the selected view |
 | `Operator_add_decomposition_relation` | `settings.add_decomposition_relation` | Adds a relation to the selected view |
 | `Operator_remove_decomposition_relation` | `settings.remove_decomposition_relation` | Removes the selected relation |
+| `Operator_export_config_profile` | `settings.export_config_profile` | Exports editable settings to a portable JSON profile |
+| `Operator_import_config_profile` | `settings.import_config_profile` | Imports a portable JSON profile and refreshes the UI |
 
 Dependencies:
 
 - `data.decomposition_views`: normalization, defaults, validation, and saving.
+- `data.config_profile`: portable profile validation, reading, and writing.
+- `modules.catalog.operators`: LI mapping payload serialization.
 
 ## modules/analysis/operators.py
 

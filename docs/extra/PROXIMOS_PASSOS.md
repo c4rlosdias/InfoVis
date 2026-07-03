@@ -1,48 +1,52 @@
-# Proximos Passos
+# Next Steps
 
-## Objetivo
+## Purpose
 
-Este documento lista as acoes mais uteis para manter a documentacao do InfoVis consistente com a evolucao do add-on.
+This document lists the most useful actions for keeping the InfoVis
+documentation consistent with add-on evolution.
 
-## Prioridade imediata
+## Immediate Priority
 
-1. validar no Blender o fluxo descrito em `README.md` e `docs/DEVELOPMENT.md`
-2. revisar se os paineis e operadores documentados ainda correspondem ao comportamento atual
-3. atualizar exemplos quando houver mudanca de interface, nomenclatura ou fluxo de release
+1. validate in Blender the workflows described in `README.md` and
+   `docs/DEVELOPMENT.md`
+2. review whether the documented panels and operators still match current
+   behavior
+3. update examples whenever the interface, naming, or release flow changes
 
-## Curto prazo
+## Short Term
 
-### 1. Adicionar evidencia visual
+### 1. Add Visual Evidence
 
-- incluir screenshots dos paineis principais do add-on
-- registrar o fluxo de instalacao pelo zip gerado em `releases/`
-- mostrar um exemplo com `Example/C3388.8_UN-31.ifc`
+- include screenshots of the main add-on panels
+- document the installation flow using the zip generated in `releases/`
+- show an example with `Example/C3388.8_UN-31.ifc`
 
-### 2. Refinar onboarding tecnico
+### 2. Refine Technical Onboarding
 
-- adicionar um roteiro curto de primeira contribuicao
-- documentar convencoes de registro em `modules/__init__.py`
-- incluir exemplos pequenos de extensao de `OG_Properties`
+- add a short first-contribution walkthrough
+- document registration conventions in `modules/__init__.py`
+- include small examples of extending `OG_Properties`
 
-### 3. Melhorar rastreabilidade
+### 3. Improve Traceability
 
-- relacionar mudancas de versao em `bl_info` com alteracoes documentais relevantes
-- registrar, no release process, quando bibliotecas embarcadas forem alteradas
+- connect version changes in `bl_info` with relevant documentation changes
+- record in the release process when bundled libraries are changed
 
-## Medio prazo
+## Medium Term
 
-### 1. Publicacao web
+### 1. Web Publication
 
-Se a equipe quiser navegacao web, uma opcao simples e publicar a pasta `docs/` com MkDocs.
+If the team wants web navigation, a simple option is to publish the `docs/`
+folder with MkDocs.
 
-Passos basicos:
+Basic steps:
 
 ```bash
 pip install mkdocs mkdocs-material
-mkdocs new infovis-docs
+mkdocs build
 ```
 
-Depois, copiar ou referenciar os documentos principais:
+Main documents:
 
 - `README.md`
 - `docs/ARCHITECTURE.md`
@@ -50,34 +54,34 @@ Depois, copiar ou referenciar os documentos principais:
 - `docs/guides/*.md`
 - `docs/reference/GLOSSARY.md`
 
-### 2. Validacao automatica de markdown
+### 2. Automated Markdown Validation
 
-- adicionar verificacao de links internos
-- validar existencia de arquivos referenciados
-- padronizar nomenclatura de titulos e secoes principais
+- add internal link checks
+- validate that referenced files exist
+- standardize naming for headings and main sections
 
-## Longo prazo
+## Long Term
 
-- manter changelog documental por versao do add-on
-- separar guias de usuario e guias de manutencao se a base crescer
-- gerar material de demonstracao para novos integrantes da equipe
+- maintain a documentation changelog per add-on version
+- split user guides and maintenance guides if the documentation base grows
+- generate demo material for new team members
 
-## Checklist de manutencao
+## Maintenance Checklist
 
-- [ ] mudou a estrutura de pastas do add-on
-- [ ] mudou o processo de build ou release
-- [ ] mudou o nome exibido em `bl_info`
-- [ ] mudou o fluxo de instalacao no Blender
-- [ ] mudou a composicao de `OG_Properties`
-- [ ] mudou a organizacao de operadores, paineis ou `PropertyGroup`s
+- [ ] add-on folder structure changed
+- [ ] build or release process changed
+- [ ] displayed name in `bl_info` changed
+- [ ] Blender installation flow changed
+- [ ] `OG_Properties` composition changed
+- [ ] operators, panels, or `PropertyGroup`s were reorganized
 
-Se qualquer item acima ocorrer, revise pelo menos:
+If any item above occurs, review at least:
 
 - `README.md`
 - `docs/ARCHITECTURE.md`
 - `docs/DEVELOPMENT.md`
 
-## Referencias principais
+## Main References
 
 - `README.md`
 - `docs/ARCHITECTURE.md`

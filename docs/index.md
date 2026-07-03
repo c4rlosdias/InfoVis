@@ -1,69 +1,73 @@
 # InfoVis
 
-Documentacao central do add-on InfoVis para Blender.
+Central documentation for the InfoVis Blender add-on.
 
-## Visao geral
+## Overview
 
-O projeto e distribuido como um add-on Python com entrada em `__init__.py`, organizacao funcional em `modules/` e camada de apoio em `data/`. Esta documentacao foi reorganizada para refletir a estrutura real do repositorio, o fluxo de instalacao no Blender e o processo atual de release.
+The project is distributed as a Python add-on with its entry point in
+`__init__.py`, functional organization in `modules/`, and support logic in
+`data/`. This documentation reflects the repository structure, the Blender
+installation flow, and the current release process.
 
-> Ponto de entrada recomendado para manutencao: leia primeiro Arquitetura, depois Desenvolvimento e entao a referencia tecnica do dominio que sera alterado.
+> Recommended starting point for maintenance: read Architecture first, then
+> Development, then the technical guide for the domain you plan to change.
 
-## O que voce encontra aqui
+## What You Will Find Here
 
-- arquitetura do add-on e fluxo de inicializacao
-- guia de utilizacao dos paineis do AddOn no Blender
-- guia de desenvolvimento e release
-- referencia por operadores, paineis, propriedades e camada de dados
-- glossario dos termos e componentes recorrentes
-- materiais de apoio para acompanhamento e manutencao documental
+- add-on architecture and initialization flow
+- Blender add-on user guide and panel workflows
+- development and release guide
+- reference material for operators, panels, properties, and the data layer
+- glossary of recurring terms and components
+- supporting material for documentation maintenance and follow-up
 
-## Trilhas de leitura
+## Reading Paths
 
-| Objetivo | Comece aqui | Proximo passo |
-|----------|-------------|---------------|
-| Usar o AddOn no Blender | [Guia de Utilizacao](guides/GUIA_DE_UTILIZACAO.md) | [Glossario](reference/GLOSSARY.md) |
-| Configurar a Lista de Itens | [Guia LI Mapping](guides/LI_MAPPING_GUIDE.md) | [Guia de Utilizacao](guides/GUIA_DE_UTILIZACAO.md) |
-| Entender a estrutura do add-on | [Arquitetura](ARCHITECTURE.md) | [Glossario](reference/GLOSSARY.md) |
-| Implementar mudancas no codigo | [Desenvolvimento](DEVELOPMENT.md) | Guias em `guides/` |
-| Revisar operadores e paineis | [Operadores](guides/OPERATORS_DOCUMENTATION.md) | [Paineis](guides/PANELS_DOCUMENTATION.md) |
-| Revisar modelo de dados | [Propriedades](guides/PROPERTIES_DOCUMENTATION.md) | [Dados](guides/DATA_DOCUMENTATION.md) |
-| Obter contexto executivo | [Sumario Executivo](extra/SUMARIO_EXECUTIVO.md) | [Proximos Passos](extra/PROXIMOS_PASSOS.md) |
+| Goal | Start here | Next step |
+|------|------------|-----------|
+| Use the add-on in Blender | [User Guide](guides/GUIA_DE_UTILIZACAO.md) | [Glossary](reference/GLOSSARY.md) |
+| Configure the Item List | [LI Mapping Guide](guides/LI_MAPPING_GUIDE.md) | [User Guide](guides/GUIA_DE_UTILIZACAO.md) |
+| Understand the add-on structure | [Architecture](ARCHITECTURE.md) | [Glossary](reference/GLOSSARY.md) |
+| Implement code changes | [Development](DEVELOPMENT.md) | Guides in `guides/` |
+| Review operators and panels | [Operators](guides/OPERATORS_DOCUMENTATION.md) | [Panels](guides/PANELS_DOCUMENTATION.md) |
+| Review the data model | [Properties](guides/PROPERTIES_DOCUMENTATION.md) | [Data](guides/DATA_DOCUMENTATION.md) |
+| Get executive context | [Executive Summary](extra/SUMARIO_EXECUTIVO.md) | [Next Steps](extra/PROXIMOS_PASSOS.md) |
 
-## Comece por perfil
+## Start by Role
 
-### Para entender o projeto
+### To Understand the Project
 
-- [Arquitetura](ARCHITECTURE.md)
-- [Glossario](reference/GLOSSARY.md)
+- [Architecture](ARCHITECTURE.md)
+- [Glossary](reference/GLOSSARY.md)
 
-### Para desenvolver
+### To Develop
 
-- [Desenvolvimento](DEVELOPMENT.md)
-- [Operadores](guides/OPERATORS_DOCUMENTATION.md)
-- [Paineis](guides/PANELS_DOCUMENTATION.md)
-- [Propriedades](guides/PROPERTIES_DOCUMENTATION.md)
-- [Dados](guides/DATA_DOCUMENTATION.md)
+- [Development](DEVELOPMENT.md)
+- [Operators](guides/OPERATORS_DOCUMENTATION.md)
+- [Panels](guides/PANELS_DOCUMENTATION.md)
+- [Properties](guides/PROPERTIES_DOCUMENTATION.md)
+- [Data](guides/DATA_DOCUMENTATION.md)
 
-### Para instalar e validar rapidamente
+### To Install and Validate Quickly
 
-1. consulte o [Guia de Utilizacao](guides/GUIA_DE_UTILIZACAO.md) para o fluxo geral de uso
-2. gere um zip com `build_release.bat` ou `build_release.sh`
-3. instale o add-on no Blender por `Install from Disk`
-4. valide com `Example/C3388.8_UN-31.ifc`
+1. read the [User Guide](guides/GUIA_DE_UTILIZACAO.md) for the general usage flow
+2. generate a zip with `build_release.bat` or `build_release.sh`
+3. install the add-on in Blender with `Install from Disk`
+4. validate it with `Example/C3388.8_UN-31.ifc`
 
-### Para revisar documentacao
+### To Review Documentation
 
-1. valide os documentos principais desta pasta
-2. execute `mkdocs build --strict` na raiz do repositorio
-3. revise a navegacao gerada em `site/`
+1. validate the main documents in this folder
+2. run `mkdocs build --strict` from the repository root
+3. review the generated navigation in `site/`
 
-### Para contexto executivo ou acompanhamento
+### For Executive Context or Follow-Up
 
-- [Sumario Executivo](extra/SUMARIO_EXECUTIVO.md)
-- [Proximos Passos](extra/PROXIMOS_PASSOS.md)
-- [Documentacao Concluida](extra/DOCUMENTACAO_CONCLUIDA.md)
+- [Executive Summary](extra/SUMARIO_EXECUTIVO.md)
+- [Next Steps](extra/PROXIMOS_PASSOS.md)
+- [Documentation Completed](extra/DOCUMENTACAO_CONCLUIDA.md)
 
-## Estrutura rapida
+## Quick Structure
 
 ```text
 InfoVis/
@@ -77,32 +81,35 @@ InfoVis/
 `-- libs313/
 ```
 
-## Publicacao da documentacao
+## Publishing the Documentation
 
-Esta pasta `docs/` pode ser publicada com MkDocs usando a configuracao em `mkdocs.yml`.
+The `docs/` folder can be published with MkDocs using the configuration in
+`mkdocs.yml`.
 
-Execute os comandos a partir da raiz do repositorio.
+Run the commands from the repository root.
 
-### Ambiente local
+### Local Environment
 
-Comandos basicos:
+Basic commands:
 
 ```powershell
 pip install -r requirements-docs.txt
 mkdocs serve
 ```
 
-Para build estatico:
+For a static build:
 
 ```powershell
 mkdocs build
 ```
 
-Se o repositorio estiver no GitHub, o workflow `.github/workflows/docs.yml` publica a documentacao automaticamente no GitHub Pages para a branch configurada.
+If the repository is hosted on GitHub, the `.github/workflows/docs.yml`
+workflow can automatically publish the documentation to GitHub Pages for the
+configured branch.
 
-## Checklist rapido
+## Quick Checklist
 
-- `README.md` alinhado com `docs/`
-- `mkdocs build --strict` sem warnings bloqueantes
-- links locais resolvendo corretamente
-- workflow de docs apontando para a branch ativa
+- `README.md` aligned with `docs/`
+- `mkdocs build --strict` without blocking warnings
+- local links resolve correctly
+- documentation workflow points to the active branch

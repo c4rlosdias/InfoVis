@@ -54,7 +54,7 @@ The panels are organized into these Blender 3D Viewport sidebar categories:
 | `InfoVis-Dictionary` | `Subsea Classes` |
 | `InfoVis-Occurrence` | `Decompositions`, `Properties`, `Constructive Type`, `Connect Elements` |
 | `InfoVis-Catalog` | `Catalog`, `LI Mapping` |
-| `InfoVis-Analisys` | `Analisys` |
+| `InfoVis-Analysis` | `Analysis` |
 | `InfoVis-Settings` | `Settings` |
 
 ## Authentication
@@ -182,10 +182,10 @@ Features:
 1. Loads `resources/li_mapping.json` with `Load`.
 2. Saves changes back to the JSON with `Save`.
 3. Exports the Item List with `Export LI`.
-4. Edits mapping header fields: `Schema`, `Planilha`, and `Descricao`.
+4. Edits mapping header fields: `Schema`, `Reference Sheet`, and `Description`.
 5. Displays LI columns with `BIM_UL_li_mapping_columns`.
 6. Adds or removes columns.
-7. Edits common column fields: `Coluna`, `Origem`, and `Notas`.
+7. Edits common column fields: `Column`, `Source`, and `Notes`.
 8. Shows guided source fields according to `source_type`.
 9. Provides a bSDD picker for `ifc_property` and `manual` sources.
 10. Adds/removes extra source fields through `BIM_UL_li_mapping_source_items`.
@@ -196,12 +196,12 @@ Guided source behavior:
 
 | Source type | Fields displayed |
 |-------------|------------------|
-| `ifc_attribute` | `Classe`, `Atributo`, `Fallback`, `Format` |
-| `ifc_property` | `Classe`, `Pset`, `Property`, `Allowed Values`, bSDD picker |
-| `manual` | `Classe`, `Pset`, `Property`, `Allowed Values`, bSDD picker |
-| `spatial` | `Nivel (classe IFC)`, `Atributo` |
-| `aggregation_parent` | `Nivel (1=pai imediato, 2=avo, ...)`, `Atributo`, `Fallback` |
-| `ifc_class` | `Atributo`, `Mapping Table` |
+| `ifc_attribute` | `Class`, `Attribute`, `Fallback`, `Format` |
+| `ifc_property` | `Class`, `Pset`, `Property`, `Allowed Values`, bSDD picker |
+| `manual` | `Class`, `Pset`, `Property`, `Allowed Values`, bSDD picker |
+| `spatial` | `Level (IFC class)`, `Attribute` |
+| `aggregation_parent` | `Level (1=direct parent, 2=grandparent, ...)`, `Attribute`, `Fallback` |
+| `ifc_class` | `Attribute`, `Mapping Table` |
 | `ifc_quantity` | `Modo`, and when mapping: `Mapping Table`, `Selected By` |
 | `computed` | `Selected By`, `Template Table`, `Derived From`, `Method`, `Format` |
 | `not_applicable` | no guided source field |
@@ -249,38 +249,39 @@ Features:
 6. Selects type layers/components.
 7. Selects the IFC type object.
 
-## Panel_Info: Settings
+## Panel_Settings: Settings
 
 Defined in `modules/settings/panels.py`.
 
 | Property | Value |
 |----------|-------|
-| `bl_idname` | `VIEW3D_PT_og_info` |
+| `bl_idname` | `VIEW3D_PT_og_settings` |
 | `bl_category` | `InfoVis-Settings` |
 | `bl_label` | `Settings` |
 
 Features:
 
-1. Toggles `Show IFC label`.
-2. Edits `Fields to display` with `BIM_UL_ifc_label_attrs`.
-3. Adds IFC attributes to labels.
-4. Removes label fields.
-5. Adjusts label display text and offset.
-6. Loads decomposition views.
-7. Saves decomposition views.
-8. Resets views to defaults.
-9. Adds, duplicates, or removes views.
-10. Edits view ID, label, root IFC class, and relation rows.
+1. Imports and exports the portable InfoVis config profile.
+2. Toggles `Show IFC label`.
+3. Edits `Fields to display` with `BIM_UL_ifc_label_attrs`.
+4. Adds IFC attributes to labels.
+5. Removes label fields.
+6. Adjusts label display text and offset.
+7. Loads decomposition views.
+8. Saves decomposition views.
+9. Resets views to defaults.
+10. Adds, duplicates, or removes views.
+11. Edits view ID, label, root IFC class, and relation rows.
 
-## Panel_Analisys
+## Panel_Analysis
 
 Defined in `modules/analysis/panels.py`.
 
 | Property | Value |
 |----------|-------|
-| `bl_idname` | `VIEW3D_PT_og_analisys` |
-| `bl_category` | `InfoVis-Analisys` |
-| `bl_label` | `Analisys` |
+| `bl_idname` | `VIEW3D_PT_og_color_mapping_analysis` |
+| `bl_category` | `InfoVis-Analysis` |
+| `bl_label` | `Color Mapping Analysis` |
 
 Features:
 

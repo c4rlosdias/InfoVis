@@ -57,6 +57,8 @@ _RELEVANT_SOURCE_FIELDS = {
     'not_applicable': set(),
 }
 
+LI_MAPPING_RESERVED_KEYS = {'$schema_version', 'description', 'reference_sheet', 'source_types', 'columns'}
+
 
 def _get_li_mapping_path():
     return os.path.join(
@@ -64,6 +66,21 @@ def _get_li_mapping_path():
         "resources",
         "li_mapping.json",
     )
+
+
+def get_li_mapping_path():
+    return _get_li_mapping_path()
+
+
+def load_li_mapping_payload():
+    with open(_get_li_mapping_path(), 'r', encoding='utf-8') as file:
+        return json.load(file)
+
+
+def save_li_mapping_payload(data):
+    with open(_get_li_mapping_path(), 'w', encoding='utf-8') as file:
+        json.dump(data, file, ensure_ascii=False, indent=2)
+        file.write('\n')
 
 
 def _clear_li_mapping(props):
@@ -132,11 +149,7 @@ def _build_source_from_column(column):
     return source
 
 
-def _load_li_mapping_into_props(props):
-    mapping_path = _get_li_mapping_path()
-    with open(mapping_path, 'r', encoding='utf-8') as file:
-        data = json.load(file)
-
+def apply_li_mapping_payload_to_props(props, data):
     _clear_li_mapping(props)
     props.li_mapping_schema_version = str(data.get('$schema_version', '1.0'))
     props.li_mapping_description = data.get('description', '')
@@ -158,9 +171,8 @@ def _load_li_mapping_into_props(props):
             source_item.key = str(key)
             source_item.value = _stringify_mapping_value(value)
 
-    reserved_keys = {'$schema_version', 'description', 'reference_sheet', 'source_types', 'columns'}
     for table_name, table_data in data.items():
-        if table_name in reserved_keys or not isinstance(table_data, dict):
+        if table_name in LI_MAPPING_RESERVED_KEYS or not isinstance(table_data, dict):
             continue
 
         support_table = props.li_support_tables.add()
@@ -176,11 +188,12 @@ def _load_li_mapping_into_props(props):
     props.li_mapping_loaded = True
 
 
-def _save_li_mapping_from_props(props):
-    mapping_path = _get_li_mapping_path()
-    with open(mapping_path, 'r', encoding='utf-8') as file:
-        data = json.load(file)
+def _load_li_mapping_into_props(props):
+    apply_li_mapping_payload_to_props(props, load_li_mapping_payload())
 
+
+def li_mapping_payload_from_props(props, base_data=None):
+    data = dict(base_data or {})
     data['$schema_version'] = props.li_mapping_schema_version or '1.0'
     data['description'] = props.li_mapping_description
     data['reference_sheet'] = props.li_mapping_reference_sheet
@@ -196,9 +209,8 @@ def _save_li_mapping_from_props(props):
 
     data['columns'] = columns
 
-    reserved_keys = {'$schema_version', 'description', 'reference_sheet', 'source_types', 'columns'}
     for key in list(data.keys()):
-        if key not in reserved_keys and isinstance(data[key], dict):
+        if key not in LI_MAPPING_RESERVED_KEYS and isinstance(data[key], dict):
             del data[key]
 
     for support_table in props.li_support_tables:
@@ -214,9 +226,13 @@ def _save_li_mapping_from_props(props):
 
         data[support_table.table_name] = table_data
 
-    with open(mapping_path, 'w', encoding='utf-8') as file:
-        json.dump(data, file, ensure_ascii=False, indent=2)
-        file.write('\n')
+    return data
+
+
+def _save_li_mapping_from_props(props):
+    save_li_mapping_payload(
+        li_mapping_payload_from_props(props, load_li_mapping_payload())
+    )
 
 
 class Operator_load_li_mapping(bpy.types.Operator):
@@ -484,8 +500,7 @@ def _sum_occurrence_quantities(occurrences, qto_name, quantity_name):
 
 
 def _load_li_mapping_data():
-    with open(_get_li_mapping_path(), 'r', encoding='utf-8') as file:
-        return json.load(file)
+    return load_li_mapping_payload()
 
 
 def _ensure_xlsx_suffix(filepath):

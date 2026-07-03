@@ -13,11 +13,11 @@
 
 
 bl_info = {
-    "name"        : "InfoVis - alpha - v0.1.2",
+    "name"        : "InfoVis - alpha - v0.1.3",
     "author"      : "Carlos Dias",
     "description" : "",
     "blender"     : (5, 0, 0),
-    "version"     : (0, 1, 2),
+    "version"     : (0, 1, 3),
     "location"    : "View3D > Panel > InfoVis",
     "warning"     : "",
     "category"    : "User"

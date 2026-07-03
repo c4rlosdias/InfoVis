@@ -1,6 +1,8 @@
 import bpy
 
+from ...data import config_profile
 from ...data import decomposition_views
+from ..catalog import operators as catalog_operators
 
 
 _RELATION_PRESET_ITEMS = [
@@ -11,6 +13,35 @@ _RELATION_PRESET_ITEMS = [
     )
     for preset in decomposition_views.RELATION_PRESETS
 ]
+
+
+def _get_addon_preferences(context):
+    package_name = __package__.split(".modules", 1)[0]
+    addon = context.preferences.addons.get(package_name)
+    return addon.preferences if addon else None
+
+
+def _get_addon_version():
+    try:
+        from ... import bl_info
+    except Exception:
+        return ""
+    return ".".join(str(part) for part in bl_info.get("version", ()))
+
+
+def _decomposition_payload_for_export(props):
+    if props.decomposition_views_loaded and len(props.decomposition_views) > 0:
+        return decomposition_views.payload_from_collection(props.decomposition_views)
+    return config_profile.load_decomposition_payload()
+
+
+def _li_mapping_payload_for_export(props):
+    if props.li_mapping_loaded:
+        return catalog_operators.li_mapping_payload_from_props(
+            props,
+            catalog_operators.load_li_mapping_payload(),
+        )
+    return catalog_operators.load_li_mapping_payload()
 
 
 def _add_ifc_label_field(props, field_name, display_name=""):
@@ -294,3 +325,108 @@ class Operator_remove_ifc_label_attr(bpy.types.Operator):
             props.ifc_label_attributes.remove(idx)
             props.active_ifc_label_attr_index = max(0, idx - 1)
         return {"FINISHED"}
+
+
+class Operator_export_config_profile(bpy.types.Operator):
+    bl_idname = "settings.export_config_profile"
+    bl_label = "Export Config Profile"
+    bl_description = "Export editable InfoVis configuration to a portable JSON profile"
+    bl_options = {"REGISTER"}
+
+    filepath : bpy.props.StringProperty(
+        name="File Path",
+        default=config_profile.PROFILE_FILENAME,
+        subtype="FILE_PATH",
+    )
+    filter_glob : bpy.props.StringProperty(default="*.json", options={'HIDDEN'})
+
+    def invoke(self, context, event):
+        if not self.filepath:
+            self.filepath = config_profile.PROFILE_FILENAME
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        props = context.scene.og_props
+        preferences = _get_addon_preferences(context)
+
+        try:
+            profile = config_profile.build_profile(
+                props=props,
+                preferences=preferences,
+                addon_version=_get_addon_version(),
+                decomposition_payload=_decomposition_payload_for_export(props),
+                li_mapping_payload=_li_mapping_payload_for_export(props),
+            )
+            errors = config_profile.validate_profile(profile)
+            if errors:
+                self.report({'ERROR'}, errors[0])
+                return {'CANCELLED'}
+
+            output_path = config_profile.ensure_json_suffix(self.filepath)
+            config_profile.save_json(output_path, profile)
+        except Exception as exc:
+            self.report({'ERROR'}, f"Could not export config profile: {exc}")
+            return {'CANCELLED'}
+
+        self.report({'INFO'}, f"Config profile exported to {output_path}")
+        return {'FINISHED'}
+
+
+class Operator_import_config_profile(bpy.types.Operator):
+    bl_idname = "settings.import_config_profile"
+    bl_label = "Import Config Profile"
+    bl_description = "Import editable InfoVis configuration from a portable JSON profile"
+    bl_options = {"REGISTER", "UNDO"}
+
+    filepath : bpy.props.StringProperty(
+        name="File Path",
+        default=config_profile.PROFILE_FILENAME,
+        subtype="FILE_PATH",
+    )
+    filter_glob : bpy.props.StringProperty(default="*.json", options={'HIDDEN'})
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        props = context.scene.og_props
+        preferences = _get_addon_preferences(context)
+
+        try:
+            profile = config_profile.load_json(self.filepath)
+            errors = config_profile.validate_profile(profile)
+            if errors:
+                self.report({'ERROR'}, errors[0])
+                return {'CANCELLED'}
+
+            decomposition_payload = profile.get("decomposition_views")
+            if decomposition_payload is not None:
+                views = decomposition_views.save_payload(decomposition_payload)["views"]
+                from ...data import tree as data_tree
+                data_tree.load_views(force=True)
+                _load_views_into_props(props, views)
+
+            li_mapping_payload = profile.get("li_mapping")
+            if li_mapping_payload is not None:
+                catalog_operators.save_li_mapping_payload(li_mapping_payload)
+                catalog_operators.apply_li_mapping_payload_to_props(
+                    props,
+                    li_mapping_payload,
+                )
+
+            config_profile.apply_label_settings_to_props(
+                props,
+                profile.get("label_settings", {}),
+            )
+            config_profile.apply_preferences_to_addon_preferences(
+                preferences,
+                profile.get("preferences", {}),
+            )
+        except Exception as exc:
+            self.report({'ERROR'}, f"Could not import config profile: {exc}")
+            return {'CANCELLED'}
+
+        self.report({'INFO'}, "Config profile imported.")
+        return {'FINISHED'}
