@@ -1,63 +1,67 @@
 # InfoVis
 
-Add-on para Blender voltado a visualizacao, inspecao e enriquecimento de informacoes IFC, com integracao a bSDD, estruturas de decomposicao, catalogo de tipos, conexoes e propriedades de objetos.
+InfoVis is an open-source Blender add-on, developed together with IfcOpenShell, with the goal of making the information contained in IFC files for the oil and gas industry clear and accessible. The tool was created in the context of the IFC schema extension project for subsea engineering, developed by Fundação CERTI in partnership with Petrobras, and enables visualization and analysis of the data mapped in this standardization effort.
 
-## Visao Geral
+More than a viewer, InfoVis was designed as an open tool intended to serve the entire sector supply chain. Manufacturers, designers, integrators, and operators often face barriers to technical information access because they rely on proprietary solutions and closed formats. By adopting the OpenBIM standard and providing a free customization that translates the IFC data structure into understandable visualizations, InfoVis reduces these barriers and promotes interoperability across the different links of the chain, from component suppliers to subsea asset operators.
 
-O projeto e distribuido como um add-on Python para Blender. A entrada principal fica em `__init__.py`, que registra preferencias, operadores de autenticacao, `OG_Properties` e todas as classes carregadas por `modules/get_classes()`.
+This initiative is aligned with Brazil's Innovation Law (Law No. 10,973/2004, updated by the Legal Framework for Science, Technology, and Innovation - Law No. 13,243/2016), which encourages cooperation between Scientific, Technological, and Innovation Institutions (ICTs) and companies to develop technological solutions of national interest. The partnership between CERTI and Petrobras materializes this spirit: it transforms research and development investment into an open technological asset whose benefits extend beyond the institutions involved, strengthening the competitiveness and technological capabilities of the entire Brazilian oil and gas ecosystem.
 
-Principais capacidades:
+## Overview
 
-- leitura e navegacao de dados IFC
-- consulta a classes e propriedades via bSDD
-- visualizacao de decomposicao e arvore de elementos
-- selecao de tipos e camadas de catalogo
-- edicao e inspecao de propriedades e documentos
-- exibicao de atributos IFC na viewport
+The project is distributed as a Python add-on for Blender. The main entry point is `__init__.py`, which registers preferences, authentication operators, `OG_Properties`, and all classes loaded by `modules/get_classes()`.
 
-## Requisitos
+Main capabilities:
 
-- Blender 5.0 ou superior
-- Python embarcado do Blender compativel com o ambiente alvo
-- Windows, Linux ou macOS
+- reading and navigating IFC data
+- querying classes and properties through bSDD
+- viewing decomposition and element trees
+- selecting catalog types and layers
+- editing and inspecting properties and documents
+- displaying IFC attributes in the viewport
 
-Observacoes sobre dependencias:
+## Requirements
 
-- no Windows, o add-on utiliza bibliotecas empacotadas em `libs311/` e `libs313/`
-- em Linux e macOS, pacotes ausentes podem ser instalados no Python do Blender na inicializacao do add-on
+- Blender 5.0 or later
+- Blender embedded Python compatible with the target environment
+- Windows, Linux, or macOS
 
-## Instalacao
+Dependency notes:
 
-### Uso de release zipado
+- on Windows, the add-on uses packaged libraries in `libs311/` and `libs313/`
+- on Linux and macOS, missing packages can be installed into Blender's Python when the add-on starts
 
-1. Gere ou obtenha um arquivo `.zip` do release.
-2. No Blender, abra `Edit > Preferences > Add-ons`.
-3. Clique em `Install from Disk`.
-4. Selecione o arquivo `.zip` gerado em `releases/`.
-5. Ative o add-on `InfoVis`.
+## Installation
 
-### Instalacao para desenvolvimento
+### Using a zipped release
 
-1. Clone ou copie este repositorio para um diretorio de trabalho.
-2. Gere um pacote de release com um dos scripts abaixo:
+1. Generate or obtain a release `.zip` file.
+2. In Blender, open `Edit > Preferences > Add-ons`.
+3. Click `Install from Disk`.
+4. Select the `.zip` file generated in `releases/`.
+5. Enable the `InfoVis` add-on.
+
+### Development installation
+
+1. Clone or copy this repository into a working directory.
+2. Generate a release package with one of the scripts below:
 
 ```powershell
-.\build_release.bat nome-do-release
+.\build_release.bat release-name
 ```
 
 ```bash
-./build_release.sh nome-do-release
+./build_release.sh release-name
 ```
 
-3. Instale o zip gerado no Blender pelo fluxo de `Install from Disk`.
+3. Install the generated zip in Blender using the `Install from Disk` flow.
 
-Se preferir instalar sem zip durante o desenvolvimento, copie a pasta do projeto para o diretorio de add-ons do Blender mantendo a estrutura atual e o nome do pacote consistente com `InfoVis`.
+If you prefer installing without a zip during development, copy the project folder to Blender's add-ons directory, keeping the current structure and package name consistent with `InfoVis`.
 
-## Build de Release
+## Release Build
 
-Os scripts de build copiam os arquivos necessarios para `releases/InfoVis/` e geram um zip final em `releases/<nome>.zip`.
+The build scripts copy the required files to `releases/InfoVis/` and generate a final zip in `releases/<name>.zip`.
 
-Arquivos e pastas incluidos no pacote:
+Files and folders included in the package:
 
 - `__init__.py`
 - `auth.py`
@@ -67,7 +71,7 @@ Arquivos e pastas incluidos no pacote:
 - `libs313/`
 - `resources/`
 
-## Estrutura do Repositorio
+## Repository Structure
 
 ```text
 InfoVis/
@@ -85,37 +89,37 @@ InfoVis/
 `-- resources/
 ```
 
-### Modulos principais
+### Main modules
 
-- `modules/dictionary/`: integracao com bSDD e propriedades de classe
-- `modules/decomposition/`: arvore de decomposicao e navegacao IFC
-- `modules/catalog/`: tipos de produto e camadas
-- `modules/connections/`: criacao e remocao de conexoes entre objetos
-- `modules/props/`: propriedades, documentos e visualizacoes
-- `modules/types/`: painel de tipos
-- `modules/settings/`: informacoes do add-on e configuracoes visuais
-- `modules/common/`: utilitarios compartilhados
-- `modules/og_properties.py`: property group central da aplicacao
+- `modules/dictionary/`: bSDD integration and class properties
+- `modules/decomposition/`: decomposition tree and IFC navigation
+- `modules/catalog/`: product types and layers
+- `modules/connections/`: creating and removing object connections
+- `modules/props/`: properties, documents, and views
+- `modules/types/`: types panel
+- `modules/settings/`: add-on information and visual settings
+- `modules/common/`: shared utilities
+- `modules/og_properties.py`: central application property group
 
-### Camadas de suporte
+### Support layers
 
-- `data/bsdd.py`: cliente para a API bSDD
-- `data/catalog.py`: leitura de catalogo e importacao IFC
-- `data/cde.py`: integracao com CDE
-- `data/tree.py`: refresh de arvores e callbacks
-- `data/ifc_utils.py`: funcoes auxiliares para IFC
-- `resources/`: arquivos JSON de apoio
+- `data/bsdd.py`: client for the bSDD API
+- `data/catalog.py`: catalog reading and IFC import
+- `data/cde.py`: CDE integration
+- `data/tree.py`: tree refresh and callbacks
+- `data/ifc_utils.py`: helper functions for IFC
+- `resources/`: supporting JSON files
 
-## Documentacao
+## Documentation
 
-Documentos principais:
+Main documents:
 
-- [docs/guides/GUIA_DE_UTILIZACAO.md](docs/guides/GUIA_DE_UTILIZACAO.md): uso do AddOn no Blender, paineis, fluxos e exportacoes
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): arquitetura do add-on, fluxo de inicializacao e organizacao por modulos
-- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md): setup, fluxo de trabalho e manutencao
-- [docs/reference/GLOSSARY.md](docs/reference/GLOSSARY.md): termos recorrentes e convencoes
+- [docs/guides/GUIA_DE_UTILIZACAO.md](docs/guides/GUIA_DE_UTILIZACAO.md): using the add-on in Blender, panels, flows, and exports
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): add-on architecture, initialization flow, and module organization
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md): setup, workflow, and maintenance
+- [docs/reference/GLOSSARY.md](docs/reference/GLOSSARY.md): recurring terms and conventions
 
-Guias detalhados:
+Detailed guides:
 
 - [docs/guides/LI_MAPPING_GUIDE.md](docs/guides/LI_MAPPING_GUIDE.md)
 - [docs/guides/OPERATORS_DOCUMENTATION.md](docs/guides/OPERATORS_DOCUMENTATION.md)
@@ -123,47 +127,47 @@ Guias detalhados:
 - [docs/guides/PROPERTIES_DOCUMENTATION.md](docs/guides/PROPERTIES_DOCUMENTATION.md)
 - [docs/guides/DATA_DOCUMENTATION.md](docs/guides/DATA_DOCUMENTATION.md)
 
-Documentos complementares:
+Additional documents:
 
-- `docs/extra/` contem materiais de apoio gerencial e historico da documentacao
+- `docs/extra/` contains managerial supporting materials and documentation history
 
-### Publicacao com MkDocs
+### Publishing with MkDocs
 
-O repositorio ja possui uma base inicial para publicacao da documentacao:
+The repository already includes an initial base for publishing documentation:
 
 - `mkdocs.yml`
 - `docs/index.md`
 - `requirements-docs.txt`
 
-Para publicar localmente:
+To publish locally:
 
 ```powershell
 pip install -r requirements-docs.txt
 mkdocs serve
 ```
 
-Para gerar o site estatico:
+To generate the static site:
 
 ```powershell
 mkdocs build
 ```
 
-Se o repositorio estiver hospedado no GitHub, o workflow em `.github/workflows/docs.yml` pode publicar automaticamente a documentacao via GitHub Pages.
+If the repository is hosted on GitHub, the workflow in `.github/workflows/docs.yml` can automatically publish the documentation through GitHub Pages.
 
-## Fluxo de Desenvolvimento
+## Development Flow
 
-1. Ajuste o codigo em `modules/`, `data/` ou `resources/`.
-2. Reinstale ou recarregue o add-on no Blender.
-3. Valide os paines e operadores afetados com um arquivo IFC de exemplo.
-4. Gere um novo zip de release quando necessario.
+1. Adjust code in `modules/`, `data/`, or `resources/`.
+2. Reinstall or reload the add-on in Blender.
+3. Validate affected panels and operators with a sample IFC file.
+4. Generate a new release zip when needed.
 
-## Arquivos de Exemplo
+## Example Files
 
-- `Example/C3388.8_UN-31.ifc`: arquivo IFC para testes manuais
-- `graphic.html` e `layers.html`: artefatos auxiliares para visualizacao
+- `Example/C3388.8_UN-31.ifc`: IFC file for manual tests
+- `graphic.html` and `layers.html`: supporting visualization artifacts
 
-## Observacoes
+## Notes
 
-- `requirements.txt` lista dependencias Python do projeto, mas o empacotamento para Blender depende tambem das bibliotecas embarcadas em `libs311/` e `libs313/`.
-- O nome exibido no Blender e definido em `bl_info` dentro de `__init__.py`.
+- `requirements.txt` lists Python dependencies for the project, but Blender packaging also depends on the embedded libraries in `libs311/` and `libs313/`.
+- The name displayed in Blender is defined in `bl_info` inside `__init__.py`.
 

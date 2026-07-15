@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 ZIP=$1
 
@@ -21,4 +21,5 @@ cd ./releases || exit
 zip -r "${ZIP}.zip" InfoVis
 
 echo "ZIP criado com sucesso!"
-read -p "Pressione Enter para continuar"
+printf "Pressione Enter para continuar"
+read _
