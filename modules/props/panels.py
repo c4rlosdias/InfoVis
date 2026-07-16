@@ -177,14 +177,19 @@ class Panel_Properties(bpy.types.Panel):
                         
                         for item in pset.props:   
                                                              
-                            if 'Table' in  item.name:
+                            if ('Table' in  pset.name or 'Table' in item.name) and ('_' in item.name or ('Dimension' in item.name and 'Dimension' in pset.name)):
+                                # if '_' in item.name:
+                                #     names = item.name.split('_')
+                                # else:
+                                #names = ['Dimensions']
                                 names = item.name.split('_')
-
-                                title = names[0]
+                                title = names[0] if 'Table' in item.name  else 'Dimensions' 
+                                
+                                # title = names[0]
                                 if props.show_description:
                                     name_prop = item.description
                                 else:
-                                    name_prop = names[1]
+                                    name_prop = names[len(names)-1]
                                 
                                 if title != old_title:
                                     rowb = box.row(align=True)
@@ -211,7 +216,8 @@ class Panel_Properties(bpy.types.Panel):
                                     if props.show_description:
                                         name_prop = f"{item.description} {item.datatype}" if item.description != '' else f"No description {item.datatype}"
                                     else:
-                                        name_prop = f"{item.name.split('_')[1]} {item.datatype}"
+                                        label_name = item.name.split('_')[len(item.name.split('_'))-1] if len(item.name.split('_')) > 0 else item.name  
+                                        name_prop = f"{label_name} {item.datatype}"
                                     
                                     col.label(text=name_prop)                                        
                                     titulos = titulos + item.name  

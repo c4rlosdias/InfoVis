@@ -4,6 +4,51 @@ import ifcopenshell
 import ifcopenshell.util.element
 import ifcopenshell.util.unit
 import bonsai.tool as tool
+import json
+import os
+
+_DESCRIPTION_INDEX = None
+
+def convert_camel_case(texto):
+    if not texto:
+        return ''
+    texto = texto.replace('_', ' ')
+    texto = ''.join(' ' + c if c.isupper() else c for c in texto).strip()
+    return texto.title()
+
+def _resources_path(filename):
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', filename)
+
+
+def _load_description_index():
+    index = {}
+    source_files = [
+        'subsea_flexible_pipes_2.1_completo.json',
+        'subsea_rigid_pipes_1.0_completo.json',
+    ]
+
+    for source_file in source_files:
+        with open(_resources_path(source_file), 'r', encoding='utf-8') as file:
+            payload = json.load(file)
+
+        for classe in payload.get('classes', []):
+            obj_class = classe.get('code', '')
+            for pset in classe.get('propertySets', []):
+                pset_name = pset.get('name', '')
+                for prop in pset.get('properties', []):
+                    prop_name = prop.get('name', '')
+                    key = (obj_class, pset_name, prop_name)
+                    index[key] = prop.get('description', '')
+
+    return index
+
+
+def get_description(obj_class, pset_name, prop_name):
+    global _DESCRIPTION_INDEX
+    if _DESCRIPTION_INDEX is None:
+        _DESCRIPTION_INDEX = _load_description_index()
+
+    return _DESCRIPTION_INDEX.get((obj_class, pset_name, prop_name), '')
 
 
 def set_prop_type(prop, value_prop):
@@ -99,14 +144,15 @@ def set_properties(props, ifc_obj, is_a, i):
     if ifc_obj is None:
         return i
     id = ifc_obj.id()
+    att = 'ElementType' if is_a == 'type' else 'ObjectType'
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False )        
-    for pset, _props in psets.items():             
-
+    for pset, _props in psets.items():                     
         _pset = get_pset(ifc_obj, pset)      
         table = {}    
         new_item = props.prop_metadata.add()            
         new_item.name = pset  
-        new_item.description = _pset.Description or ''
+        #new_item.description = _pset.Description or ''   
+        new_item.description = convert_camel_case(pset.split('_')[1]) if '_' in pset else pset        
         new_item.is_a = is_a 
         new_item.id_obj = id          
         new_item.index = i     
@@ -136,7 +182,7 @@ def set_properties(props, ifc_obj, is_a, i):
                 
             if prop != 'id':  
                 
-                if 'Table' in prop:
+                if ('Table' in pset or 'Table' in prop) and ('_' in prop or ('Dimension' in prop and 'Dimension' in pset)):
                     _prop = get_property(ifc_obj, pset, prop)
                     table[f'{prop}||{_prop.Description}']=value
                 else:               
@@ -151,8 +197,9 @@ def set_properties(props, ifc_obj, is_a, i):
                         if type_prop == 'IfcPropertyListValue':
                             for item_prop in value:    
                                 new_prop = new_item.props.add() 
-                                new_prop.name = prop
-                                new_prop.description = _prop.Description if _prop.Description is not None else ''
+                                new_prop.name = prop                                
+                                #new_prop.description = _prop.Description if _prop.Description is not None else ''
+                                new_prop.description = get_description(getattr(ifc_obj, att, ''), pset, prop)
                                 new_prop.datatype = get_unit(ifc_obj, pset, prop)
                                 new_prop.index = j      
                                 new_prop.type_prop = type_prop                                     
@@ -161,7 +208,8 @@ def set_properties(props, ifc_obj, is_a, i):
                         if type_prop == 'IfcPropertyEnumeratedValue':  
                             new_prop = new_item.props.add()                             
                             new_prop.name = prop  
-                            new_prop.description = _prop.Description if _prop.Description is not None else ''
+                            #new_prop.description = _prop.Description if _prop.Description is not None else ''
+                            new_prop.description = get_description(getattr(ifc_obj, att, ''), pset, prop)
                             new_prop.index = j      
                             new_prop.type_prop = type_prop   
                             new_prop.datatype = get_unit(ifc_obj, pset, prop)                                                        
@@ -177,7 +225,8 @@ def set_properties(props, ifc_obj, is_a, i):
                         _prop = get_property(ifc_obj, pset, prop)
                         new_prop = new_item.props.add()  
                         new_prop.name = prop
-                        new_prop.description = _prop.Description if _prop.Description is not None else ''
+                        #new_prop.description = _prop.Description if _prop.Description is not None else ''
+                        new_prop.description = get_description(getattr(ifc_obj, att, ''), pset, prop)
                         new_prop.datatype = get_unit(ifc_obj, pset, prop)
                         new_prop.index = j                                                
                         set_prop_type(new_prop, value)        
@@ -220,21 +269,6 @@ def refresh_props(context):
             ifc_obj = tool.Ifc.get_entity(obj)
             if ifc_obj is None:
                 return
-            # ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
-            # if getattr(ifc_obj_type, 'HasAssociations', None):
-            #     associations = ifc_obj_type.HasAssociations            
-            #     for association in associations:
-            #         if association.is_a('IfcRelAssociatesDocument'):
-            #             props.has_document = True
-            #             document = association.RelatingDocument
-            #             newdocument = props.documents.add()
-            #             newdocument.name = document.Name
-            #             newdocument.identification = document.Identification
-            #             if document.Location:
-            #                 newdocument.location = str(document.Location)
-            #             else:
-            #                 newdocument.location = ''
-
             ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
 
             if ifc_obj.is_a('IfcTypeProduct'):

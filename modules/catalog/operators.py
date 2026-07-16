@@ -467,6 +467,9 @@ def get_qtde(type):
     if type.is_a('IfcPipeSegmentType'):
         for e in elements:
             pset = ifcopenshell.util.element.get_pset(e, "OGSubPset_FlexiblePipeSegmentOccurence")
+            if pset is None:
+                pset = ifcopenshell.util.element.get_pset(e, "OGSubPset_PhysicalCharacteristicOccurrence")
+            
             length = pset["NominalLength"] if "NominalLength" in pset else 0
             qtde += length
     else:

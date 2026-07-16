@@ -5390,7 +5390,7 @@
             {
               "code": "EarlyLeakMaxPressTb_PressValRef",
               "name": "EarlyLeakMaxPressTable_PressValRef",
-              "description": "Early Leak Maximum Pressure Table - Pressure Value Reference",
+              "description": "Pressure Value Reference",
               "definition": "Specifies the reference pressure used to determine the Early Leak Maximum Pressure value.",
               "dataType": "String",
               "units": null,
@@ -5579,7 +5579,7 @@
             {
               "code": "EarlyLeakNomPressTb_TensLimitValRef",
               "name": "EarlyLeakNomPressTable_TensLimitValRef",
-              "description": "Early Leak Nominal Pressure Table - Tensile Limit Value Reference",
+              "description": "Tensile Limit Value Reference",
               "definition": "Indicates the basis used to establish the tensile limit value during the Early Leak Nominal Pressure Test, ensuring the product's tensile strength is respected to avoid damage.",
               "dataType": "String",
               "units": null,
@@ -5644,7 +5644,7 @@
             {
               "code": "EarlyLeakNomPressTb_Press",
               "name": "EarlyLeakNomPressTable_Press",
-              "description": "Early Leak Nominal Pressure Table - Pressure",
+              "description": "Pressure",
               "definition": "The nominal pressure applied during the Early Leak Test, verifying standard operational conditions for leakage detection.",
               "dataType": "Real",
               "units": [
@@ -5658,7 +5658,7 @@
             {
               "code": "EarlyLeakMaxPressTb_TensLimit",
               "name": "EarlyLeakMaxPressTable_TensLimit",
-              "description": "Early Leak Maximum Pressure Table - Tensile Limit",
+              "description": "Tensile Limit",
               "definition": "Tensile limit condition that must be respected to avoid damaging the tested product.",
               "dataType": "Real",
               "units": [
@@ -5686,7 +5686,7 @@
             {
               "code": "EarlyLeakNomPressTb_PressValRef",
               "name": "EarlyLeakNomPressTable_PressValRef",
-              "description": "Early Leak Nominal Pressure Table - Pressure Value Reference",
+              "description": "Pressure Value Reference",
               "definition": "Specifies the reference pressure used to determine the Early Leak Nominal Pressure value.",
               "dataType": "String",
               "units": null,
@@ -5719,7 +5719,7 @@
             {
               "code": "EarlyLeakNomPressTb_PressValRefMult",
               "name": "EarlyLeakNomPressTable_PressValRefMult",
-              "description": "Early Leak Nominal Pressure Table - Pressure Value Reference Multiplier",
+              "description": "Pressure Value Reference Multiplier",
               "definition": "The multiplier applied to the reference pressure to determine the Early Leak Nominal Pressure value.",
               "dataType": "Real",
               "units": null,
@@ -5731,7 +5731,7 @@
             {
               "code": "EarlyLeakMaxPressTb_TensLimitValRef",
               "name": "EarlyLeakMaxPressTable_TensLimitValRef",
-              "description": "Early Leak Maximum Pressure Table - Tensile Limit Value Reference",
+              "description": "Tensile Limit Value Reference",
               "definition": "Indicates the basis used to establish the tensile limit value during the Early Leak Maximum Pressure Test, ensuring the product's tensile strength is respected to avoid damage.",
               "dataType": "String",
               "units": null,
@@ -5825,7 +5825,7 @@
             {
               "code": "EarlyLeakMaxPressTb_PressValRefMult",
               "name": "EarlyLeakMaxPressTable_PressValRefMult",
-              "description": "Early Leak Maximum Pressure Table - Pressure Value Reference Multiplier",
+              "description": "Pressure Value Reference Multiplier",
               "definition": "The multiplier applied to the reference pressure to determine the Early Leak Maximum Pressure value.",
               "dataType": "Real",
               "units": null,
@@ -5837,7 +5837,7 @@
             {
               "code": "EarlyLeakMaxPressTb_PressIntValStrat",
               "name": "EarlyLeakMaxPressTable_PressIntValStrat",
-              "description": "Early Leak Maximum Pressure Table - Pressure Intermediate Values Strategy",
+              "description": "Pressure Intermediate Values Strategy",
               "definition": "Strategy used to calculate intermediate values between maximum conditions during the Early Leak Test.",
               "dataType": "String",
               "units": null,
@@ -5860,7 +5860,7 @@
             {
               "code": "EarlyLeakMaxPressTb_Press",
               "name": "EarlyLeakMaxPressTable_Press",
-              "description": "Early Leak Maximum Pressure Table - Pressure",
+              "description": "Pressure",
               "definition": "The maximum pressure applied during the Early Leak Test, verifying resistance under extreme pressure conditions.",
               "dataType": "Real",
               "units": [
@@ -5874,7 +5874,7 @@
             {
               "code": "EarlyLeakNomPressTb_TensLimit",
               "name": "EarlyLeakNomPressTable_TensLimit",
-              "description": "Early Leak Nominal Pressure Table - Tensile Limit",
+              "description": "Tensile Limit",
               "definition": "Tensile limit condition that must be respected to avoid damaging the tested product.",
               "dataType": "Real",
               "units": [
@@ -6067,7 +6067,7 @@
             {
               "code": "EarlyLeakNomPressTb_PressIntValStrat",
               "name": "EarlyLeakNomPressTable_PressIntValStrat",
-              "description": "Early Leak Nominal Pressure Table - Pressure Intermediate Values Strategy",
+              "description": "Pressure Intermediate Values Strategy",
               "definition": "Strategy used to calculate intermediate Pressure values between nominal conditions during the Early Leak Test.",
               "dataType": "String",
               "units": null,
