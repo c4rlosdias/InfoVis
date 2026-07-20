@@ -98,7 +98,7 @@ class Panel_Properties(bpy.types.Panel):
                     if old_is_a != pset.is_a:
                         if pset.is_a == 'instance':
                             row = layout.row()
-                            row.label(text="Occurence Properties:", icon='HOLDOUT_OFF') 
+                            row.label(text="Occurrence Properties:", icon='HOLDOUT_OFF') 
                             row = layout.row()
                         else:
                             row = layout.row()
@@ -112,7 +112,7 @@ class Panel_Properties(bpy.types.Panel):
                         icon = 'TRIA_RIGHT'
                     row.operator("props.expand", icon=icon, text="").index = pset.index
                     if props.show_description:
-                        row.label(text=pset.description, icon='COPY_ID') 
+                        row.label(text=pset.description if pset.description else pset.name, icon='COPY_ID') 
                     else:
                         row.label(text=pset.name, icon='COPY_ID')                   
                          
@@ -240,7 +240,10 @@ class Panel_Properties(bpy.types.Panel):
                                         icon = 'BLANK'
 
                                     rowb.label(text=prop_name)
-                                    
+                                    op = rowb.operator("settings.add_ifc_label_property", icon='ADD', text="")
+                                    op.field_name = f"{pset.name}.{item.name}"
+                                    op.display_name = item.description if item.description else item.name
+                                     
 
                                 if item.type_prop == 'IfcPropertyEnumeratedValue':
                                     rowb = box.row(align=True)   

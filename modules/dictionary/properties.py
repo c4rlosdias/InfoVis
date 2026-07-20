@@ -18,7 +18,7 @@ class Class_info(PropertyGroup):
     uri         : StringProperty(name='uri')    
     propertyset : StringProperty(name='property set')
     has_children: BoolProperty(name="has children")    
-    is_hidden   : BoolProperty(name="is Hidded", default=True)
+    is_hidden   : BoolProperty(name="is hidden", default=True)
     is_expanded : BoolProperty(name="Is Expanded", default=True)
     index       : IntProperty(name="index")
     parent      : StringProperty(name="parent")

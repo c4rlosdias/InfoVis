@@ -276,12 +276,14 @@ def build_products(context, classe, c, level, parent, hide, children):
     new_product.tag          = classe["tag"]
     new_product.description  = classe['description']   
     new_product.element_type = classe["element_type"] 
-    new_product.index        =   c  
+    new_product.index        = c  
     new_product.level        = level
     new_product.parent       = parent
     new_product.is_expanded  = False
     new_product.is_hidden    = hide
     new_product.has_children = children
+    new_product.qtde = classe["qtde"] if "qtde" in classe else 0
+    new_product.unit = classe["unit"] if "unit" in classe else ''
     return c
 
 

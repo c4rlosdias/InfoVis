@@ -5,7 +5,7 @@ from bpy.props import *
 
 class Container(PropertyGroup):
     has_children  : BoolProperty(name="has children")    
-    is_hidden     : BoolProperty(name="is Hidded", default=True)
+    is_hidden     : BoolProperty(name="is hidden", default=True)
     is_expanded   : BoolProperty(name="Is Expanded", default=True)
     is_selected   : BoolProperty(name="Is Selected")
     index         : IntProperty(name="index")

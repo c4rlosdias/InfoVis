@@ -18,6 +18,12 @@ __pycache__/
 /files
 .releases
 /releases
+.outputs
+/outputs
+./Example
+/Example
+.claude
+.agents
 
 # Distribution / packaging
 .Python
@@ -27,11 +33,11 @@ dist/
 downloads/
 eggs/
 .eggs/
+*.zip
 lib64/
 parts/
 sdist/
 var/
-wheels/
 share/python-wheels/
 *.egg-info/
 .installed.cfg

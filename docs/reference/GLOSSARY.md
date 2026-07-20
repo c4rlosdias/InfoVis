@@ -1,88 +1,92 @@
-# Glossario e Referencia Rapida
+# Glossary and Quick Reference
 
-## Termos principais
+## Main Terms
 
 **InfoVis**
-- add-on para Blender voltado a visualizacao e enriquecimento de dados IFC
-- nome definido em `bl_info` em `__init__.py`
+- Blender add-on for visualizing and enriching IFC data
+- name defined in `bl_info` inside `__init__.py`
 
 **Add-on**
-- extensao carregada pelo Blender
-- registrada por classes Python derivadas de tipos como `bpy.types.Operator`, `bpy.types.Panel` e `bpy.types.PropertyGroup`
+- extension loaded by Blender
+- registered through Python classes derived from types such as
+  `bpy.types.Operator`, `bpy.types.Panel`, and `bpy.types.PropertyGroup`
 
 **Blender**
-- aplicacao hospedeira do add-on
-- fornece API Python, UI, handlers e `msgbus`
+- host application for the add-on
+- provides the Python API, UI, handlers, and `msgbus`
 
-**Contexto**
-- objeto `bpy.context`
-- concentra acesso a cena, objeto ativo, preferencias e estado da interface
+**Context**
+- `bpy.context` object
+- central access point for the scene, active object, preferences, and UI state
 
 **Bonsai**
-- ecossistema BIM usado pelo projeto para acesso a dados IFC no Blender
+- BIM ecosystem used by the project to access IFC data in Blender
 
-## Termos IFC e integracao
+## IFC and Integration Terms
 
 **IFC**
-- formato aberto para dados de construcao
-- usado como base para leitura de elementos, propriedades, documentos e relacoes
+- open format for construction data
+- used as the basis for reading elements, properties, documents, and
+  relationships
 
 **IFC Entity**
-- entidade individual dentro de um arquivo IFC
-- exemplos comuns: `IfcWall`, `IfcPipeSegment`, `IfcDistributionElement`
+- individual entity inside an IFC file
+- common examples: `IfcWall`, `IfcPipeSegment`, `IfcDistributionElement`
 
 **bSDD**
 - buildingSMART Data Dictionary
-- dicionario externo consultado por `data/bsdd.py`
+- external dictionary queried by `data/bsdd.py`
 
 **GUID / GlobalId**
-- identificador unico de uma entidade IFC
+- unique identifier of an IFC entity
 
 **Pset**
-- conjunto de propriedades associado a um elemento
+- property set associated with an element
 
 **IDS**
 - Information Delivery Specification
-- pode ser exportado a partir de operadores do dominio `dictionary`
+- can be exported through operators in the `dictionary` domain
 
 **CDE**
 - Common Data Environment
-- integracao apoiada por `data/cde.py`
+- integration supported by `data/cde.py`
 
-## Termos internos do projeto
+## Internal Project Terms
 
 **PropertyGroup**
-- estrutura de dados registrada no Blender
-- definida em `modules/*/properties.py` e agregada em `modules/og_properties.py`
+- data structure registered in Blender
+- defined in `modules/*/properties.py` and aggregated in
+  `modules/og_properties.py`
 
 **OG_Properties**
-- agregador central de estado do add-on
-- fica em `context.scene.og_props`
+- central state aggregator for the add-on
+- available at `context.scene.og_props`
 
 **Operator**
-- acao executavel exposta ao usuario
-- normalmente localizada em `modules/*/operators.py`
+- executable action exposed to the user
+- usually located in `modules/*/operators.py`
 
 **Panel**
-- componente visual na sidebar da View3D
-- normalmente localizado em `modules/*/panels.py`
+- visual component in the View3D sidebar
+- usually located in `modules/*/panels.py`
 
 **UIList**
-- lista visual usada para exibir colecoes Blender com selecao e interacao
+- visual list used to display Blender collections with selection and
+  interaction
 
 **CollectionProperty**
-- colecao tipada usada para armazenar listas dentro de `PropertyGroup`s
+- typed collection used to store lists inside `PropertyGroup`s
 
 **Handler**
-- funcao registrada em eventos do Blender, como carregamento de arquivo
+- function registered for Blender events, such as file loading
 
 **msgbus**
-- mecanismo de observacao do Blender usado para reagir a mudancas no objeto ativo
+- Blender observation mechanism used to react to active-object changes
 
 **AddonPreferences**
-- preferencias persistentes do add-on, definidas em `OilGasAddonPreferences`
+- persistent add-on preferences defined in `OilGasAddonPreferences`
 
-## Estrutura do repositorio
+## Repository Structure
 
 ```text
 InfoVis/
@@ -90,8 +94,11 @@ InfoVis/
 |-- auth.py
 |-- data/
 |   |-- bsdd.py
+|   |-- bsdd_dictionary.py
 |   |-- catalog.py
 |   |-- cde.py
+|   |-- config_profile.py
+|   |-- decomposition_views.py
 |   |-- ifc_utils.py
 |   `-- tree.py
 |-- modules/
@@ -101,34 +108,35 @@ InfoVis/
 |   |-- dictionary/
 |   |-- decomposition/
 |   |-- catalog/
+|   |-- analysis/
 |   |-- connections/
 |   |-- props/
 |   |-- settings/
 |   `-- types/
 |-- resources/
-|-- libs311/
-`-- libs313/
+`-- wheels/
 ```
 
-## Referencia rapida de codigo
+## Quick Code Reference
 
-### Acessar o estado principal
+### Access the Main State
 
 ```python
 props = bpy.context.scene.og_props
 print(len(props.classes))
 ```
 
-### Acessar preferencias do add-on
+### Access Add-on Preferences
 
 ```python
 prefs = bpy.context.preferences.addons["InfoVis"].preferences
 print(prefs.cde_url)
 ```
 
-Se o pacote tiver sido instalado com outro nome de pasta, a chave em `addons[...]` deve seguir o nome real do pacote carregado pelo Blender.
+If the package was installed with another folder name, the key in
+`addons[...]` must match the real package name loaded by Blender.
 
-### Chamar operadores comuns
+### Call Common Operators
 
 ```python
 bpy.ops.bsdd.get_prop()
@@ -136,23 +144,23 @@ bpy.ops.props.load_properties()
 bpy.ops.og.login()
 ```
 
-### Adicionar item em colecao Blender
+### Add an Item to a Blender Collection
 
 ```python
 item = props.classes.add()
-item.name = "Novo item"
+item.name = "New item"
 ```
 
-### Consultar autenticacao
+### Check Authentication
 
 ```python
 import InfoVis.auth as auth
 print(auth.is_authenticated())
 ```
 
-## Convencoes usadas no codigo
+## Code Conventions
 
-### Classes Blender
+### Blender Classes
 
 ```python
 class Operator_get_properties(bpy.types.Operator):
@@ -170,7 +178,7 @@ bl_idname = "props.load_properties"
 bl_idname = "og.login"
 ```
 
-### Funcoes auxiliares
+### Helper Functions
 
 ```python
 refresh_classes()
@@ -178,23 +186,24 @@ refresh_props()
 build_classes()
 ```
 
-## Padroes recorrentes
+## Recurring Patterns
 
-**Estado centralizado**
-- os paineis e operadores leem e escrevem principalmente em `context.scene.og_props`
+**Centralized state**
+- panels and operators mainly read and write through `context.scene.og_props`
 
-**Refresh apos mutacao**
-- alteracoes em colecoes ou selecao costumam ser seguidas por chamadas de `refresh_*()` em `data/tree.py` ou `data/ifc_utils.py`
+**Refresh after mutation**
+- collection or selection changes are often followed by `refresh_*()` calls in
+  `data/tree.py` or `data/ifc_utils.py`
 
-**Registro centralizado**
-- toda nova classe Blender deve entrar em `modules/__init__.py`
+**Centralized registration**
+- every new Blender class must be added to `modules/__init__.py`
 
-**Separacao por dominio**
-- UI, operadores e dados ficam organizados por dominio funcional em `modules/`
+**Domain separation**
+- UI, operators, and data are organized by functional domain in `modules/`
 
-## Debug rapido
+## Quick Debugging
 
-### Console Python do Blender
+### Blender Python Console
 
 ```python
 import bpy
@@ -208,7 +217,7 @@ print(auth.is_authenticated())
 print(hasattr(props, "classes"))
 ```
 
-### Recarregar um modulo
+### Reload a Module
 
 ```python
 import importlib
@@ -217,29 +226,32 @@ import InfoVis.data.bsdd as bsdd
 importlib.reload(bsdd)
 ```
 
-## Problemas comuns
+## Common Problems
 
-**Operador nao aparece na interface**
-- a classe nao foi adicionada a `modules/__init__.py`
-- o arquivo nao foi recarregado no Blender depois da mudanca
+**Operator does not appear in the UI**
+- the class was not added to `modules/__init__.py`
+- the file was not reloaded in Blender after the change
 
-**PropertyGroup nao persiste**
-- o tipo nao foi registrado antes de `OG_Properties`
-- a propriedade nao foi anexada corretamente ao agregador central ou a `Scene`
+**PropertyGroup does not persist**
+- the type was not registered before `OG_Properties`
+- the property was not correctly attached to the central aggregator or to
+  `Scene`
 
-**Erro de contexto no Blender**
-- operador ou funcao foi chamado fora do contexto esperado pela UI ou pelo objeto ativo
+**Blender context error**
+- an operator or function was called outside the expected UI or active-object
+  context
 
-**ImportError de dependencia cientifica**
-- ambiente Blender nao encontrou as bibliotecas embarcadas ou faltou instalacao dinamica fora do Windows
+**Scientific dependency ImportError**
+- the Blender environment did not find the bundled libraries or dynamic
+  installation outside Windows failed
 
-**Dados nao atualizam ao trocar selecao**
-- verificar handlers, assinatura de `msgbus` e funcoes de `refresh_*()`
+**Data does not update when selection changes**
+- check handlers, the `msgbus` subscription, and `refresh_*()` functions
 
-## Recursos externos
+## External Resources
 
-| Recurso | Link |
-|---------|------|
+| Resource | Link |
+|----------|------|
 | Blender API | https://docs.blender.org/api/current/ |
 | IfcOpenShell | https://docs.ifcopenshell.org/ |
 | buildingSMART | https://www.buildingsmart.org/ |

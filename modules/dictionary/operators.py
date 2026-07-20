@@ -62,7 +62,8 @@ class Operator_get_properties(bpy.types.Operator):
         props = context.scene.og_props
         props.add_prop_clicked = False        
         props.ifc_prop.clear()
-        result = bSDD.load_properties(props.dictionary)
+        bSDD.set_uri(props.dictionary)
+        result = bSDD.load_properties()
         if result:
             for property in bSDD.data_prop:  
                 new_prop = props.ifc_prop.add() 
@@ -77,7 +78,7 @@ class Operator_get_properties(bpy.types.Operator):
 
 
 class Operator_uri(bpy.types.Operator):
-    """acerra a uri na propriedade no bSDD"""
+    """Open the property URI in bSDD."""
     bl_idname  = "object.uri"
     bl_label   = "uri property"
     bl_options = {"REGISTER", "UNDO"}
@@ -286,7 +287,7 @@ class Operator_export_ids(bpy.types.Operator):
         my_ids = ids.Ids(
             title='Oil & Gas Subsea',
             copyright='Petrobras',
-            author='ÇERTI',
+            author='CERTI',
             description='Requirements for properties at subsea projects Oil&Gas',
             purpose='',
             milestone=''

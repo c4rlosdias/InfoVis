@@ -103,11 +103,11 @@ class PropTempl:
     # Add properties and unit to elements
     @classmethod
     def add_pset_template(cls, metadata):
-        # Verificar se o arquivo existe, se não criar um
+        # Ensure the template file exists; create one if needed.
         if cls.template is None:
             cls.get_template()
 
-        # Abre o arquivo com os tipos dos valores de acordo com a unidade
+        # Load value types by unit.
         units_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', 'units.json')
         with open(units_path, 'r') as file:
             d_types = json.load(file)
@@ -128,7 +128,7 @@ class PropTempl:
         else:
             template_type = 'P_SINGLEVALUE'
 
-        # Seleciona o data type correto
+        # Select the correct data type.
         if metadata['dataType'] == 'Boolean':
             data_type = 'IfcBoolean'
         elif metadata['dataType'] == 'String':
@@ -142,7 +142,7 @@ class PropTempl:
                 unit = ''
             data_type = d_types[unit] if unit in d_types else 'IfcReal'
 
-        # ser for uma propriedade com valores validos, cria uma propriedade enumedada
+        # If the property has allowed values, create an enumerated property.
         if "allowedValues" in metadata:
             template_type = 'P_ENUMERATEDVALUE'
             values = []
@@ -158,12 +158,12 @@ class PropTempl:
         else:
             enumerators = None
 
-        # Para cada classe criar a propriedade conforme o pset
+        # Create the property for each class according to the Pset.
         for classe in metadata['propertyClasses']:
             pset_name = classe['propertySet']
             object_type = classe['code']
 
-            # verifica para qual classe ifc o pset deve ser usadado
+            # Check which IFC class the Pset should apply to.
             result = bSDD.get_class(classe['uri'])
             if result:
                 if 'relatedIfcEntityNames' in bSDD.data_info_class:
@@ -176,7 +176,7 @@ class PropTempl:
             else:
                 ifc_class = 'IfcObject, IfcObjectType'
 
-            # se o pset já existe no arquivo, edita ele
+            # If the Pset already exists in the file, edit it.
             search = selector.filter_elements(cls.template, f"IfcPropertySetTemplate, Name={pset_name}")
             aplicable_entity = f'{ifc_class}/{object_type}' if ifc_class != 'IfcMaterial' else ifc_class
             if len(search) > 0:                 
@@ -190,14 +190,14 @@ class PropTempl:
                     attributes = attributes 
                 )
             else:
-                # caso contrario cria o pset
+                # Otherwise, create the Pset.
                 pset_templ = ifcopenshell.api.pset_template.add_pset_template(
                     cls.template,
                     name=pset_name,
                     applicable_entity= aplicable_entity
                 )
 
-            # Se existe a propriedade naquele pset edita ela
+            # If the property exists in that Pset, edit it.
             prop_templ = cls.get_prop(prop_name, pset_name, cls.template)
             if prop_templ is not None:
                 prop_templ.Description=description
@@ -207,7 +207,7 @@ class PropTempl:
             
 
             else:
-                # caso contrario cria a propriedade
+                # Otherwise, create the property.
                 property_template = ifcopenshell.api.pset_template.add_prop_template(
                     cls.template,
                     description=definition,
@@ -217,7 +217,7 @@ class PropTempl:
                     template_type = template_type,                    
                 )
                 property_template.Enumerators=enumerators            
-        # grava o template
+        # Write the template.
         
         if cls.filepath is not None:
             cls.template.write(cls.filepath)

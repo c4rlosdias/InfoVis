@@ -3,10 +3,31 @@ import ifcopenshell
 import ifcopenshell.util.element
 import bonsai.tool as tool
 
+from . import decomposition_views
 from .ifc_utils import refresh_props
 
 last_active = None
+views = None
+views_by_id = None
 
+
+def load_views(force=False):
+    global views, views_by_id
+
+    if views is None or views_by_id is None or force:
+        views = decomposition_views.load_views()
+        views_by_id = {view['id']: view for view in views}
+
+    return views
+
+
+def get_view(view_id):
+    load_views()
+    return views_by_id[view_id]
+
+
+def __init__():
+    load_views()
 
 def refresh_layers(context):
     obj = context.view_layer.objects.active
@@ -31,7 +52,7 @@ def refresh_layers(context):
         new_layer.description = element.get_info() or ''
 
 
-# Call back para carregar as propriedades ao mudar o objeto ativo
+# Callback used to load properties when the active object changes.
 def call_back():
     try:
         bpy.ops.props.load_properties()
@@ -46,7 +67,7 @@ def call_back():
     except Exception as e:
         print(f"[call_back] refresh_layers error: {e}")
 
-# Handler para carregar as propriedades ao mudar o objeto ativo
+# Handler used to load properties when the active object changes.
 def on_active_object_change(scene):
     global last_active
     obj = bpy.context.view_layer.objects.active
@@ -55,45 +76,42 @@ def on_active_object_change(scene):
         bpy.ops.props.load_properties()
 
 
-def load_contained_elements_by_decomposition(container: ifcopenshell.entity_instance, name_props: str, context : bpy.types.Context ) -> None:
-            props = context.scene.og_props        
-            def get_decomposition(element: ifcopenshell.entity_instance, is_recursive : bool) -> set[ifcopenshell.entity_instance]:
-
+def load_contained_elements_by_decomposition(container: ifcopenshell.entity_instance, view_id : str, name_props: str, context : bpy.types.Context ) -> None:
+            props = context.scene.og_props    
+            #view_id = 'assets'
+                
+            def get_decomposition(element: ifcopenshell.entity_instance, view_id: str, is_recursive : bool) -> set[ifcopenshell.entity_instance]:
+                data_view = get_view(view_id)
                 queue = [element]            
                 results = []
-
+          
                 while queue:
                     element = queue.pop()
-                    for rel in getattr(element, "IsGroupedBy", []):
-                        related = rel.RelatedObjects
-                        queue.extend(related)
-                        results.extend(related) 
-                    for rel in getattr(element, "ContainsElements", []):
-                        related = rel.RelatedElements
-                        queue.extend(related)
-                        results.extend(related)      
-                    for rel in getattr(element, "IsDecomposedBy", []):
-                        related = rel.RelatedObjects
-                        queue.extend(related)
-                        results.extend(related)
-                    for rel in getattr(element, "IsNestedBy", []):
-                        related = rel.RelatedObjects
-                        if related[0].is_a("IfcDistributionPort"):
-                            continue
-                        queue.extend(related)
-                        results.extend(related)
+                    for relation in data_view['relations']:
+                        element_attribute, relationship_attribute = decomposition_views.get_relation_attributes(relation)
+                        for rel in getattr(element, element_attribute, []):
+                            related = getattr(rel, relationship_attribute, [])
+                            if not related:
+                                continue
+                            if related and not isinstance(related, (list, tuple)):
+                                related = [related]
+                            if related and related[0].is_a("IfcDistributionPort"):
+                                continue
+                            queue.extend(related)
+                            results.extend(related)
                     if not is_recursive:
                         break
                 return results
+
 
             def add_elements(elements, name_props, level=1):                
                 for element in elements:                                            
                     new = getattr(props, name_props).add()
                     
-                    new.name = element.Name or 'Unnamed'
-                    new.type = element.is_a()
+                    new.name  = element.Name or 'Unnamed'
+                    new.type  = element.is_a()
                     new.level = level 
-                    new.id = element.id()                
+                    new.id    = element.id()                
                      
                     if hasattr(element, "ObjectType") and element.ObjectType:
                         new.object_type = element.ObjectType
@@ -104,7 +122,7 @@ def load_contained_elements_by_decomposition(container: ifcopenshell.entity_inst
 
                     children = [
                         e
-                        for e in get_decomposition(element, is_recursive=False)
+                        for e in get_decomposition(element, view_id=view_id, is_recursive=False)
                         if not e.is_a("IfcFeatureElement")
                     ]
                     if children:
@@ -112,30 +130,33 @@ def load_contained_elements_by_decomposition(container: ifcopenshell.entity_inst
                         new.is_expanded = False
                         add_elements(children, name_props, level=level + 1)
             
-            getattr(props, name_props).clear()
-            elements = get_decomposition(container, is_recursive=False)
+            getattr(props, name_props).clear()            
+            #elements = get_decomposition(container, view_id=view_id, is_recursive=False)   
+            
+            elements = [container]        
             add_elements(elements, name_props)
 
 
 def draw_tree(layout, item, operators, attributes, property, only_children = False):
 
-    ''' Desenha uma árvore de classes, produtos ou tipos no layout do blender.
-            layout: layout do blender
-            item: item da coleção a ser desenhado
-            operators: operadores a serem adicionados para cada item
-            attributes: atributos a serem mostrados para cada item
-            property: nome da propriedade onde a coleção está armazenada
-            only_children: se True, mostra apenas os operadores para os itens que tem filhos, caso contrário, mostra para todos os itens
-        retorna o layout com a árvore desenhada
+    ''' Draw a class, product, or type tree in the Blender layout.
+            layout: Blender layout
+            item: collection item to draw
+            operators: operators to add for each item
+            attributes: attributes to show for each item
+            property: property name where the collection is stored
+            only_children: if True, show operators only for items with children;
+                           otherwise, show them for all items
+        returns the layout with the rendered tree
     '''
     if not item.is_hidden:
         
         row = layout.row(align=True)
-        # adiciona os ícones de hierarquia
+        # Add hierarchy icons.
         for _ in range(0, item.level - 1):
             row.label(text="", icon="BLANK1")
 
-        # adiciona o ícone de expandir/contrair    
+        # Add the expand/collapse icon.
         if item.has_children:
             if item.is_expanded:
                 op = row.operator("element.contract_tree", text="", emboss=False, icon="DISCLOSURE_TRI_DOWN")
@@ -148,11 +169,11 @@ def draw_tree(layout, item, operators, attributes, property, only_children = Fal
         else:
             row.label(text="", icon="BLANK1")
   
-        # adiciona os atributos do item
+        # Add item attributes.
         for att in attributes:            
             row.label(text=att[0], icon=att[1])  
         
-        # se não for para mostrar apenas os filhos ou se o item não tiver filhos, mostra os operadores
+        # Show operators unless only child items should expose them.
         if not only_children or not item.has_children:
             for opt in operators:
                 op = row.operator(opt['name'], text=opt['text'] if 'text' in opt else "", icon=opt['icon'])
@@ -208,6 +229,8 @@ def refresh_types(context):
             new_item.description = classe.description
             new_item.level = classe.level
             new_item.element_type = classe.element_type
+            new_item.qtde = classe.qtde
+            new_item.unit = classe.unit
             new_item.index = classe.index
             new_item.has_children = classe.has_children
             new_item.is_expanded = classe.is_expanded

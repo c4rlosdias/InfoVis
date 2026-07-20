@@ -1,10 +1,11 @@
-# Documentacao Concluida
+# Documentation Completed
 
 ## Status
 
-Este arquivo registra que a base documental principal do projeto foi consolidada e atualizada para a estrutura atual do repositrio `InfoVis`.
+This file records that the project's main documentation base has been
+consolidated and updated to match the current `InfoVis` repository structure.
 
-Documentos que devem ser tratados como fonte primaria:
+Documents that should be treated as primary sources:
 
 - `README.md`
 - `docs/ARCHITECTURE.md`
@@ -15,30 +16,37 @@ Documentos que devem ser tratados como fonte primaria:
 - `docs/guides/DATA_DOCUMENTATION.md`
 - `docs/reference/GLOSSARY.md`
 
-## O que foi ajustado
+## What Was Adjusted
 
-- remocao de referencias a arquivos que nao existem mais, como `README_DOCUMENTATION.md`, `DOCUMENTATION.md` e `INDICE_COMPLETO.md`
-- alinhamento do nome do produto para `InfoVis`
-- revisao da estrutura real do repositorio, baseada em `modules/`, `data/`, `resources/`, `libs311/` e `libs313/`
-- correcao do fluxo de instalacao e empacotamento do add-on para Blender
+- removed references to files that no longer exist, such as
+  `README_DOCUMENTATION.md`, `DOCUMENTATION.md`, and `INDICE_COMPLETO.md`
+- aligned the product name to `InfoVis`
+- reviewed the real repository structure, based on `modules/`, `data/`,
+  `resources/`, and `wheels/`
+- corrected the Blender add-on installation and packaging flow
+- added architecture and maintenance references that match the current codebase
 
-## Resultado esperado
+## Expected Result
 
-Depois dessa revisao, a documentacao principal deve:
+After this review, the main documentation should:
 
-- orientar corretamente a instalacao e o uso do add-on
-- refletir o registro real de classes e a organizacao modular do codigo
-- servir como base de onboarding tecnico para manutencao e evolucao
+- correctly guide installation and usage of the add-on
+- reflect the real class registration and modular code organization
+- serve as a technical onboarding base for maintenance and evolution
+- support MkDocs publication without broken navigation
 
-## Observacoes
+## Notes
 
-- `docs/extra/` deve ser lido como material complementar, nao como fonte normativa da arquitetura
-- sempre que houver mudanca estrutural no projeto, atualize primeiro `README.md`, `docs/ARCHITECTURE.md` e `docs/DEVELOPMENT.md`
-- os guias em `docs/guides/` devem acompanhar alteracoes relevantes em operadores, paineis, propriedades e camada de dados
+- `docs/extra/` should be read as complementary material, not as the normative
+  source for architecture
+- whenever there is a structural change in the project, update
+  `README.md`, `docs/ARCHITECTURE.md`, and `docs/DEVELOPMENT.md` first
+- the guides in `docs/guides/` should follow relevant changes in operators,
+  panels, properties, and the data layer
 
-## Proxima manutencao recomendada
+## Recommended Next Maintenance
 
-1. revisar a documentacao quando houver mudanca em `bl_info`, fluxo de release ou estrutura de modulos
-2. adicionar exemplos visuais de interface quando o layout dos paineis estabilizar
-3. manter os arquivos de apoio em `docs/extra/` curtos e historicamente corretos
-
+1. review the documentation whenever `bl_info`, the release flow, or module
+   structure changes
+2. add visual interface examples when the panel layout stabilizes
+3. keep supporting files in `docs/extra/` short and historically accurate

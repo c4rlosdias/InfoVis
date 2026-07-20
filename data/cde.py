@@ -1,127 +1,39 @@
 import requests
+import bonsai.tool as tool
 
 
 class CDE_Api:  
     def __init__(self, endpoint):
         self.endpoint = endpoint
     
-    def get_projects(self):
+    def get_projects(self, element):
         response = requests.get(f'{self.endpoint}/projects')
         if response.status_code == 200:
             return response.json()
         else:
             return None
     
-    def get_contracts(self):
-        contracts = [
-            {
-                "id": "ct1",
-                "name": "Contracto-001",
-                "objects": [
-                    {
-                        "id" : "TR-001",
-                        "name" : "Trench-001",
-                        "objects": [
-                            {
-                                "id" : "AC-001",
-                                "name" : "AC-001"
-                            },
-                            {
-                                "id" : "AC-002",
-                                "name" : "AC-002"
-                            }
-                        ]
-                    },
-                    {
-                        "id" : "TR-002",
-                        "name" : "Trench-002",
-                        "objects": [
-                            {
-                                "id" : "AC-003",
-                                "name" : "AC-003"
-                            },
-                            {
-                                "id" : "AC-004",
-                                "name" : "AC-004"
-                            }
-                        ]
-                    }
-
-                ]
-            },
-            {
-                "id": "ct2",
-                "name": "Contracto-002",
-                "objects": [
-                    {
-                        "id" : "TR-003",
-                        "name" : "Trench-003",
-                        "objects": [
-                            {
-                                "id" : "AC-005",
-                                "name" : "AC-005"
-                            },
-                            {
-                                "id" : "AC-006",
-                                "name" : "AC-006"
-                            }
-                        ]
-                    },
-                    {
-                        "id" : "TR-004",
-                        "name" : "Trench-004",
-                        "objects": [
-                            {
-                                "id" : "AC-007",
-                                "name" : "AC-007"
-                            },
-                            {
-                                "id" : "AC-008",
-                                "name" : "AC-008"
-                            }
-                        ]
-                    }
-
-                ]
-            }
-        ]
-
+    def get_contracts(self, element):
+        contracts = []
+           
+        model = tool.Ifc.get()
+        entity = model.by_id(element.id)
+        assignment = entity.HasAssignments
+        if assignment:
+            for rel in assignment:
+                if rel.is_a("IfcRelAssignsToControl"):
+                    contract = rel.RelatingControl                   
+                    if contract.is_a("IfcProjectOrder"):
+                        contract_data = {
+                            "id"          : contract.GlobalId,
+                            "name"        : contract.Name,
+                            "description" : contract.Description,
+                        }
+                        contracts.append(contract_data)
         return contracts
 
-    def get_assets(self):
-        assets = [
-            {
-                "id": "as1",
-                "name": "Asset-001",
-                "objects": [
-                    {
-                        "id" : "AC-001",
-                        "name" : "AC-001"
-                    },
-                    {
-                        "id" : "AC-002",
-                        "name" : "AC-002"
-                    }
-                ]
-            },
-            {
-                "id": "as2",
-                "name": "Asset-002",
-                "objects": [
-                    {
-                        "id" : "AC-003",
-                        "name" : "AC-003"
-                    },
-                    {
-                        "id" : "AC-004",
-                        "name" : "AC-004"
-                    }
-                ]
-            }
-        ]
-        return assets
 
-    def get_inventory(self):
+    def get_inventory(self, element):
         inventory = [
             {
                 "id": "in1",
@@ -152,4 +64,6 @@ class CDE_Api:
                 ]
             }
         ]
+
+
         return inventory

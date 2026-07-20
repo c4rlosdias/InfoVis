@@ -5,7 +5,7 @@ from ...data.ifc_utils import add_connections
 
 
 class Operator_disconnect(bpy.types.Operator):
-    """Operator para desconectar um objeto selecionado"""
+    """Disconnect a selected object relationship."""
     bl_idname  = "conn.disconnect"
     bl_label   = "Disconnect Object"
     bl_options = {"REGISTER", "UNDO"} 
@@ -25,7 +25,7 @@ class Operator_disconnect(bpy.types.Operator):
         
 
 class Operator_select_object(bpy.types.Operator):
-    """Operator para selecionar objeto com eyedropper e atribuir à propriedade correta"""
+    """Select an object with the eyedropper and assign it to the target property."""
     bl_idname  = "conn.select_object"
     bl_label   = "Select Object"
     bl_options = {"REGISTER", "UNDO"} 
@@ -45,7 +45,7 @@ class Operator_select_object(bpy.types.Operator):
 
 
 class Operator_add_connect(bpy.types.Operator):
-    """Adiciona conexão selecionando objeto via UI"""
+    """Add a connection using objects selected in the UI."""
     bl_idname  = "conn.add_connect"
     bl_label   = "Add Connection"
     bl_options = {"REGISTER", "UNDO"}

@@ -1,41 +1,46 @@
-# Desenvolvimento do InfoVis
+# InfoVis Development
 
-## Objetivo deste guia
+## Purpose
 
-Este documento descreve como preparar o ambiente, iterar no add-on e empacotar releases do InfoVis sem perder aderencia a estrutura atual do repositorio.
+This guide explains how to prepare the environment, iterate on the add-on, and
+package InfoVis releases while staying aligned with the current repository
+structure.
 
-## Requisitos
+## Requirements
 
-- Blender 5.0 ou superior
-- acesso ao Python embarcado do Blender
+- Blender 5.0 or newer
+- access to Blender's embedded Python
 - Git
-- VS Code ou outro editor com suporte a Python
+- VS Code or another editor with Python support
 
-## Estrutura relevante para desenvolvimento
+## Development-Relevant Structure
 
-- `__init__.py`: entrada do add-on e registro de classes
-- `auth.py`: autenticacao e controle de sessao
-- `modules/`: operadores, paineis e `PropertyGroup`s por dominio
-- `data/`: integracoes e logica de apoio
-- `resources/`: arquivos JSON de apoio
-- `Example/`: arquivo IFC para testes manuais
-- `build_release.bat` e `build_release.sh`: empacotamento
+- `__init__.py`: add-on entry point and class registration
+- `auth.py`: authentication and session control
+- `modules/`: operators, panels, and domain `PropertyGroup`s
+- `data/`: integrations and support logic
+- `resources/`: supporting JSON files
+- `Example/`: IFC file for manual testing
+- `build_release.bat` and `build_release.sh`: packaging scripts
 
-## Preparacao do ambiente
+## Environment Setup
 
-### Dependencias Python
+### Python Dependencies
 
-O arquivo `requirements.txt` lista dependencias de apoio ao projeto. Em ambiente Blender, a execucao depende tambem das bibliotecas embarcadas nas pastas `libs311/` e `libs313/`.
+`requirements.txt` lists support dependencies for the project. In the Blender
+environment, runtime dependencies are bundled in `wheels/` and declared in
+`blender_manifest.toml`.
 
-No Windows, o add-on prioriza essas bibliotecas empacotadas. Em Linux e macOS, dependencias ausentes podem ser instaladas dinamicamente pelo proprio add-on quando ele e importado.
+Use Blender's extensions installation flow so these wheel dependencies are
+resolved during install.
 
-### Instalar o add-on para iteracao local
+### Install the Add-on for Local Iteration
 
-Fluxo recomendado:
+Recommended flow:
 
-1. trabalhe normalmente neste repositorio
-2. gere um zip instalavel com o script de build
-3. reinstale o zip no Blender quando precisar validar mudancas
+1. work normally in this repository
+2. generate an installable zip with the build script
+3. reinstall the zip in Blender whenever changes need validation
 
 Windows:
 
@@ -43,80 +48,84 @@ Windows:
 .\build_release.bat dev-local
 ```
 
-Linux ou macOS:
+Linux or macOS:
 
 ```bash
 ./build_release.sh dev-local
 ```
 
-O pacote gerado fica em `releases/dev-local.zip`.
+The generated package is written to `releases/dev-local.zip`.
 
-### Instalar no Blender
+### Install in Blender
 
-1. abra o Blender
-2. acesse `Edit > Preferences > Add-ons`
-3. clique em `Install from Disk`
-4. selecione o zip gerado em `releases/`
-5. habilite o add-on `InfoVis`
+1. open Blender
+2. go to `Edit > Preferences > Add-ons`
+3. click `Install from Disk`
+4. select the zip generated in `releases/`
+5. enable the `InfoVis` add-on
 
-## Fluxo de trabalho recomendado
+## Recommended Workflow
 
-1. altere o codigo em `modules/`, `data/`, `auth.py` ou `resources/`
-2. gere um novo zip com o script de build
-3. reinstale o add-on ou remova e instale novamente no Blender
-4. valide os paineis e operadores impactados com um arquivo IFC real
-5. repita o ciclo ate estabilizar a funcionalidade
+1. change code in `modules/`, `data/`, `auth.py`, or `resources/`
+2. generate a new zip with the build script
+3. reinstall or remove and reinstall the add-on in Blender
+4. validate affected panels and operators with a real IFC file
+5. repeat the cycle until the feature is stable
 
-## Onde fazer cada tipo de mudanca
+## Where to Make Each Kind of Change
 
-### Novo operador
+### New Operator
 
-1. adicione a classe em `modules/<dominio>/operators.py`
-2. registre a classe em `modules/__init__.py`
-3. exponha a acao no painel apropriado, se necessario
-4. use `data/` para encapsular acesso a IFC, bSDD ou CDE
+1. add the class in `modules/<domain>/operators.py`
+2. register the class in `modules/__init__.py`
+3. expose the action in the appropriate panel when needed
+4. use `data/` to encapsulate IFC, bSDD, or CDE access
 
-### Novo painel ou UIList
+### New Panel or UIList
 
-1. implemente em `modules/<dominio>/panels.py`
-2. registre em `modules/__init__.py`
-3. leia e escreva estado apenas por `context.scene.og_props` ou propriedades Blender relacionadas
+1. implement it in `modules/<domain>/panels.py`
+2. register it in `modules/__init__.py`
+3. read and write state only through `context.scene.og_props` or related
+   Blender properties
 
-### Novo `PropertyGroup`
+### New `PropertyGroup`
 
-1. declare o tipo no modulo de dominio correspondente
-2. registre o tipo antes de `OG_Properties`
-3. adicione a propriedade agregada em `modules/og_properties.py` quando o estado for compartilhado
+1. declare the type in the corresponding domain module
+2. register the type before `OG_Properties`
+3. add the aggregate property in `modules/og_properties.py` when the state is
+   shared
 
-### Nova integracao ou regra de negocio
+### New Integration or Business Rule
 
-Prefira colocar logica fora de `draw()` dos paineis. Se a funcionalidade conversar com APIs, arquivos IFC, catalogos ou transformacao de dados, o destino natural costuma ser `data/`.
+Prefer keeping logic out of panel `draw()` methods. If the feature talks to
+APIs, IFC files, catalogs, or data transformations, the natural destination is
+usually `data/`.
 
-## Regras praticas do projeto
+## Practical Project Rules
 
-- mantenha `modules/__init__.py` como fonte unica da ordem de registro
-- nao coloque logica pesada dentro de `Panel.draw()`
-- preserve o uso de `OG_Properties` como estado compartilhado entre modulos
-- trate dependencias multiplataforma considerando o carregamento de `libs311/` e `libs313/`
-- teste no Blender depois de qualquer alteracao que envolva registro, UI ou callbacks
+- keep `modules/__init__.py` as the single source of class registration order
+- do not put heavy logic inside `Panel.draw()`
+- preserve `OG_Properties` as the shared state between modules
+- keep `wheels/` aligned with the dependency list in `blender_manifest.toml`
+- test in Blender after any change involving registration, UI, or callbacks
 
-## Validacao manual
+## Manual Validation
 
-Use `Example/C3388.8_UN-31.ifc` como base para verificacoes manuais quando aplicavel.
+Use `Example/C3388.8_UN-31.ifc` as a baseline for manual checks when applicable.
 
-Checklist minimo:
+Minimum checklist:
 
-1. o add-on instala e habilita sem erro
-2. os paineis principais aparecem na barra lateral da View3D
-3. a selecao de objetos atualiza as informacoes do painel de propriedades
-4. operadores alterados executam sem excecao no console do Blender
-5. overlays ou listas afetadas refletem o novo estado apos refresh
+1. the add-on installs and enables without errors
+2. the main panels appear in the View3D sidebar
+3. object selection updates the properties panel information
+4. changed operators run without exceptions in the Blender console
+5. affected overlays or lists reflect the new state after refresh
 
-## Debug no Blender
+## Debugging in Blender
 
-O console Python do Blender pode ser usado para verificacoes rapidas.
+The Blender Python console can be used for quick checks.
 
-Exemplos uteis:
+Useful examples:
 
 ```python
 import bpy
@@ -130,30 +139,31 @@ print(auth.is_authenticated())
 print(hasattr(props, "classes"))
 ```
 
-Se o add-on foi instalado com outro nome de pasta, ajuste o import conforme o nome real do pacote no ambiente Blender.
+If the add-on was installed with another folder name, adjust the import to the
+actual package name in the Blender environment.
 
-## Processo de release
+## Release Process
 
-Os scripts de build fazem a montagem do pacote em `releases/InfoVis/` e depois geram um zip final.
+The build scripts assemble the package in `releases/InfoVis/` and then create a
+final zip file.
 
-Conteudo do pacote:
+Packaged content:
 
 - `__init__.py`
 - `auth.py`
 - `modules/`
 - `data/`
-- `libs311/`
-- `libs313/`
+- `wheels/`
 - `resources/`
 
-Antes de publicar um release:
+Before publishing a release:
 
-1. confirme a versao em `bl_info` dentro de `__init__.py`
-2. valide a instalacao do zip em um Blender limpo
-3. confira se recursos JSON e bibliotecas embarcadas estao incluidos
-4. registre as mudancas relevantes na documentacao principal
+1. confirm the version in `bl_info` inside `__init__.py`
+2. validate zip installation in a clean Blender environment
+3. confirm that JSON resources and bundled libraries are included
+4. record relevant changes in the main documentation
 
-## Documentacao relacionada
+## Related Documentation
 
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [guides/OPERATORS_DOCUMENTATION.md](guides/OPERATORS_DOCUMENTATION.md)
@@ -161,4 +171,3 @@ Antes de publicar um release:
 - [guides/PROPERTIES_DOCUMENTATION.md](guides/PROPERTIES_DOCUMENTATION.md)
 - [guides/DATA_DOCUMENTATION.md](guides/DATA_DOCUMENTATION.md)
 - [reference/GLOSSARY.md](reference/GLOSSARY.md)
-

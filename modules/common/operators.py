@@ -9,7 +9,7 @@ from gpu_extras.batch import batch_for_shader
 import bonsai.tool as tool
 import bpy_extras.view3d_utils
 
-from ...data.tree import refresh_tree
+from ...data.tree import refresh_tree, refresh_container
 
 
 # ---------------------------------------------------------------------------
@@ -17,6 +17,39 @@ from ...data.tree import refresh_tree
 # ---------------------------------------------------------------------------
 
 _ifc_label_handle = None
+
+
+def _pset_name_variants(pset_name):
+    variants = [pset_name]
+    if "Occurrence" in pset_name:
+        variants.append(pset_name.replace("Occurrence", "Occurence"))
+    elif "Occurence" in pset_name:
+        variants.append(pset_name.replace("Occurence", "Occurrence"))
+    return variants
+
+
+def _get_ifc_label_value(entity, field_name):
+    field_name = field_name.strip()
+    if not field_name:
+        return None
+
+    if '.' in field_name:
+        pset_name, _, prop_name = field_name.partition('.')
+        if not pset_name or not prop_name:
+            return None
+        try:
+            import ifcopenshell.util.element as ifc_util
+            psets = ifc_util.get_psets(entity) or {}
+        except Exception:
+            return None
+
+        for variant in _pset_name_variants(pset_name):
+            pset = psets.get(variant)
+            if pset and prop_name in pset:
+                return pset[prop_name]
+        return None
+
+    return getattr(entity, field_name, None)
 
 
 def _draw_ifc_label():
@@ -28,8 +61,8 @@ def _draw_ifc_label():
     if not og_props.show_ifc_label:
         return
 
-    attrs = [item.attr_name for item in og_props.ifc_label_attributes if item.attr_name]
-    if not attrs:
+    fields = [item for item in og_props.ifc_label_attributes if item.attr_name]
+    if not fields:
         return
 
     objs = context.selected_objects
@@ -67,20 +100,13 @@ def _draw_ifc_label():
 
         # --- Build text lines ---
         lines = []
-        for attr_name in attrs:
-            if '.' in attr_name:
-                pset_name, _, prop_name = attr_name.partition('.')
-                try:
-                    import ifcopenshell.util.element as ifc_util
-                    psets = ifc_util.get_psets(entity)
-                    value = psets.get(pset_name, {}).get(prop_name)
-                except Exception:
-                    value = None
-            else:
-                value = getattr(entity, attr_name, None)
+        for item in fields:
+            attr_name = item.attr_name.strip()
+            value = _get_ifc_label_value(entity, attr_name)
             if value is None:
                 continue
-            lines.append(f"{attr_name}: {value}")
+            label = item.display_name.strip() if item.display_name else attr_name
+            lines.append(f"{label}: {value}")
 
         if not lines:
             continue
@@ -320,3 +346,35 @@ class Select_object(bpy.types.Operator):
         else:
             self.report({'WARNING'}, f"Object '{self.obj_name}' not found.")
             return {'CANCELLED'}
+
+class Operator_common_set_tree_expansion(bpy.types.Operator):
+    """"""
+    bl_idname  = "common.set_tree_expansion"
+    bl_label   = "Set decomposition tree expansion"
+    bl_options = {"REGISTER", "UNDO"}
+
+    expand : bpy.props.BoolProperty(name="expand", default=True)
+    property : bpy.props.StringProperty(name="property", default="is_expanded")
+
+    def execute(self, context):
+        props = context.scene.og_props
+        prop = getattr(props, self.property, None)
+        if prop is None:
+            self.report({'ERROR'}, f"Property '{self.property}' not found in og_props.")
+            return {"CANCELLED"}
+        if len(prop) == 0:
+            self.report({'WARNING'}, "No decomposition tree loaded.")
+            return {"CANCELLED"}
+
+        for item in prop:
+            item.is_expanded = self.expand and item.has_children
+            item.is_hidden = False if self.expand else item.level != 1
+
+        refresh_container(context)
+        if len(props.containers_show) > 0:
+            props.active_element_index = min(
+                props.active_element_index,
+                len(props.containers_show) - 1
+            )
+
+        return {"FINISHED"}

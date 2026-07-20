@@ -1,0 +1,59 @@
+schema_version = "1.0.0"
+id = "infovis"
+version = "1.0.0"
+name = "InfoVis"
+tagline = "Viewer for info contained in IFC files for the oil and gas ind"
+maintainer = "Carlos Dias <cld@certi.org.br>"
+type = "add-on"
+website = "https://github.com/c4rlosdias/InfoVis"
+
+tags = ["3D View", "User Interface"]
+
+blender_version_min = "4.2.0"
+
+license = ["SPDX:GPL-3.0-or-later"]
+platforms = ["windows-x64"]
+
+wheels = [
+	"./wheels/certifi-2026.6.17-py3-none-any.whl",
+	"./wheels/charset_normalizer-3.4.9-cp313-cp313-win_amd64.whl",
+	"./wheels/colorama-0.4.6-py2.py3-none-any.whl",
+	"./wheels/contourpy-1.3.3-cp313-cp313-win_amd64.whl",
+	"./wheels/cycler-0.12.1-py3-none-any.whl",
+	"./wheels/elementpath-5.1.3-py3-none-any.whl",
+	"./wheels/et_xmlfile-2.0.0-py3-none-any.whl",
+	"./wheels/fonttools-4.63.0-cp313-cp313-win_amd64.whl",
+	"./wheels/idna-3.18-py3-none-any.whl",
+	"./wheels/ifctester-0.8.5-py3-none-any.whl",
+	"./wheels/kiwisolver-1.5.0-cp313-cp313-win_amd64.whl",
+	"./wheels/matplotlib-3.11.1-cp313-cp313-win_amd64.whl",
+	"./wheels/numpy-2.5.1-cp313-cp313-win_amd64.whl",
+	"./wheels/openpyxl-3.1.5-py2.py3-none-any.whl",
+	"./wheels/packaging-26.2-py3-none-any.whl",
+	"./wheels/pandas-3.0.3-cp313-cp313-win_amd64.whl",
+	"./wheels/pillow-12.3.0-cp313-cp313-win_amd64.whl",
+	"./wheels/pyparsing-3.3.2-py3-none-any.whl",
+	"./wheels/python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+	"./wheels/requests-2.34.2-py3-none-any.whl",
+	"./wheels/scipy-1.18.0-cp313-cp313-win_amd64.whl",
+	"./wheels/six-1.17.0-py2.py3-none-any.whl",
+	"./wheels/tqdm-4.69.0-py3-none-any.whl",
+	"./wheels/tzdata-2026.3-py2.py3-none-any.whl",
+	"./wheels/urllib3-2.7.0-py3-none-any.whl",
+	"./wheels/xmlschema-4.3.2-py3-none-any.whl",
+]
+
+[permissions]
+network = "CDE integrations for upload and download IFC files"
+files = "Import/export xlsx from/to disk"
+clipboard = "Copy and paste error logs"
+
+[build]
+paths_exclude_pattern = [
+	"__pycache__/",
+	".git",
+	"*.zip",
+    "Example/",
+    "docs/"
+]
+

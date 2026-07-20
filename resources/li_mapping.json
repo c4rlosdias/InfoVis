@@ -1,0 +1,135 @@
+{
+  "$schema_version": "1.0",
+  "description": "",
+  "reference_sheet": "Item List",
+  "source_types": {
+    "ifc_attribute": "Direct attribute from the IFC entity (for example: Name, Description, Tag, ObjectType, GlobalId)",
+    "ifc_property": "Property inside a Pset (read through ifcopenshell.util.element.get_psets / get_property)",
+    "ifc_quantity": "Quantity inside a Qto (IfcElementQuantity)",
+    "ifc_class": "IFC class/type of the occurrence, mapped to the project bSDD class",
+    "spatial": "Derived from the spatial hierarchy (IfcRelContainedInSpatialStructure / IfcRelNests)",
+    "aggregation_parent": "Attribute from an assembly ancestor (IfcRelNests / IfcRelAggregates), by level: 1=direct parent, 2=grandparent, etc.",
+    "computed": "Value calculated from a template or from other fields",
+    "manual": "No IFC v2.1 correspondence; manual entry or custom Pset (Pset_LI_Extra / Pset_Procurement)",
+    "not_applicable": "Item List control field with no relationship to the model (document status, free notes, etc.)"
+  },
+  "columns": [
+    {
+      "column": "Class",
+      "source_type": "ifc_class",
+      "source": {
+        "attribute": "ObjectType",
+        "mapping_table": "subsea_flexible_classes"
+      },
+      "notes": "Maps the IFC ObjectType or occurrence class (for example: FlexiblePipeSegment) to the English project class name through subsea_flexible_classes."
+    },
+    {
+      "column": "Id",
+      "source_type": "ifc_property",
+      "source": {
+        "pset": "OGSubPset_LineComponentTypeCommon",
+        "property": "IdInUnifilarDiagram"
+      },
+      "notes": ""
+    },
+    {
+      "column": "Name",
+      "source_type": "ifc_attribute",
+      "source": {
+        "attribute": "Name"
+      },
+      "notes": ""
+    },
+    {
+      "column": "Space",
+      "source_type": "computed",
+      "source": {
+        "method": "spatial_name_part",
+        "separator": "/"
+      },
+      "notes": "IfcSite/IfcBuilding do not distinguish platform/well in this model. The exporter walks the Nests/Decomposes chain until it finds an ancestor whose Name contains '/' (for example, root segment 'P-52/7-RO-25D-RJS') and returns the full name. Add 'part_index' (0 or 1) in Extra Fields to extract one side only."
+    },
+    {
+      "column": "Quantity",
+      "source_type": "ifc_quantity",
+      "source": {
+        "mapping_table": "quantity_by_class",
+        "quantity_mode": "mapping"
+      },
+      "notes": "Sums length for classes with a 'Length' rule in quantity_by_class (for example: FlexiblePipeSegment); counts occurrences for the other classes."
+    },
+    {
+      "column": "Unit",
+      "source_type": "computed",
+      "source": {
+        "derived_from": "Quantity",
+        "method": "quantity_unit_symbol"
+      },
+      "notes": "Derives 'm' or 'un' from the same quantity_by_class rule used by the Quantity column."
+    },
+    {
+      "column": "Segment",
+      "source_type": "aggregation_parent",
+      "source": {
+        "level": "1",
+        "attribute": "Name"
+      },
+      "notes": "Direct parent in the assembly chain (Nests/IfcRelAggregates). Empty if the occurrence has no assembly parent."
+    },
+    {
+      "column": "Pipeline",
+      "source_type": "aggregation_parent",
+      "source": {
+        "level": "2",
+        "attribute": "Name"
+      },
+      "notes": "Grandparent in the assembly chain (2 levels up). Add more columns with level=3, 4, etc. to walk further up."
+    }
+  ],
+  "subsea_flexible_classes": {
+    "FlexiblePipeSegment": "Segment",
+    "FlexiblePipeStructure": "Flexible Structure",
+    "EndFitting": "End Fitting",
+    "TopBendStiffener": "Top Bend Stiffener",
+    "IntermediateBendStiffener": "Intermediate Bend Stiffener",
+    "BendRestrictor": "Bend Restrictor",
+    "HangOffCollar": "Hang-Off Collar",
+    "StopperCollar": "Stopper Collar",
+    "PullInCollar": "Pull-In Collar",
+    "AnchoringCollar": "Anchoring Collar",
+    "DeadweightCollar": "Deadweight Collar",
+    "BuoyancyModule": "Buoyancy Module",
+    "AnodeCollarSet": "Anode Collar Set",
+    "HandlingCollar": "Handling Collar",
+    "PipePullingHead": "Pipe Pulling Head",
+    "UNSStudSet": "UNS Stud Set",
+    "MetricStudSet": "Metric Stud Set",
+    "UNSBoltSet": "UNS Bolt Set",
+    "MechanicalFastener": "Mechanical Fastener",
+    "RingGasket": "Ring Gasket",
+    "MetallicStrandSet": "Metallic Strand Set",
+    "Shackle": "Shackle",
+    "RepairKit": "Repair Kit"
+  },
+  "description_templates": {
+    "_comment": "Accepted placeholders: {attr.AttributeName} and {Pset_Name.PropertyName}. Literal strings between placeholders are kept as written.",
+    "FlexiblePipeSegment": "Flexible pipe segment; Segment code: {attr.Tag}; Length (m): {Pset_FlexiblePipeSegment.NominalLength}; Standard envelope: {Pset_FlexiblePipeSegment.StructureCode}; Line inner diameter (in): {Pset_FlexiblePipeSegment.NominalInsideDiameter}; Supply unifilar drawing: {Pset_LI_Extra.UnifilarDrawingNumber}; Design water depth (m): {Pset_FlexiblePipeSegment.MaxWaterDepth}",
+    "FlexiblePipeStructure": "Flexible structure {attr.Description}; Design pressure = {Pset_FlexiblePipeSegment.MaxOperatingPressure} psi; Design water depth = {Pset_FlexiblePipeSegment.MaxWaterDepth} m",
+    "EndFitting": "End fitting {attr.Description}; Flange {Pset_EndFitting.FlangeStandard} {Pset_EndFitting.FlangeNominalDiameter}; {Pset_EndFitting.FlangePressureRating} psi; ring {Pset_EndFitting.RingJointProfile}",
+    "AnodeCollarSet": "Anode collar set: {Pset_AnodeCollarSet.AnodeCollarsQuantity} collars; total mass {Pset_AnodeCollarSet.AnodeMass} kg; service life {Pset_AnodeCollarSet.ServiceLife} years",
+    "UNSStudSet": "Stud set {Pset_StudSet.StudStandard} {Pset_StudSet.StudSize}; {Pset_StudSet.StudQuantity} studs, {Pset_StudSet.NutQuantity} nuts; surface treatment {Pset_StudSet.SurfaceTreatment}",
+    "MetricStudSet": "Stud set {Pset_StudSet.StudStandard} {Pset_StudSet.StudSize}; {Pset_StudSet.StudQuantity} studs, {Pset_StudSet.NutQuantity} nuts; surface treatment {Pset_StudSet.SurfaceTreatment}",
+    "_default": "{attr.Description}"
+  },
+  "quantity_by_class": {
+    "_comment": "Qto and quantity read for the Quantity column, by class.",
+    "FlexiblePipeSegment": {
+      "qto": "Qto_FlexiblePipeSegment",
+      "quantity": "Length"
+    },
+    "_default": {
+      "qto": "BaseQuantities",
+      "quantity": "Count"
+    }
+  }
+}

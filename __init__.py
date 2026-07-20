@@ -13,11 +13,11 @@
 
 
 bl_info = {
-    "name"        : "InfoVis - alpha - v0.1.2",
+    "name"        : "InfoVis - alpha - v1.0.0",
     "author"      : "Carlos Dias",
     "description" : "",
     "blender"     : (5, 0, 0),
-    "version"     : (0, 1, 2),
+    "version"     : (1, 0, 0),
     "location"    : "View3D > Panel > InfoVis",
     "warning"     : "",
     "category"    : "User"
@@ -25,9 +25,6 @@ bl_info = {
 
 
 import sys
-import os
-import platform
-import subprocess
 import bpy
 from bpy.props import PointerProperty
 from bpy.types import Scene
@@ -41,28 +38,6 @@ _BUNDLED_PKGS = [
 for _key in list(sys.modules.keys()):
     if any(_key == p or _key.startswith(p + ".") for p in _BUNDLED_PKGS):
         del sys.modules[_key]
-
-if platform.system() == "Windows":
-        
-    if sys.version_info >= (3, 13):
-        # On Windows with Python 3.13+, we can use the bundled libs directly.
-        sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs313", "site-packages"))  
-    else:
-        # On Windows with Python 3.11+, we can use the bundled libs directly.
-        sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "libs311", "site", "packages")) 
-else:
-    # On Linux/macOS the bundled libs contain Windows-only binaries (.pyd),
-    # so we install the required packages into Blender's Python instead.
-    _required = ["matplotlib", "scipy", "tqdm", "kiwisolver", "cycler"]
-    _missing = []
-    for _pkg in _required:
-        try:
-            __import__(_pkg)
-        
-        except ImportError:
-            _missing.append(_pkg)
-    if _missing:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", *_missing])
 
 from .modules import get_classes
 from .modules.og_properties import OG_Properties
