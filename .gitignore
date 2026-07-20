@@ -33,6 +33,7 @@ dist/
 downloads/
 eggs/
 .eggs/
+*.zip
 lib64/
 parts/
 sdist/
