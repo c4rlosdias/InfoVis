@@ -39,7 +39,7 @@ flowchart TB
 
     subgraph entry["Add-on entry point"]
         init["__init__.py<br/>bl_info, sys.path, register, unregister"]
-        deps["Dependencies<br/>libs311, libs313, or pip in Blender Python"]
+        deps["Dependencies<br/>wheels/ declared in blender_manifest.toml"]
         auth["auth.py<br/>login, logout, is_authenticated"]
         login_ops["OG_OT_Login<br/>OG_OT_Logout"]
         registry["modules.get_classes()<br/>Blender class registration order"]
@@ -111,7 +111,7 @@ flowchart TB
     end
 
     subgraph support["Support, docs, and release"]
-        libs["libs311 / libs313<br/>Python packages bundled for Windows"]
+        libs["wheels/<br/>Python packages bundled as wheel files"]
         build["build_release.bat / build_release.sh<br/>generates releases/InfoVis.zip"]
         docs["docs/<br/>MkDocs, guides, reference"]
         html["graphic.html / layers.html<br/>supporting visualization artifacts"]
@@ -339,8 +339,7 @@ InfoVis/
 |   |-- ifc_utils.py
 |   `-- tree.py
 |-- resources/
-|-- libs311/
-|-- libs313/
+|-- wheels/
 |-- docs/
 |-- build_release.bat
 `-- build_release.sh
@@ -353,8 +352,7 @@ InfoVis/
 `__init__.py` contains what Blender needs to load the add-on:
 
 - defines `bl_info`
-- adjusts `sys.path` for bundled libraries on Windows
-- installs missing dependencies on Linux and macOS when needed
+- relies on wheel dependencies declared in `blender_manifest.toml`
 - declares add-on preferences and authentication operators
 - creates `Scene.og_props`
 - creates temporary `WindowManager` pointers for connections
@@ -452,13 +450,8 @@ registered before they are used.
 
 ## Dependency Management
 
-The project uses two distribution strategies:
-
-- Windows: binary libraries bundled in `libs311/` and `libs313/`.
-- Linux and macOS: on-demand installation through Blender's Python.
-
-This behavior is decided at import time based on `platform.system()` and
-`sys.version_info`.
+The project bundles dependencies as wheel files in `wheels/`, referenced by
+`blender_manifest.toml`.
 
 ## Static Resources
 
@@ -484,8 +477,7 @@ Packaged content:
 - `auth.py`
 - `modules/`
 - `data/`
-- `libs311/`
-- `libs313/`
+- `wheels/`
 - `resources/`
 
 Documentation and example files are not included in the installation package.

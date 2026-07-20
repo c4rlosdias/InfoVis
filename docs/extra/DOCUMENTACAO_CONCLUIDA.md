@@ -22,7 +22,7 @@ Documents that should be treated as primary sources:
   `README_DOCUMENTATION.md`, `DOCUMENTATION.md`, and `INDICE_COMPLETO.md`
 - aligned the product name to `InfoVis`
 - reviewed the real repository structure, based on `modules/`, `data/`,
-  `resources/`, `libs311/`, and `libs313/`
+  `resources/`, and `wheels/`
 - corrected the Blender add-on installation and packaging flow
 - added architecture and maintenance references that match the current codebase
 

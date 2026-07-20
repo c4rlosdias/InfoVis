@@ -28,12 +28,11 @@ structure.
 ### Python Dependencies
 
 `requirements.txt` lists support dependencies for the project. In the Blender
-environment, execution also depends on the libraries bundled in `libs311/` and
-`libs313/`.
+environment, runtime dependencies are bundled in `wheels/` and declared in
+`blender_manifest.toml`.
 
-On Windows, the add-on prioritizes those bundled libraries. On Linux and macOS,
-missing dependencies may be installed dynamically by the add-on itself when it
-is imported.
+Use Blender's extensions installation flow so these wheel dependencies are
+resolved during install.
 
 ### Install the Add-on for Local Iteration
 
@@ -107,8 +106,7 @@ usually `data/`.
 - keep `modules/__init__.py` as the single source of class registration order
 - do not put heavy logic inside `Panel.draw()`
 - preserve `OG_Properties` as the shared state between modules
-- handle cross-platform dependencies with `libs311/` and `libs313/` loading in
-  mind
+- keep `wheels/` aligned with the dependency list in `blender_manifest.toml`
 - test in Blender after any change involving registration, UI, or callbacks
 
 ## Manual Validation
@@ -155,8 +153,7 @@ Packaged content:
 - `auth.py`
 - `modules/`
 - `data/`
-- `libs311/`
-- `libs313/`
+- `wheels/`
 - `resources/`
 
 Before publishing a release:

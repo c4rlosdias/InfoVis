@@ -77,8 +77,7 @@ InfoVis/
 |-- docs/
 |-- modules/
 |-- resources/
-|-- libs311/
-`-- libs313/
+`-- wheels/
 ```
 
 ## Publishing the Documentation

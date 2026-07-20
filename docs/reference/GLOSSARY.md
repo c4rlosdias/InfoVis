@@ -114,8 +114,7 @@ InfoVis/
 |   |-- settings/
 |   `-- types/
 |-- resources/
-|-- libs311/
-`-- libs313/
+`-- wheels/
 ```
 
 ## Quick Code Reference

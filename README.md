@@ -27,8 +27,8 @@ Main capabilities:
 
 Dependency notes:
 
-- on Windows, the add-on uses packaged libraries in `libs311/` and `libs313/`
-- on Linux and macOS, missing packages can be installed into Blender's Python when the add-on starts
+- packaged dependencies are distributed through `wheels/` and declared in `blender_manifest.toml`
+- install using Blender's extensions workflow so wheels are resolved automatically
 
 ## Installation
 
@@ -67,8 +67,7 @@ Files and folders included in the package:
 - `auth.py`
 - `modules/`
 - `data/`
-- `libs311/`
-- `libs313/`
+- `wheels/`
 - `resources/`
 
 ## Repository Structure
@@ -77,15 +76,12 @@ Files and folders included in the package:
 InfoVis/
 |-- __init__.py
 |-- auth.py
-|-- build_release.bat
-|-- build_release.sh
 |-- data/
 |-- docs/
 |-- Example/
-|-- libs311/
-|-- libs313/
 |-- modules/
 |-- releases/
+|-- wheels/
 `-- resources/
 ```
 
@@ -168,6 +164,6 @@ If the repository is hosted on GitHub, the workflow in `.github/workflows/docs.y
 
 ## Notes
 
-- `requirements.txt` lists Python dependencies for the project, but Blender packaging also depends on the embedded libraries in `libs311/` and `libs313/`.
+- `requirements.txt` lists Python dependencies for the project, but Blender packaging depends on the wheel files listed in `blender_manifest.toml`.
 - The name displayed in Blender is defined in `bl_info` inside `__init__.py`.
 
