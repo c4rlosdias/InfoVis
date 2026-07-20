@@ -17,7 +17,7 @@ bl_info = {
     "author"      : "Carlos Dias",
     "description" : "",
     "blender"     : (5, 0, 0),
-    "version"     : (0, 1, 3),
+    "version"     : (0, 1, 4),
     "location"    : "View3D > Panel > InfoVis",
     "warning"     : "",
     "category"    : "User"

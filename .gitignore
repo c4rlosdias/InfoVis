@@ -11,6 +11,7 @@ __pycache__/
 
 #files
 *.txt
+*.docx
 *.ifc
 *.pdf
 *.xlsx
