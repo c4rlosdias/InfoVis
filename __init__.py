@@ -24,114 +24,51 @@ bl_info = {
 }
 
 
-import sys
 import bpy
 from bpy.props import PointerProperty
 from bpy.types import Scene
 from bpy.utils import register_class, unregister_class
-
-_BUNDLED_PKGS = [
-    "matplotlib", "scipy", "tqdm", "kiwisolver", "cycler",
-    "contourpy", "fonttools", "PIL", "pillow",
-    "pyparsing", "dateutil", "python_dateutil",
-]
-for _key in list(sys.modules.keys()):
-    if any(_key == p or _key.startswith(p + ".") for p in _BUNDLED_PKGS):
-        del sys.modules[_key]
 
 from .modules import get_classes
 from .modules.og_properties import OG_Properties
 from .modules.common.operators import register_ifc_label_overlay, unregister_ifc_label_overlay
 from . import data
 from .data import tree as _data_tree
-from . import auth
 
 
-# ----- Operadores de autenticação -----
-
-class OG_OT_Login(bpy.types.Operator):
-    bl_idname = "og.login"
-    bl_label = "Login"
-    bl_description = "Autenticar com a senha cadastrada"
-
-    def execute(self, context):
-        prefs = context.preferences.addons[__package__].preferences
-        pw = prefs.auth_password
-        if auth.login(pw):
-            prefs.auth_password = ""
-            self.report({'INFO'}, "Autenticado com sucesso")
-        else:
-            prefs.auth_password = ""
-            self.report({'ERROR'}, "Senha incorreta")
-        return {'FINISHED'}
-
-
-class OG_OT_Logout(bpy.types.Operator):
-    bl_idname = "og.logout"
-    bl_label = "Logout"
-    bl_description = "Encerrar sessão autenticada"
-
-    def execute(self, context):
-        auth.logout()
-        self.report({'INFO'}, "Sessão encerrada")
-        return {'FINISHED'}
-
-
-# ----- Preferências do Addon -----
+# ----- Add-on Preferences -----
 
 class OilGasAddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
     cde_url: bpy.props.StringProperty(
         name="CDE URL",
-        description="URL base da API do CDE",
+        description="Base URL for the CDE API",
         default="http://localhost:8000",
     )
     cde_token: bpy.props.StringProperty(
         name="CDE Token",
-        description="Token de autenticação para o CDE",
+        description="Authentication token for the CDE",
         default="",
         subtype='PASSWORD',
     )
     debug_mode: bpy.props.BoolProperty(
         name="Debug Mode",
-        description="Ativar modo de depuração",
+        description="Enable debug mode",
         default=False,
-    )
-    auth_password: bpy.props.StringProperty(
-        name="Senha",
-        description="Senha para autenticação no addon",
-        default="",
-        subtype='PASSWORD',
     )
 
     def draw(self, context):
         layout = self.layout
-
-        # --- Autenticação ---
         box = layout.box()
-        box.label(text="Autenticação para status de editor", icon='LOCKED')
-
-        if auth.is_authenticated():
-            box.label(text="Status de editor: Autenticado", icon='CHECKMARK')
-            box.operator("og.logout", icon='PANEL_CLOSE')
-        else:
-            box.label(text="Status de editor: Não autenticado", icon='ERROR')
-            box.prop(self, "auth_password")
-            box.operator("og.login", icon='UNLOCKED')
-
-        # # --- Outras configurações ---
-        # box3 = layout.box()
-        # box3.label(text="Configurações", icon='PREFERENCES')
-        # box3.prop(self, "cde_url")
-        # box3.prop(self, "cde_token")
-        # box3.prop(self, "debug_mode")
+        box.label(text="CDE Integration", icon='URL')
+        box.prop(self, "cde_url")
+        box.prop(self, "cde_token")
+        box.prop(self, "debug_mode")
 
 
 classes = [
     OilGasAddonPreferences,
-    OG_OT_Login,
-    OG_OT_Logout,
 ] + get_classes()
 owner = object()
 
@@ -152,9 +89,6 @@ def register():
     for c in classes:
         register_class(c)
     Scene.og_props = PointerProperty(type=OG_Properties)
-    bpy.types.WindowManager.add_connect_object_a = PointerProperty(type=bpy.types.Object, name="Object A")
-    bpy.types.WindowManager.add_connect_object_b = PointerProperty(type=bpy.types.Object, name="Object B")
-    bpy.types.WindowManager.add_connect_object_c = PointerProperty(type=bpy.types.Object, name="Object C")
     _subscribe_msgbus()
     bpy.app.handlers.load_post.append(_on_load_post)
     register_ifc_label_overlay()
@@ -164,12 +98,6 @@ def unregister():
     if _on_load_post in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_on_load_post)
     bpy.msgbus.clear_by_owner(owner)
-    if hasattr(bpy.types.WindowManager, "add_connect_object_c"):
-        del bpy.types.WindowManager.add_connect_object_c
-    if hasattr(bpy.types.WindowManager, "add_connect_object_b"):
-        del bpy.types.WindowManager.add_connect_object_b
-    if hasattr(bpy.types.WindowManager, "add_connect_object_a"):
-        del bpy.types.WindowManager.add_connect_object_a
     unregister_ifc_label_overlay()
     if hasattr(Scene, "og_props"):
         del Scene.og_props

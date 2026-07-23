@@ -16,7 +16,6 @@ structure.
 ## Development-Relevant Structure
 
 - `__init__.py`: add-on entry point and class registration
-- `auth.py`: authentication and session control
 - `modules/`: operators, panels, and domain `PropertyGroup`s
 - `data/`: integrations and support logic
 - `resources/`: supporting JSON files
@@ -66,7 +65,7 @@ The generated package is written to `releases/dev-local.zip`.
 
 ## Recommended Workflow
 
-1. change code in `modules/`, `data/`, `auth.py`, or `resources/`
+1. change code in `modules/`, `data/`, or `resources/`
 2. generate a new zip with the build script
 3. reinstall or remove and reinstall the add-on in Blender
 4. validate affected panels and operators with a real IFC file
@@ -131,11 +130,9 @@ Useful examples:
 import bpy
 import InfoVis
 from InfoVis.modules import get_classes
-from InfoVis import auth
 
 props = bpy.context.scene.og_props
 print(len(get_classes()))
-print(auth.is_authenticated())
 print(hasattr(props, "classes"))
 ```
 
@@ -150,7 +147,6 @@ final zip file.
 Packaged content:
 
 - `__init__.py`
-- `auth.py`
 - `modules/`
 - `data/`
 - `wheels/`

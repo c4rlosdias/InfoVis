@@ -1,7 +1,6 @@
 import bpy
 import bonsai.tool as tool
 
-from ... import auth
 from ..common.operators import Select_object
 
 
@@ -53,8 +52,6 @@ class Panel_Connect_Elements(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        wm = context.window_manager
-        props = context.scene.og_props
         row = layout.row()
         
         if len(context.selected_objects) > 0:
@@ -67,41 +64,9 @@ class Panel_Connect_Elements(bpy.types.Panel):
                 for connect in self.get_connects(obj):
                     row = layout.row()
                     row.label(text=f"connection #{c}", icon='LINKED')
-                    if auth.is_authenticated():
-                        row.operator("conn.disconnect", text="", icon='UNLINKED').rel_id = connect['id']
+                    row.operator("conn.disconnect", text="", icon='UNLINKED').rel_id = connect['id']
                     self.draw_connect(layout, connect)
                     c += 1
-
-        row = layout.row()
-        row.separator()
-        row = layout.row()
-
-        if auth.is_authenticated():
-            row.label(text="Select objects to connect before clicking 'Add Connection'", icon='INFO')
-            box = layout.box()
-            row = box.row()
-            row.prop(props, "connect_type", text="Connection Type")
-            row = box.row()
-            row.prop(wm, "add_connect_object_a", text="Relating Element A")
-            if wm.add_connect_object_a is None:
-                op= row.operator("conn.select_object", text="", icon='ADD')
-                op.obj_name = "add_connect_object_a"
-            row = box.row()
-            row.prop(wm, "add_connect_object_b", text="Relating Element B")
-            if wm.add_connect_object_b is None:
-                op= row.operator("conn.select_object", text="", icon='ADD')
-                op.obj_name = "add_connect_object_b"
-        
-            if props.connect_type != "IfcRelConnectsElements":
-                row = box.row()
-                row.prop(wm, "add_connect_object_c", text="Realizing Element")                
-                if wm.add_connect_object_c is None:
-                    op = row.operator("conn.select_object", text="", icon='ADD')
-                    op.obj_name = "add_connect_object_c"
-            
-            row = box.row()
-            row.operator("conn.add_connect", text="Add Connection", icon='ADD')
-        
 
     def draw_connect(self, layout, connect):
         box = layout.box()

@@ -299,7 +299,6 @@ Decomposition state:
 - `elements_tree`, `elements_tree_show`
 - `decomposition_views`
 - active decomposition view and relation indices
-- `show_agg`, `chg_order`
 
 Catalog and LI state:
 
@@ -345,7 +344,6 @@ Viewport label state:
 
 Connections state:
 
-- `connect_type`
 - connection collections and selected objects managed by connection operators
 
 ## Relationship Between PropertyGroups
@@ -407,7 +405,7 @@ order. The root `__init__.py` registers them:
 from .modules import get_classes
 from .modules.og_properties import OG_Properties
 
-classes = [Prefs, Login, Logout] + get_classes()
+classes = [Prefs] + get_classes()
 
 def register():
     for cls in classes:

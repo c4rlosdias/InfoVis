@@ -309,7 +309,7 @@ class Columns(bpy.types.PropertyGroup):
 
 class ErrorMessage(bpy.types.Operator):
     bl_idname = "og.error_message"
-    bl_label = "Erro!"
+    bl_label = "Error!"
 
     message: bpy.props.StringProperty()
     

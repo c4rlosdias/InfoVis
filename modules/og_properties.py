@@ -65,7 +65,7 @@ def _update_tree_type(self, context):
             else:
                 new.has_children = False
 
-    cde = CDE_Api('')
+    cde = CDE_Api.from_blender_context(context)
     elements_tree = []
 
     i = 0    
@@ -198,7 +198,7 @@ def active_element_changed(self, context):
             new_layer.description = element.get_info() or ''
 
     # view associated contracts
-    cde = CDE_Api('')
+    cde = CDE_Api.from_blender_context(context)
     elements_tree = []
     elements_tree = cde.get_contracts(self.containers_show[self.active_element_index])
 
@@ -265,16 +265,6 @@ class OG_Properties(PropertyGroup):
     active_decomposition_view_index : IntProperty(name='decomposition view index', default=0)
     active_decomposition_relation_index : IntProperty(name='decomposition relation index', default=0)
     decomposition_views_loaded : BoolProperty(name='decomposition views loaded', default=False)
-    
-    show_agg                 : BoolProperty(name="change aggregations", default=False)
-    chg_order                : BoolProperty(name="change order", default=False)
-    agg_type                 : EnumProperty (
-                                    name="aggregation type",
-                                    items=[     
-                                        ("nests", "Nests", ""),
-                                        ("aggregations", "Aggregations", "")
-                                    ]
-                             )
 
 
     add_prop_clicked         : BoolProperty(name="add property clicked", default=False)
@@ -390,12 +380,3 @@ class OG_Properties(PropertyGroup):
     label_offset_y              : FloatProperty(name='Offset Y', description='Vertical label offset from the object (px)', default=80.0, min=-500.0, max=500.0)
 
     # Element Connections
-    connect_type             : EnumProperty(
-                                    name="Connection Type",
-                                    items=[
-                                        ("IfcRelConnectsPorts", "IfcRelConnectsPorts",""),
-                                        ("IfcRelConnectsElements", "IfcRelConnectsElements",""),
-                                        ("IfcRelConnectsWithRealizingElements", "IfcRelConnectsWithRealizingElements","")
-                                    ],                                
-                                    default="IfcRelConnectsElements"
-                                )

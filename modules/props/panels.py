@@ -5,7 +5,6 @@ import ifcopenshell.util.element as element
 import bonsai.tool as tool
 
 from ...data.ifc_utils import get_prop_type, refresh_props
-from ... import auth
 
 
 class Panel_Properties(bpy.types.Panel):
@@ -23,7 +22,7 @@ class Panel_Properties(bpy.types.Panel):
 
     def draw(self, context):   
         props = context.scene.og_props 
-        can_edit_props = auth.is_authenticated()
+        can_edit_props = False
         layout = self.layout       
         row = layout.row()   
         obj = context.active_object  
@@ -55,13 +54,12 @@ class Panel_Properties(bpy.types.Panel):
                 if props.docs_expanded:
                     box = layout.box()
                     for document in props.documents:
-                        if auth.is_authenticated():
-                            row = box.row() 
-                            op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
-                            op4.ifc_id = tool.Ifc.get_entity(obj).id()
-                            op4.id = document.identification
-                            op4.name = document.name
-                            op4.location = document.location
+                        row = box.row() 
+                        op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                        op4.ifc_id = tool.Ifc.get_entity(obj).id()
+                        op4.id = document.identification
+                        op4.name = document.name
+                        op4.location = document.location
 
                         row = box.row()
                         row.prop(document, 'identification')
@@ -70,7 +68,7 @@ class Panel_Properties(bpy.types.Panel):
                         row = box.row()
                         row.prop(document, 'location')
 
-                        if auth.is_authenticated() and document.location != '':
+                        if document.location != '':
                             op0 = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
                             op0.index = -1
                             op0.doc_index = document.index
@@ -136,13 +134,12 @@ class Panel_Properties(bpy.types.Panel):
                             if pset.docs_expanded:
                                 box = layout.box()  
                                 for document in pset.documents:   
-                                    if auth.is_authenticated():                             
-                                        row = box.row()
-                                        op = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
-                                        op.ifc_id = ifc_pset.id()
-                                        op.id = document.identification   
-                                        op.name = document.name 
-                                        op.location = document.location                                  
+                                    row = box.row()
+                                    op = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
+                                    op.ifc_id = ifc_pset.id()
+                                    op.id = document.identification   
+                                    op.name = document.name 
+                                    op.location = document.location                                  
 
                                     row = box.row()
                                     row.prop(document, 'identification')
@@ -154,9 +151,8 @@ class Panel_Properties(bpy.types.Panel):
                                     row.prop(document, 'location')
                                     
                                     if document.location != '' :
-                                        if auth.is_authenticated():
-                                            op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
-                                            op.index = pset.index 
+                                        op = row.operator("props.load_doc", icon='FILEBROWSER', text="") 
+                                        op.index = pset.index 
 
                                         op = row.operator("props.open_doc", icon='BORDERMOVE', text="") 
                                         op.location = document.location                           
@@ -228,10 +224,6 @@ class Panel_Properties(bpy.types.Panel):
                             else:    
                                 if item.name != old_name_prop:
                                     rowb = box.row(align=True)
-                                    if auth.is_authenticated():
-                                        op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
-                                        op.pset_index = pset.index
-                                        op.prop_index = item.index  
                                     if props.show_description:
                                         prop_name =  f' {item.description}' if item.description != '' else " No description"
                                         icon = 'BLANK'
@@ -248,19 +240,12 @@ class Panel_Properties(bpy.types.Panel):
                                 if item.type_prop == 'IfcPropertyEnumeratedValue':
                                     rowb = box.row(align=True)   
                                     col = rowb.column(align=True)
-                                    if not auth.is_authenticated():
-                                        col.prop(item, "enumerated", text='')
-                                    else:
-                                        val=getattr(item, "enbumerated")
-                                        col.label(text=str(val))
+                                    col.enabled = can_edit_props
+                                    col.prop(item, "enumerated", text='')
                                     col = rowb.column(align=False)
                                     col.enabled = can_edit_props
                                     for enum in item.enumerations:
                                         col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
-                                    if getattr(item, "has_document", False) and auth.is_authenticated():
-                                        op=rowb.operator("props.edit", icon='CHECKMARK', text="")   
-                                        op.pset_index = pset.index
-                                        op.prop_index = item.index 
                                     old_name_prop = item.name   
 
                                 else:

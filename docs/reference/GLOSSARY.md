@@ -91,7 +91,6 @@
 ```text
 InfoVis/
 |-- __init__.py
-|-- auth.py
 |-- data/
 |   |-- bsdd.py
 |   |-- bsdd_dictionary.py
@@ -141,7 +140,6 @@ If the package was installed with another folder name, the key in
 ```python
 bpy.ops.bsdd.get_prop()
 bpy.ops.props.load_properties()
-bpy.ops.og.login()
 ```
 
 ### Add an Item to a Blender Collection
@@ -149,13 +147,6 @@ bpy.ops.og.login()
 ```python
 item = props.classes.add()
 item.name = "New item"
-```
-
-### Check Authentication
-
-```python
-import InfoVis.auth as auth
-print(auth.is_authenticated())
 ```
 
 ## Code Conventions
@@ -175,7 +166,6 @@ class Panel_Properties(bpy.types.Panel):
 ```python
 bl_idname = "bsdd.get_prop"
 bl_idname = "props.load_properties"
-bl_idname = "og.login"
 ```
 
 ### Helper Functions
@@ -208,12 +198,10 @@ build_classes()
 ```python
 import bpy
 import importlib
-import InfoVis.auth as auth
 from InfoVis.modules import get_classes
 
 props = bpy.context.scene.og_props
 print(len(get_classes()))
-print(auth.is_authenticated())
 print(hasattr(props, "classes"))
 ```
 

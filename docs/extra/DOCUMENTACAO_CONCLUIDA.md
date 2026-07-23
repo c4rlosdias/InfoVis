@@ -33,7 +33,7 @@ After this review, the main documentation should:
 - correctly guide installation and usage of the add-on
 - reflect the real class registration and modular code organization
 - serve as a technical onboarding base for maintenance and evolution
-- support MkDocs publication without broken navigation
+- keep markdown guides and references internally consistent
 
 ## Notes
 

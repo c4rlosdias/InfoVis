@@ -1,29 +1,83 @@
 {
     "m"                : "IfcLengthMeasure",
-    "W.m⁻¹.K⁻¹"        : "IfcThermalConductivityMeasure",
-    "Pa"               : "IfcPressureMeasure",
-    "N"                : "IfcForceMeasure",
+    "in"               : "IfcLengthMeasure",
     "mm"               : "IfcLengthMeasure",
-    "kg"               : "IfcMassMeasure",
-    "K"                : "IfcThermodynamicTemperatureMeasure",
-    "degree"           : "IfcPlaneAngleMeasure",
-    "N.m⁻³"            : "IfcModulusOfSubgradeReactionMeasure",
-    "N.m².rad⁻¹"       : "IfcModulusOfRotationalSubgradeReactionMeasure",
-    "kg.m⁻¹"           : "IfcMassPerLengthMeasure",
-    "N.m"              : "IfcTorqueMeasure",
-    "m²"               : "IfcAreaMeasure",
+    "µm"               : "IfcLengthMeasure",
+    "1/m"              : "IfcCurvatureMeasure",
     "m⁻¹"              : "IfcCurvatureMeasure",
-    "m³.m⁻¹"           : "IfcMassPerLengthMeasure",
-    "m².s⁻¹"           : "IfcKinematicViscosityMeasure",
-    "Pa.√m"            : "IfcNumericMeasure",
+
+    "m²"               : "IfcAreaMeasure",
     "m³"               : "IfcVolumeMeasure",
+    "l"                : "IfcVolumeMeasure",
+    "ml"               : "IfcVolumeMeasure",
+
+    "kg"               : "IfcMassMeasure",
+    "mg"               : "IfcMassMeasure",
+    "kg/m"             : "IfcMassPerLengthMeasure",
+    "kg.m⁻¹"           : "IfcMassPerLengthMeasure",
+    "kg/m³"            : "IfcMassDensityMeasure",
     "kg.m⁻³"           : "IfcMassDensityMeasure",
-    "N.m²"             : "IfcNumericMeasure",
-    "J.kg⁻¹.K⁻¹"       : "IfcSpecificHeatCapacityMeasure",
-    "m⁴"               : "IfcMomentOfInertiaMeasure",    
+    "g/m²"             : "IfcMassPerAreaMeasure",
+    "kgf"              : "IfcForceMeasure",
+
+    "s"                : "IfcTimeMeasure",
+    "yr"               : "IfcTimeMeasure",
+
+    "K"                : "IfcThermodynamicTemperatureMeasure",
+    "°C"               : "IfcThermodynamicTemperatureMeasure",
+    "1/K"              : "IfcNumericMeasure",
+
+    "degree"           : "IfcPlaneAngleMeasure",
+    "deg"              : "IfcPlaneAngleMeasure",
+    "°"                : "IfcPlaneAngleMeasure",
+
+    "N"                : "IfcForceMeasure",
+    "kN"               : "IfcForceMeasure",
+    "N.m"              : "IfcTorqueMeasure",
+    "Nm"               : "IfcTorqueMeasure",
+
+    "Pa"               : "IfcPressureMeasure",
+    "N/m²"             : "IfcPressureMeasure",
+    "bar"              : "IfcPressureMeasure",
+    "MPa"              : "IfcPressureMeasure",
+    "psi"              : "IfcPressureMeasure",
+
+    "W.m⁻¹.K⁻¹"        : "IfcThermalConductivityMeasure",
+    "W/(m·K)"          : "IfcThermalConductivityMeasure",
+    "W"                : "IfcPowerMeasure",
+
+    "N.m⁻³"            : "IfcModulusOfSubgradeReactionMeasure",
+    "kN/m³"            : "IfcModulusOfSubgradeReactionMeasure",
+    "N.m².rad⁻¹"       : "IfcModulusOfRotationalSubgradeReactionMeasure",
+    "N·m²/rad"         : "IfcModulusOfRotationalSubgradeReactionMeasure",
+
     "N.m⁻¹"            : "IfcNumericMeasure",
+    "N/m"              : "IfcNumericMeasure",
+    "N/mm"             : "IfcNumericMeasure",
+    "N.m²"             : "IfcNumericMeasure",
+    "m³.m⁻¹"           : "IfcMassPerLengthMeasure",
+    "m³/m"             : "IfcMassPerLengthMeasure",
+
+    "m².s⁻¹"           : "IfcKinematicViscosityMeasure",
+    "m²/s"             : "IfcKinematicViscosityMeasure",
+
+    "Pa.√m"            : "IfcNumericMeasure",
+    "Pa·√m"            : "IfcNumericMeasure",
+
+    "J.kg⁻¹.K⁻¹"       : "IfcSpecificHeatCapacityMeasure",
+    "J/kg·K"           : "IfcSpecificHeatCapacityMeasure",
+
+    "m/s"              : "IfcLinearVelocityMeasure",
+    "m³/h"             : "IfcVolumetricFlowRateMeasure",
+    "m⁴"               : "IfcMomentOfInertiaMeasure",
+
     "µm³.m⁻³"          : "IfcNumericMeasure",
     "mol.m⁻¹.s⁻¹.Pa⁻¹" : "IfcNumericMeasure",
+    "mol/(m·s·Pa)"     : "IfcNumericMeasure",
     "mol.m⁻³.Pa⁻¹"     : "IfcNumericMeasure",
-    "kgf"              : "IfcForceMeasure"
+    "mol/(m³·Pa)"      : "IfcNumericMeasure",
+
+    "%"                : "IfcNormalisedRatioMeasure",
+    "ppmv"             : "IfcNumericMeasure",
+    "TPI"              : "IfcNumericMeasure"
 }

@@ -8,7 +8,7 @@ This initiative is aligned with Brazil's Innovation Law (Law No. 10,973/2004, up
 
 ## Overview
 
-The project is distributed as a Python add-on for Blender. The main entry point is `__init__.py`, which registers preferences, authentication operators, `OG_Properties`, and all classes loaded by `modules/get_classes()`.
+The project is distributed as a Python add-on for Blender. The main entry point is `__init__.py`, which registers preferences, `OG_Properties`, and all classes loaded by `modules/get_classes()`.
 
 Main capabilities:
 
@@ -64,7 +64,6 @@ The build scripts copy the required files to `releases/InfoVis/` and generate a 
 Files and folders included in the package:
 
 - `__init__.py`
-- `auth.py`
 - `modules/`
 - `data/`
 - `wheels/`
@@ -75,7 +74,6 @@ Files and folders included in the package:
 ```text
 InfoVis/
 |-- __init__.py
-|-- auth.py
 |-- data/
 |-- docs/
 |-- Example/
@@ -127,28 +125,9 @@ Additional documents:
 
 - `docs/extra/` contains managerial supporting materials and documentation history
 
-### Publishing with MkDocs
+### Documentation Format
 
-The repository already includes an initial base for publishing documentation:
-
-- `mkdocs.yml`
-- `docs/index.md`
-- `requirements-docs.txt`
-
-To publish locally:
-
-```powershell
-pip install -r requirements-docs.txt
-mkdocs serve
-```
-
-To generate the static site:
-
-```powershell
-mkdocs build
-```
-
-If the repository is hosted on GitHub, the workflow in `.github/workflows/docs.yml` can automatically publish the documentation through GitHub Pages.
+Project documentation is maintained directly in Markdown files under `docs/`.
 
 ## Development Flow
 

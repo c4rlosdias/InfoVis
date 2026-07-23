@@ -9,7 +9,7 @@ data helpers for IFC/bSDD/CDE, and local JSON resources.
 The application is built around four main blocks:
 
 - `__init__.py`: entry point, add-on metadata, dependencies, preferences,
-  authentication, and registration lifecycle.
+  and registration lifecycle.
 - `modules/`: panels, operators, `PropertyGroup`s, `UIList`s, and state exposed
   to Blender.
 - `data/`: support functions for IFC, bSDD, catalog, CDE, trees, local
@@ -29,7 +29,7 @@ flowchart TB
 
     subgraph host["Blender 5.0 / Bonsai BIM"]
         view3d["View3D<br/>InfoVis tab"]
-        addon_prefs["Addon Preferences<br/>CDE URL, token, debug, password"]
+      addon_prefs["Addon Preferences<br/>CDE URL, token, debug"]
         scene["bpy.types.Scene<br/>Scene.og_props"]
         wm["bpy.types.WindowManager<br/>connection objects A, B, C"]
         msgbus["bpy.msgbus<br/>LayerObjects.active"]
@@ -40,8 +40,6 @@ flowchart TB
     subgraph entry["Add-on entry point"]
         init["__init__.py<br/>bl_info, sys.path, register, unregister"]
         deps["Dependencies<br/>wheels/ declared in blender_manifest.toml"]
-        auth["auth.py<br/>login, logout, is_authenticated"]
-        login_ops["OG_OT_Login<br/>OG_OT_Logout"]
         registry["modules.get_classes()<br/>Blender class registration order"]
     end
 
@@ -72,7 +70,7 @@ flowchart TB
     subgraph ops["Command layer - modules/*/operators.py"]
         common_ops["common<br/>expand, collapse, select object, overlay"]
         dictionary_ops["dictionary<br/>load bSDD, properties, info, assign, IDS"]
-        decomp_ops["decomposition<br/>load, export, select, move, change order"]
+        decomp_ops["decomposition<br/>load, export, select"]
         catalog_ops["catalog<br/>load products, layers, LI mapping, export LI/QTDS"]
         analysis_ops["analysis<br/>apply colors, reset colors"]
         conn_ops["connections<br/>add connect, disconnect, select object"]
@@ -113,7 +111,7 @@ flowchart TB
     subgraph support["Support, docs, and release"]
         libs["wheels/<br/>Python packages bundled as wheel files"]
         build["build_release.bat / build_release.sh<br/>generates releases/InfoVis.zip"]
-        docs["docs/<br/>MkDocs, guides, reference"]
+      docs["docs/<br/>Markdown guides and reference"]
         html["graphic.html / layers.html<br/>supporting visualization artifacts"]
     end
 
@@ -121,8 +119,6 @@ flowchart TB
     user --> addon_prefs
 
     init --> deps
-    init --> auth
-    init --> login_ops
     init --> registry
     init --> scene
     init --> wm
@@ -171,12 +167,6 @@ flowchart TB
     types_panel --> catalog_ops
     settings_panel --> settings_ops
     uilists --> og
-
-    auth --> addon_prefs
-    auth --> decomp_panel
-    auth --> conn_panel
-    auth --> props_panel
-    auth --> types_panel
 
     common_ops --> tree
     common_ops --> overlay
@@ -234,7 +224,6 @@ flowchart TB
     overlay --> bonsai
 
     build --> init
-    build --> auth
     build --> data_init
     build --> dictionary_panel
     build --> common_ops
@@ -256,7 +245,7 @@ flowchart TB
     classDef supportClass fill:#eeeeee,stroke:#777777,color:#222222;
 
     class view3d,addon_prefs,scene,wm,msgbus,handlers,overlay hostClass;
-    class init,deps,auth,login_ops,registry entryClass;
+    class init,deps,registry entryClass;
     class og,dict_state,decomp_state,catalog_state,props_state,analysis_state,overlay_state,conn_state stateClass;
     class dictionary_panel,decomp_panel,catalog_panel,li_panel,analysis_panel,conn_panel,props_panel,types_panel,settings_panel,uilists uiClass;
     class common_ops,dictionary_ops,decomp_ops,catalog_ops,analysis_ops,conn_ops,props_ops,settings_ops,analysis_service opsClass;
@@ -316,7 +305,6 @@ sequenceDiagram
 ```text
 InfoVis/
 |-- __init__.py
-|-- auth.py
 |-- modules/
 |   |-- __init__.py
 |   |-- og_properties.py
@@ -353,7 +341,7 @@ InfoVis/
 
 - defines `bl_info`
 - relies on wheel dependencies declared in `blender_manifest.toml`
-- declares add-on preferences and authentication operators
+- declares add-on preferences
 - creates `Scene.og_props`
 - creates temporary `WindowManager` pointers for connections
 - registers handlers and the `bpy.msgbus` subscriber
@@ -474,7 +462,6 @@ be installed in Blender.
 Packaged content:
 
 - `__init__.py`
-- `auth.py`
 - `modules/`
 - `data/`
 - `wheels/`

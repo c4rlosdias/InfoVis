@@ -4,7 +4,6 @@ import base64
 from io import BytesIO
 from pathlib import Path
 
-import ifcopenshell.api.pset
 import ifcopenshell.util.element as element
 import bonsai.tool as tool
 import pandas as pd
@@ -16,92 +15,6 @@ from scipy.interpolate import interp1d
 from ...data.ifc_utils import get_prop_type, refresh_props
 from ..common.operators import _open_in_browser, get_options, dynamic_items, Columns
 
-
-class Operator_props_edit(bpy.types.Operator):
-    """"""
-    bl_idname  = "props.edit"
-    bl_label   = "edit object properties"
-    bl_options = {"REGISTER", "UNDO"} 
-    pset_index : bpy.props.IntProperty(name='pset index')
-    prop_index : bpy.props.IntProperty(name='prop index')   
-    type_prop  : bpy.props.StringProperty(name='prop type') 
-    
-    def change_prop(self, pset, props):        
-        model = tool.Ifc.get() 
-        for name_prop, values in props.items():
-            for prop in pset.HasProperties:
-                if prop.Name == name_prop:
-                    if prop.is_a() == 'IfcPropertyListValue':
-                        list_values = prop.ListValues
-                        new_list_values = []
-                        for value in values:    
-                            if value is not None:
-                                new_value = model.create_entity(list_values[values.index(value)].is_a(), value) 
-                                new_list_values.append(new_value)
-
-                        prop.ListValues = new_list_values
-                    elif prop.is_a() == 'IfcPropertyEnumeratedValue':
-                        list_values = prop.EnumerationReference.EnumerationValues
-                        new_list_values = set()                        
-                        for value in values:    
-                            if value is not None:
-                                new_value = model.create_entity(list_values[values.index(value)].is_a(), value)                                 
-                                new_list_values.add(new_value)
-                        print(new_list_values)
-                        prop.EnumerationValues = list(new_list_values)
-                    else:                        
-                        new_value = model.create_entity(prop.NominalValue.is_a(), values[0])                        
-                        prop.NominalValue = new_value
-
-    def _get_prop_type(self, prop):
-        res = None
-        if prop.type_value == "str":
-            res = prop.valuestr
-        elif prop.type_value == "int":
-            res = prop.valueint
-        elif prop.type_value == "bool":
-            res = prop.valuebool
-        elif prop.type_value == "float":
-            res = prop.valuefloat
-        return res
-    
-    
-    def execute(self, context):
-        props = context.scene.og_props 
-        props.icon_edit_prop = 'CHECKMARK'
-        model = tool.Ifc.get()
-        new_pset = ''
-        new_values = []
-        new_props = {}
-        print(100*'_')
-        # cria um dicionario com as propriedades e valores
-        for pset in props.prop_metadata:            
-            if pset.index == self.pset_index:                              
-                for prop in pset.props:                                   
-                    if prop.index == self.prop_index:
-                        product = model.by_id(pset.id_obj)
-                        new_pset = pset.name
-
-                        if prop.type_prop == 'IfcPropertyEnumeratedValue':
-                            for enum in prop.enumerations:
-                                if enum.enumerated:
-
-                                    if prop.name in new_props:
-                                        new_props[prop.name].append(get_prop_type(enum))                        
-                                    else:
-                                        new_props[prop.name] = [get_prop_type(enum)]
-                        else:
-                            if prop.name in new_props:
-                                new_props[prop.name].append(get_prop_type(prop))                        
-                            else:
-                                new_props[prop.name] = [get_prop_type(prop)]
-      
-        _pset = ifcopenshell.api.pset.add_pset(model, product=product, name=new_pset) 
-
-        self.change_prop(_pset, new_props)
-        bpy.context.scene.update_tag()
-        return {"FINISHED"} 
-    
 
 class Operator_props_load(bpy.types.Operator):
     """"""

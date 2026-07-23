@@ -37,8 +37,6 @@ Main requirements:
 - An open IFC model whenever the action depends on elements, types,
   properties, quantities, documents, or connections.
 - Internet access when querying bSDD.
-- Authenticated editor permission to change properties, documents,
-  connections, aggregations, element order, and other editable IFC content.
 
 ## Install and Enable
 
@@ -50,22 +48,11 @@ Main requirements:
 6. Open or import the IFC file to analyze.
 7. In the 3D Viewport, press `N` and open the `InfoVis-*` tabs.
 
-## Editor Authentication
+## Editing Permissions
 
-Some actions are visible or editable only after editor login.
-
-To authenticate:
-
-1. Open `Edit > Preferences > Add-ons`.
-2. Find the `InfoVis` Add-on.
-3. In `Editor status authentication`, enter the password configured for
-   the project.
-4. Click `Login`.
-
-While authenticated, InfoVis enables actions such as editing IFC values, editing
-documents, creating or removing connections, moving elements in decomposition
-trees, and changing element order. Use `Logout` to end the Blender session's
-editor access.
+Editing actions are available by default when an IFC model is loaded. This
+includes IFC value editing, document editing, connection creation/removal,
+decomposition adjustments, and element ordering controls.
 
 ## Recommended Quick Workflow
 
@@ -167,13 +154,6 @@ If nothing is exported, load a decomposition view before clicking `Export`.
 
 After authenticating as editor, the panel shows:
 
-- `change aggregations`: enables moving elements to another parent.
-- `aggregation type`: chooses between `Nests` and `Aggregations`.
-- `change order`: enables arrows for reordering leaf elements.
-
-After moving or reordering, save the IFC through the normal Bonsai/Blender
-workflow to preserve the changes in the file.
-
 ## InfoVis-Occurrence: Properties
 
 The `Properties` panel works on the active object in the 3D Viewport.
@@ -229,22 +209,13 @@ corresponding layer in Blender.
 
 ## InfoVis-Occurrence: Connect Elements
 
-Use `Connect Elements` to review and edit IFC connection relationships.
+Use `Connect Elements` to review IFC connection relationships.
 
 With objects selected, the panel lists the detected connections, including:
 
 - `IfcRelConnectsElements`;
 - `IfcRelConnectsPorts`;
 - `IfcRelConnectsWithRealizingElements`.
-
-When authenticated:
-
-1. Choose `Connection Type`.
-2. Select the desired active object in the 3D Viewport.
-3. Use the `ADD` button beside `Relating Element A`.
-4. Select another object and use `ADD` beside `Relating Element B`.
-5. For connections that require a realizing element, fill `Realizing Element`.
-6. Click `Add Connection`.
 
 To remove an existing connection, use the disconnect icon beside the listed
 connection.

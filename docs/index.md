@@ -58,21 +58,22 @@ installation flow, and the current release process.
 ### To Review Documentation
 
 1. validate the main documents in this folder
-2. run `mkdocs build --strict` from the repository root
-3. review the generated navigation in `site/`
+2. review links between documents and section consistency
+3. confirm that recent code changes are reflected in guides and reference files
 
 ### For Executive Context or Follow-Up
 
 - [Executive Summary](extra/SUMARIO_EXECUTIVO.md)
 - [Next Steps](extra/PROXIMOS_PASSOS.md)
 - [Documentation Completed](extra/DOCUMENTACAO_CONCLUIDA.md)
+- [Subsea JSON Audit Guide](extra/SUBSEA_JSON_AUDIT_GUIDE.md)
+- [Units to IFC Mapping Report](extra/UNITS_IFC_MAPPING_REPORT.md)
 
 ## Quick Structure
 
 ```text
 InfoVis/
 |-- __init__.py
-|-- auth.py
 |-- data/
 |-- docs/
 |-- modules/
@@ -80,35 +81,12 @@ InfoVis/
 `-- wheels/
 ```
 
-## Publishing the Documentation
+## Documentation Scope
 
-The `docs/` folder can be published with MkDocs using the configuration in
-`mkdocs.yml`.
-
-Run the commands from the repository root.
-
-### Local Environment
-
-Basic commands:
-
-```powershell
-pip install -r requirements-docs.txt
-mkdocs serve
-```
-
-For a static build:
-
-```powershell
-mkdocs build
-```
-
-If the repository is hosted on GitHub, the `.github/workflows/docs.yml`
-workflow can automatically publish the documentation to GitHub Pages for the
-configured branch.
+This repository keeps documentation in Markdown only under `docs/`.
 
 ## Quick Checklist
 
 - `README.md` aligned with `docs/`
-- `mkdocs build --strict` without blocking warnings
 - local links resolve correctly
-- documentation workflow points to the active branch
+- content reflects the current addon behavior

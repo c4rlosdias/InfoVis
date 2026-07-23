@@ -53,7 +53,7 @@ Windows.
 - `PropertyGroup` usage for state persistence and synchronization
 - packaged dependencies to reduce installation friction
 - domain-oriented architecture that supports incremental evolution
-- documentation structure that can be published with MkDocs
+- documentation structure maintained directly in Markdown
 
 ## Risks and Attention Points
 

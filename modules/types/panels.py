@@ -1,7 +1,6 @@
 import bpy
 import bonsai.tool as tool
 
-from ... import auth
 from ..catalog.operators import Operator_catalog_show_layers, Operator_catalog_select_elements
 
 

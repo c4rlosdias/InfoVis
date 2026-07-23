@@ -34,17 +34,9 @@ documentation consistent with add-on evolution.
 
 ## Medium Term
 
-### 1. Web Publication
+### 1. Documentation Governance
 
-If the team wants web navigation, a simple option is to publish the `docs/`
-folder with MkDocs.
-
-Basic steps:
-
-```bash
-pip install mkdocs mkdocs-material
-mkdocs build
-```
+Keep the Markdown documentation set synchronized with code changes.
 
 Main documents:
 

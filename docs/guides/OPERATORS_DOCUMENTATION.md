@@ -88,8 +88,6 @@ Operators for IFC decomposition views.
 | `Operator_decomposition_export` | `decomposition.export_tree` | Exports the current decomposition tree to `.xlsx` |
 | `Operator_decomposition_select_element` | `decomposition.select_element` | Selects one element |
 | `Operator_decomposition_select_components` | `decomposition.select_components` | Selects an element and its children recursively |
-| `Operator_decomposition_move` | `decomposition.move` | Moves an element to the selected parent with nesting or aggregation |
-| `Operator_decomposition_chg_order` | `decomposition.chg_order` | Reorders leaf elements |
 
 Dependencies:
 
@@ -155,14 +153,10 @@ Operators for IFC connection management.
 | Class | `bl_idname` | Description |
 |-------|-------------|-------------|
 | `Operator_disconnect` | `conn.disconnect` | Removes an IFC connection relationship |
-| `Operator_select_object` | `conn.select_object` | Stores a selected object in a WindowManager pointer |
-| `Operator_add_connect` | `conn.add_connect` | Creates a connection relationship between objects |
 
 Pattern:
 
-- Uses `WindowManager` pointer properties for object selection.
-- Supports `IfcRelConnectsPorts`, `IfcRelConnectsElements`, and
-  `IfcRelConnectsWithRealizingElements`.
+- Supports review and removal of existing IFC connection relationships.
 
 ## modules/props/operators.py
 
@@ -171,7 +165,6 @@ generation.
 
 | Class | `bl_idname` | Description |
 |-------|-------------|-------------|
-| `Operator_props_edit` | `props.edit` | Edits a property value, including scalar, list, enum, and table values |
 | `Operator_props_load` | `props.load_properties` | Loads properties for the active object |
 | `Operator_props_expand` | `props.expand` | Toggles Pset expansion |
 | `Operator_docs_expand` | `docs.expand` | Toggles the document section |

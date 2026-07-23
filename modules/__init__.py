@@ -80,8 +80,6 @@ def get_classes():
         _decomp_ops.Operator_decomposition_export,        
         _decomp_ops.Operator_decomposition_select_element,
         _decomp_ops.Operator_decomposition_select_components,
-        _decomp_ops.Operator_decomposition_move,
-        _decomp_ops.Operator_decomposition_chg_order,
         _decomp_panels.Panel_Decompositions,
         _decomp_panels.BIM_UL_decomposition,
         _decomp_panels.BIM_UL_tree,
@@ -116,11 +114,8 @@ def get_classes():
         _analysis_panels.Panel_Analysis,
         # --- Connections ---
         _conn_ops.Operator_disconnect,
-        _conn_ops.Operator_select_object,
-        _conn_ops.Operator_add_connect,
         _conn_panels.Panel_Connect_Elements,
         # --- Properties ---
-        _props_ops.Operator_props_edit,
         _props_ops.Operator_props_load,
         _props_ops.Operator_props_expand,
         _props_ops.Operator_docs_expand,

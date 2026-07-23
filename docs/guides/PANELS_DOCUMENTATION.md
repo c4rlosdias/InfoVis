@@ -57,26 +57,10 @@ The panels are organized into these Blender 3D Viewport sidebar categories:
 | `InfoVis-Analysis` | `Analysis` |
 | `InfoVis-Settings` | `Settings` |
 
-## Authentication
+## Editing Availability
 
-Panels and operators that mutate IFC data check editor authentication through
-`auth.is_authenticated()`. Read-only sections remain available, while editing
-controls are hidden or disabled until the user logs in through the Add-on
-preferences.
-
-Typical pattern:
-
-```python
-from ... import auth
-
-class SomePanel(bpy.types.Panel):
-    def draw(self, context):
-        layout = self.layout
-        if not auth.is_authenticated():
-            layout.label(text="Login required")
-            return
-        # editable content
-```
+Panels and operators that mutate IFC data now expose editing controls directly
+whenever the required IFC context is available.
 
 ## Panel_Connect: Subsea Classes
 
@@ -222,7 +206,7 @@ Features:
 2. Loads properties with `props.load_properties`.
 3. Separates occurrence properties and inherited type properties.
 4. Toggles property descriptions.
-5. Edits scalar, list, enum, and table values when authenticated.
+5. Displays scalar, list, enum, and table values as read-only.
 6. Shows and edits IFC document references when authenticated.
 7. Opens document URLs or local paths.
 8. Generates charts from CSV/table data.

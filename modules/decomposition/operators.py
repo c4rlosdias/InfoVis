@@ -7,9 +7,7 @@ from ...data.tree import (
     get_view,
     load_contained_elements_by_decomposition,
     refresh_container,
-    move_to_assembly,
 )
-from ..common.operators import reorder_element
 
 
 class Operator_decomposition_load(bpy.types.Operator):
@@ -204,52 +202,3 @@ class Operator_decomposition_select_components(bpy.types.Operator):
         return {"FINISHED"} 
     
 
-class Operator_decomposition_move(bpy.types.Operator):
-    """"""
-    bl_idname  = "decomposition.move"
-    bl_label   = "Move object to selected parent"
-    bl_options = {"REGISTER", "UNDO"}    
-    index : bpy.props.IntProperty(name="index")
-    type  : bpy.props.StringProperty(name="type", default="Nests")
-
-    def execute(self, context):   
-        props = context.scene.og_props       
-        model = tool.Ifc.get() 
-        parent_id =  props.elements_containers[self.index].id           
-        entity_parent = model.by_id(parent_id) 
-        children_id = props.containers_show[props.active_element_index].id        
-        entity_children =  model.by_id(children_id)        
-
-        if entity_parent != entity_children:     
-            print(f'entity_parent: {entity_parent}')
-            print(f'entity_children: {entity_children}')
-            move_to_assembly(entity_parent, entity_children, self.type)
-            self.report({'OPERATOR'}, 'Moved successfully!')       
-            refresh_container(context) 
-            bpy.ops.decomposition.load(all_expanded=True)
-            return {"FINISHED"}
-        else:
-            self.report({'ERROR'}, 'Cannot move element to itself or its children!')
-            return {"CANCELLED"}
-
-
-class Operator_decomposition_chg_order(bpy.types.Operator):
-    """"""
-    bl_idname  = "decomposition.chg_order"
-    bl_label   = "Move element"
-    bl_options = {"REGISTER", "UNDO"}    
-    
-    index : bpy.props.IntProperty(name="index")
-    chg   : bpy.props.IntProperty(name="change", default=-1)
-
-    def execute(self, context):      
-        props = context.scene.og_props     
-        id = props.containers_show[self.index].id
-        if reorder_element(context, self.index, self.chg):
-            bpy.ops.decomposition.load(all_expanded=True)
-            for c in props.containers_show:
-                if c.id == id:  
-                    props.active_element_index = c.index
-                    break
-
-        return {"FINISHED"}

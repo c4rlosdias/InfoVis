@@ -2,7 +2,6 @@ import bpy
 import bonsai.tool as tool
 
 from ...data.tree import draw_tree
-from ... import auth
 
 
 class _Panel_Decompositions(bpy.types.Panel):
@@ -27,14 +26,6 @@ class _Panel_Decompositions(bpy.types.Panel):
         row.operator("decomposition.export_tree", text="Export", icon='EXPORT')
         row = layout.row()
         row.label(text="Project Composition:", icon='INFO')
-
-        if auth.is_authenticated():
-            box = layout.box()
-            row = box.row()
-            row.prop(props, "show_agg")
-            row.prop(props, "agg_type")
-            row = box.row()
-            row.prop(props, "chg_order")
 
         if len(props.containers_show) > 0:
             self.layout.template_list(
@@ -88,14 +79,6 @@ class Panel_Decompositions(bpy.types.Panel):
         row.operator("decomposition.export_tree", text="Export", icon='EXPORT')
         row = layout.row()
         row.label(text="Project Composition:", icon='INFO')
-                
-        if auth.is_authenticated():
-            box = layout.box()
-            row = box.row()
-            row.prop(props, "show_agg")
-            row.prop(props, "agg_type")
-            row = box.row()
-            row.prop(props, "chg_order")
 
         row = layout.row()
         row.prop(props, "tree_type", expand=True)
@@ -162,16 +145,6 @@ class BIM_UL_decomposition(bpy.types.UIList):
             if item.has_children:
                 operators += [                    
                         {"name": "decomposition.select_components", "icon": 'RESTRICT_SELECT_OFF', "att": [("index", item.index)]}
-                ]
-
-            if props.show_agg:
-                operators += [
-                    {"name": "decomposition.move",  "icon": 'TRACKING_CLEAR_BACKWARDS', "att": [("index", item.index), ("type", props.agg_type)]}
-                ]
-            if props.chg_order and not item.has_children:               
-                operators += [
-                    {"name": "decomposition.chg_order", "icon": 'TRIA_UP', "att": [("index", item.index), ("chg", -1)]},
-                    {"name": "decomposition.chg_order", "icon": 'TRIA_DOWN', "att": [("index", item.index), ("chg", 1)]}
                 ]
 
 
