@@ -1,10 +1,10 @@
 import bpy
 from bpy.types import PropertyGroup
 from bpy.props import *
-import bonsai.tool as tool
 import ifcopenshell
 import ifcopenshell.util.element
 
+from ..data.ifc_session import get_model, get_object
 from ..data.bsdd import bSDD
 from ..data.cde import CDE_Api
 from .dictionary.properties import Ifc_properties, Class_info, Class_prop_info
@@ -135,7 +135,7 @@ def active_product_changed(self, context):
     type_id = self.types_show[self.active_type_index].id if self.active_type_index < len(self.types_show) else None
     print(f"Active type ID: {type_id}")
     if type_id is not None and type_id != 0:
-        model = tool.Ifc.get()
+        model = get_model()
         ifc_type = model.by_id(type_id)
         
         nested_elements = ifcopenshell.util.element.get_components(ifc_type) or []
@@ -148,7 +148,7 @@ def active_product_changed(self, context):
             new_layer.name = element.Name or f"Element {element.id()}"
             new_layer.description = element.get_info() or ''
 
-        obj = tool.Ifc.get_object(ifc_type)
+        obj = get_object(ifc_type)
         if obj:
             bpy.ops.object.select_all(action='DESELECT')
             if obj.hide_get():
@@ -167,13 +167,13 @@ def active_element_changed(self, context):
     if _data_tree._syncing_tree:
         return
     
-    model = tool.Ifc.get()
+    model = get_model()
     print(f"Active element index: {self.active_element_index}")
     ifc_id = self.containers_show[self.active_element_index].id if self.active_element_index < len(self.containers_show) else None
     if ifc_id is None:
         return
     ifc_element = model.by_id(ifc_id)
-    obj = tool.Ifc.get_object(ifc_element)
+    obj = get_object(ifc_element)
     if obj is None:
         return
     bpy.ops.object.select_all(action='DESELECT')
@@ -184,7 +184,7 @@ def active_element_changed(self, context):
     type_ifc = ifcopenshell.util.element.get_type(ifc_element) if ifc_element is not None else None
     type_id = type_ifc.id() if type_ifc is not None else None    
     if type_id is not None:
-        model = tool.Ifc.get()
+        model = get_model()
         ifc_type = model.by_id(type_id)
         print(f"Selected type: {ifc_type}")
         nested_elements = ifcopenshell.util.element.get_components(ifc_type) or []

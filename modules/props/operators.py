@@ -5,13 +5,13 @@ from io import BytesIO
 from pathlib import Path
 
 import ifcopenshell.util.element as element
-import bonsai.tool as tool
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import numpy as np
 from scipy.interpolate import interp1d
 
+from ...data.ifc_session import get_model
 from ...data.ifc_utils import get_prop_type, refresh_props
 from ..common.operators import _open_in_browser, get_options, dynamic_items, Columns
 
@@ -24,7 +24,7 @@ class Operator_props_load(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            if tool.Ifc.get() is None:
+            if get_model() is None:
                 bpy.ops.og.error_message('INVOKE_DEFAULT', message='No Ifc file loaded')
                 return {"CANCELLED"}
             else:                
@@ -301,7 +301,7 @@ class Operator_document_edit(bpy.types.Operator):
     location : bpy.props.StringProperty(name='location')
 
     def execute(self, context):
-        model = tool.Ifc.get()
+        model = get_model()
         ifc_obj = model.by_id(self.ifc_id)
         ifc_type = ifcopenshell.util.element.get_type(ifc_obj)
         if ifc_type:

@@ -5,7 +5,6 @@ from tqdm import tqdm
 from ifctester import ids
 import ifcopenshell
 import ifcopenshell.util.selector as selector
-import bonsai.tool as tool
 
 from ...data.bsdd import bSDD
 from ...data.catalog import PropTempl

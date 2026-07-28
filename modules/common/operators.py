@@ -6,9 +6,9 @@ import bpy
 import blf
 import gpu
 from gpu_extras.batch import batch_for_shader
-import bonsai.tool as tool
 import bpy_extras.view3d_utils
 
+from ...data.ifc_session import get_entity, get_model, get_object_by_identifier
 from ...data.tree import refresh_tree, refresh_container
 
 
@@ -79,7 +79,7 @@ def _draw_ifc_label():
 
     for obj in objs:
         try:
-            entity = tool.Ifc.get_entity(obj)
+            entity = get_entity(obj)
             if entity is None:
                 continue
         except Exception:
@@ -211,10 +211,9 @@ dynamic_items = []
 
 def reorder_element(context, index, chg):
     import ifcopenshell
-    import bonsai.tool as tool
 
     props = context.scene.og_props
-    model = tool.Ifc.get() 
+    model = get_model()
     element = model.by_id(props.containers_show[index].id)
     if element is not None:
         if hasattr(element, "Nests") and element.Nests:
@@ -337,7 +336,7 @@ class Select_object(bpy.types.Operator):
         if self.id is None:
             self.report({'WARNING'}, "No object ID provided.")
             return {'CANCELLED'}
-        obj = tool.Ifc.get_object_by_identifier(self.id)
+        obj = get_object_by_identifier(self.id)
         if obj:
             context.selected_objects.clear()
             context.view_layer.objects.active = obj

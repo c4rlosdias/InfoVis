@@ -6,11 +6,15 @@ import bpy
 import ifcopenshell
 import ifcopenshell.util.element
 import ifcopenshell.util.selector as selector
-import bonsai.tool as tool
-from bonsai.bim.ifc import IfcStore
 from bonsai.bim import import_ifc
 
 from .bsdd import bSDD
+from .ifc_session import (
+    get_bonsai_data_dir_path,
+    get_model,
+    get_object_by_identifier,
+    get_path,
+)
 
 
 class Import_ifc():
@@ -19,9 +23,9 @@ class Import_ifc():
 
     @classmethod
     def import_type_from_ifc(self, element: ifcopenshell.entity_instance, context: bpy.types.Context) -> None:
-        self.file = tool.Ifc.get()
+        self.file = get_model()
         logger = logging.getLogger("ImportIFC")
-        ifc_import_settings = import_ifc.IfcImportSettings.factory(context, IfcStore.path, logger)
+        ifc_import_settings = import_ifc.IfcImportSettings.factory(context, get_path(), logger)
 
         ifc_importer = import_ifc.IfcImporter(ifc_import_settings)
         ifc_importer.file = self.file
@@ -35,7 +39,7 @@ class Import_ifc():
     @classmethod
     def import_materials(self, element: ifcopenshell.entity_instance, ifc_importer: import_ifc.IfcImporter) -> None:
         for material in ifcopenshell.util.element.get_materials(element):
-            if tool.Ifc.get_object_by_identifier(material.id()):
+            if get_object_by_identifier(material.id()):
                 continue
             self.import_material_styles(material, ifc_importer)
 
@@ -50,7 +54,7 @@ class Import_ifc():
                 if not element.is_a("IfcRepresentationItem") or not element.StyledByItem:
                     continue
                 for element2 in self.file.traverse(element.StyledByItem[0]):
-                    if element2.is_a("IfcSurfaceStyle") and not tool.Ifc.get_object_by_identifier(element2.id()):
+                    if element2.is_a("IfcSurfaceStyle") and not get_object_by_identifier(element2.id()):
                         ifc_importer.create_style(element2)
 
     @classmethod
@@ -62,7 +66,7 @@ class Import_ifc():
         if not material.HasRepresentation:
             return
         for element in self.file.traverse(material.HasRepresentation[0]):
-            if element.is_a("IfcSurfaceStyle") and not tool.Ifc.get_object_by_identifier(element.id()):
+            if element.is_a("IfcSurfaceStyle") and not get_object_by_identifier(element.id()):
                 ifc_importer.create_style(element)
 
 
@@ -82,7 +86,7 @@ class PropTempl:
     # Obtem o arquivo template de propriedades
     @classmethod
     def get_template(cls):   
-        cls.filepath = (tool.Blender.get_data_dir_path("pset") / "EPset_OG.ifc").__str__()             
+        cls.filepath = (get_bonsai_data_dir_path("pset") / "EPset_OG.ifc").__str__()
         file_exist = os.path.exists(cls.filepath)
         if file_exist:
             cls.template = ifcopenshell.open(cls.filepath)

@@ -1,6 +1,6 @@
 import bpy
-import bonsai.tool as tool
 
+from ...data.ifc_session import get_entity
 from ..common.operators import Select_object
 
 
@@ -16,7 +16,7 @@ class Panel_Connect_Elements(bpy.types.Panel):
     
     def get_connects(self, object):
         connects = []
-        element = tool.Ifc.get_entity(object)
+        element = get_entity(object)
         rels1 = element.ConnectedFrom if hasattr(element, 'ConnectedFrom') else []
         rels2 = element.ConnectedTo if hasattr(element, 'ConnectedTo') else []
         rels3 = element.IsConnectionRealization if hasattr(element, 'IsConnectionRealization') else []

@@ -1,9 +1,9 @@
 import bpy
 import ifcopenshell
 import ifcopenshell.util.element
-import bonsai.tool as tool
 
 from . import decomposition_views
+from .ifc_session import get_entity, get_model
 from .ifc_utils import refresh_props
 
 last_active = None
@@ -33,10 +33,10 @@ def refresh_layers(context):
     obj = context.view_layer.objects.active
     if obj is None:
         return
-    model = tool.Ifc.get()
+    model = get_model()
     if model is None:
         return
-    entity = tool.Ifc.get_entity(obj)
+    entity = get_entity(obj)
     if entity is None:
         return
     ifc_type = ifcopenshell.util.element.get_type(entity)
@@ -267,7 +267,7 @@ def refresh_tree(context, property):
 
 
 def move_to_assembly(parent, children, type):
-    model = tool.Ifc.get()
+    model = get_model()
     if type == 'Nests':
         if getattr(children, 'Nests', None):
             ifcopenshell.api.nest.change_nest(

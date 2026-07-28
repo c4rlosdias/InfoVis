@@ -2,8 +2,8 @@ import bpy
 
 import ifcopenshell.api.pset
 import ifcopenshell.util.element as element
-import bonsai.tool as tool
 
+from ...data.ifc_session import get_entity, get_model
 from ...data.ifc_utils import get_prop_type, refresh_props
 
 
@@ -27,7 +27,7 @@ class Panel_Properties(bpy.types.Panel):
         row = layout.row()   
         obj = context.active_object  
         if obj is not None and obj.select_get():
-            entity = tool.Ifc.get_entity(obj)
+            entity = get_entity(obj)
             row = layout.row()
             row.label(text=f"Name: {entity.Name}", icon='INFO')
             row = layout.row()
@@ -36,7 +36,7 @@ class Panel_Properties(bpy.types.Panel):
             row.separator()
 
         if obj is not None:
-            model = tool.Ifc.get()     
+            model = get_model()
             row = layout.row()                      
             row.operator("props.load_properties", text="Load properties")    
 
@@ -56,7 +56,7 @@ class Panel_Properties(bpy.types.Panel):
                     for document in props.documents:
                         row = box.row() 
                         op4 = row.operator("props.doc_edit", icon='CHECKMARK', text="") 
-                        op4.ifc_id = tool.Ifc.get_entity(obj).id()
+                        op4.ifc_id = get_entity(obj).id()
                         op4.id = document.identification
                         op4.name = document.name
                         op4.location = document.location

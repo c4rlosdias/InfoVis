@@ -1,8 +1,8 @@
 import bpy
 import ifcopenshell
 import pandas as pd
-import bonsai.tool as tool
 
+from ...data.ifc_session import get_model, get_object
 from ...data.tree import (
     get_view,
     load_contained_elements_by_decomposition,
@@ -20,7 +20,7 @@ class Operator_decomposition_load(bpy.types.Operator):
 
     def execute(self, context):   
         props = context.scene.og_props        
-        model = tool.Ifc.get()
+        model = get_model()
 
         try:
             view = get_view(props.tree_type)
@@ -132,7 +132,7 @@ class Operator_decomposition_select_element(bpy.types.Operator):
             props = context.scene.og_props       
             item = props.elements_containers[self.index]   
 
-            model = tool.Ifc.get()
+            model = get_model()
             if model is None:
                 self.report({'ERROR'}, "No IFC model loaded")
                 return {"CANCELLED"}
@@ -142,7 +142,7 @@ class Operator_decomposition_select_element(bpy.types.Operator):
                 self.report({'ERROR'}, f"Element with id {item.id} not found")
                 return {"CANCELLED"}
 
-            obj = tool.Ifc.get_object(ifc_element)  
+            obj = get_object(ifc_element)
             if obj:
                 obj.select_set(True)
                 bpy.context.view_layer.objects.active = obj
@@ -163,20 +163,20 @@ class Operator_decomposition_select_components(bpy.types.Operator):
 
     def sel_objects(self, ifc_element):         
         objs = [] 
-        objs.append(tool.Ifc.get_object(ifc_element))
+        objs.append(get_object(ifc_element))
         if len(ifc_element.IsNestedBy) > 0:
             for element in ifc_element.IsNestedBy[0].RelatedObjects:
                     if len(element.IsNestedBy)>0 or len(element.IsDecomposedBy)>0: 
                         objs += self.sel_objects(element)
                     else:
-                        objs.append(tool.Ifc.get_object(element))
+                        objs.append(get_object(element))
                     
         if len(ifc_element.IsDecomposedBy) > 0:
             for element in ifc_element.IsDecomposedBy[0].RelatedObjects:
                 if len(element.IsNestedBy)>0 or len(element.IsDecomposedBy)>0: 
                         objs += self.sel_objects(element)
                 else:
-                    objs.append(tool.Ifc.get_object(element))
+                    objs.append(get_object(element))
         print(objs)
         return objs
 
@@ -184,7 +184,7 @@ class Operator_decomposition_select_components(bpy.types.Operator):
         props = context.scene.og_props       
         item =  props.elements_containers[self.index] 
         item.is_selected = not item.is_selected                           
-        model = tool.Ifc.get()        
+        model = get_model()
         ifc_element = model.by_id(item.id) 
         print(ifc_element)
         objs = self.sel_objects(ifc_element) 

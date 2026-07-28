@@ -1,6 +1,6 @@
 import bpy
-import bonsai.tool as tool
 
+from ...data.ifc_session import get_model
 from ..catalog.operators import Operator_catalog_show_layers, Operator_catalog_select_elements
 
 
@@ -20,7 +20,7 @@ class Panel_Types(bpy.types.Panel):
         layout.label(text="", icon='GREASEPENCIL')    
 
     def draw(self, context):
-        model = tool.Ifc.get()
+        model = get_model()
         ifc_type = None
         layout = self.layout        
         props = context.scene.og_props

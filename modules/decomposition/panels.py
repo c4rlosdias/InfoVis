@@ -1,5 +1,4 @@
 import bpy
-import bonsai.tool as tool
 
 from ...data.tree import draw_tree
 

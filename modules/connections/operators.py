@@ -1,5 +1,6 @@
 import bpy
-import bonsai.tool as tool
+
+from ...data.ifc_session import get_model
 
 class Operator_disconnect(bpy.types.Operator):
     """Disconnect a selected object relationship."""
@@ -10,7 +11,7 @@ class Operator_disconnect(bpy.types.Operator):
     rel_id: bpy.props.IntProperty()
 
     def execute(self, context):
-        model = tool.Ifc.get()
+        model = get_model()
         rel = model.by_id(self.rel_id)
         if rel:
             model.remove(rel)            

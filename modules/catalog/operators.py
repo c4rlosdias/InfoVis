@@ -8,9 +8,8 @@ import ifcopenshell.util.element as element
 import ifcopenshell
 from pathlib import Path
 
-import bonsai.tool as tool
-
 from ...data.catalog import Catalog
+from ...data.ifc_session import get_model, get_object
 from ...data.ifc_utils import build_products
 from ...data.ifc_utils import get_unit_symbol
 from ...data.tree import refresh_types
@@ -846,7 +845,7 @@ def _resolve_computed(type_entity, occurrence, source, mapping_data, row_values,
             if sample is not None:
                 qto_name = quantity_rule.get('qto')
                 if qto_name:
-                    model = tool.Ifc.get()
+                    model = get_model()
                     psets = ifcopenshell.util.element.get_psets(sample, should_inherit=False)
                     if qto_name in psets and quantity_name in psets[qto_name]:
                         qto = model.by_id(psets[qto_name]['id'])
@@ -965,7 +964,7 @@ def _build_li_rows(model, mapping_data):
     return rows
             
 def update_predefined_types():
-    model = tool.Ifc.get()
+    model = get_model()
     for entity in model.by_type('IfcElement'):
         if entity.IsTypedBy:
             type = entity.IsTypedBy[0].RelatingType
@@ -985,7 +984,7 @@ class Operator_load_products(bpy.types.Operator):
         props = context.scene.og_props               
         props.types.clear()
         props.types_loaded = True
-        model = tool.Ifc.get()
+        model = get_model()
         types = model.by_type('IfcTypeProduct')
         c = -1
         result = {}
@@ -1123,7 +1122,7 @@ class Operator_catalog_show_layers(bpy.types.Operator):
         return {"FINISHED"}
 
     def invoke(self, context, event):
-        model = tool.Ifc.get()        
+        model = get_model()
         ifc_type = model.by_id(self.id)   
 
         if ifc_type is not None:                
@@ -1155,10 +1154,10 @@ class Operator_catalog_select_layer(bpy.types.Operator):
             
     def execute(self, context): 
             props = context.scene.og_props                     
-            model = tool.Ifc.get()        
+            model = get_model()
             layer = model.by_id(self.id)           
 
-            obj_blender = tool.Ifc.get_object(layer)
+            obj_blender = get_object(layer)
             if obj_blender:
                 obj_blender.select_set(True)
                 context.view_layer.objects.active = obj_blender
@@ -1180,7 +1179,7 @@ class Operator_catalog_select_elements(bpy.types.Operator):
             
     def execute(self, context): 
             props = context.scene.og_props                     
-            model = tool.Ifc.get()        
+            model = get_model()
             type = model.by_id(self.id)           
             elements=[]
             if type is not None:
@@ -1190,7 +1189,7 @@ class Operator_catalog_select_elements(bpy.types.Operator):
                         elements.extend(rel.RelatedObjects)
 
                 for element in elements:
-                    obj_blender = tool.Ifc.get_object(element)
+                    obj_blender = get_object(element)
                     if obj_blender:
                         obj_blender.select_set(True)
                         context.view_layer.objects.active = obj_blender
@@ -1245,7 +1244,7 @@ class Operator_export_li(bpy.types.Operator):
     def execute(self, context):
         try:
             mapping_data = _load_li_mapping_data()
-            model = tool.Ifc.get()
+            model = get_model()
             rows = _build_li_rows(model, mapping_data)
             if not rows:
                 self.report({'WARNING'}, 'No LI rows could be generated from the current IFC model')

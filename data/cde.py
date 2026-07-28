@@ -1,5 +1,6 @@
 import requests
-import bonsai.tool as tool
+
+from .ifc_session import get_model
 
 
 class CDE_Api:  
@@ -53,7 +54,7 @@ class CDE_Api:
     def get_contracts(self, element):
         contracts = []
            
-        model = tool.Ifc.get()
+        model = get_model()
         entity = model.by_id(element.id)
         assignment = entity.HasAssignments
         if assignment:

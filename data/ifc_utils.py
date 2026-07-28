@@ -3,7 +3,8 @@ import pandas as pd
 import ifcopenshell
 import ifcopenshell.util.element
 import ifcopenshell.util.unit
-import bonsai.tool as tool
+
+from .ifc_session import get_entity, get_model
 
 
 def set_prop_type(prop, value_prop):
@@ -61,7 +62,7 @@ def get_pset_items(pset):
 
 
 def get_unit(ifc_obj, pset_name, prop_name):
-    model = tool.Ifc.get()
+    model = get_model()
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False)
     pset = model.by_id(psets[pset_name]['id'])
     symbol = ''
@@ -77,7 +78,7 @@ def get_unit(ifc_obj, pset_name, prop_name):
 
 
 def get_property(ifc_obj, pset_name, prop_name):
-    model = tool.Ifc.get()
+    model = get_model()
     pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
     if pset is None:
         return None
@@ -90,7 +91,7 @@ def get_property(ifc_obj, pset_name, prop_name):
 
 
 def get_pset(ifc_obj, pset_name):
-    model = tool.Ifc.get()
+    model = get_model()
     pset = ifcopenshell.api.pset.add_pset(model, product=ifc_obj, name=pset_name)
     return pset
 
@@ -217,7 +218,7 @@ def refresh_props(context):
     obj = context.active_object
     try:
         if obj:
-            ifc_obj = tool.Ifc.get_entity(obj)
+            ifc_obj = get_entity(obj)
             if ifc_obj is None:
                 return
             # ifc_obj_type = ifcopenshell.util.element.get_type(ifc_obj)
@@ -314,10 +315,10 @@ def build_classes(context, classe, c, level, parent, hide):
 
 
 def add_connections(obj_a, obj_b, obj_c, connect_type="IfcRelConnectsWithRealizingElements"):   
-    model = tool.Ifc.get()
-    element_a = tool.Ifc.get_entity(obj_a)
-    element_b = tool.Ifc.get_entity(obj_b)
-    element_c = tool.Ifc.get_entity(obj_c)
+    model = get_model()
+    element_a = get_entity(obj_a)
+    element_b = get_entity(obj_b)
+    element_c = get_entity(obj_c)
     if element_a and element_b:
         if connect_type == "IfcRelConnectsPorts":
             rel = model.create_entity(

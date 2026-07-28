@@ -2,9 +2,9 @@ import colorsys
 import json
 
 import bpy
-import bonsai.tool as tool
 import ifcopenshell.util.element
 
+from ...data.ifc_session import get_entity, get_model
 from ...data.bsdd_dictionary import (
     DICTIONARY_DISCIPLINE_ITEMS,
     _base_object_type,
@@ -100,7 +100,7 @@ def _coerce_float(value):
 
 def _iter_ifc_scene_objects():
     for obj in bpy.data.objects:
-        entity = tool.Ifc.get_entity(obj)
+        entity = get_entity(obj)
         if entity is None or entity.is_a("IfcTypeProduct"):
             continue
         yield obj, entity
@@ -286,7 +286,7 @@ def _format_number(value):
 
 
 def validate_analysis_selection(props):
-    if tool.Ifc.get() is None:
+    if get_model() is None:
         raise ValueError("No Ifc file loaded")
     if not getattr(props, "analysis_object_type", ""):
         raise ValueError("Select an ObjectType")
