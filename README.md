@@ -6,143 +6,68 @@ More than a viewer, InfoVis was designed as an open tool intended to serve the e
 
 This initiative is aligned with Brazil's Innovation Law (Law No. 10,973/2004, updated by the Legal Framework for Science, Technology, and Innovation - Law No. 13,243/2016), which encourages cooperation between Scientific, Technological, and Innovation Institutions (ICTs) and companies to develop technological solutions of national interest. The partnership between CERTI and Petrobras materializes this spirit: it transforms research and development investment into an open technological asset whose benefits extend beyond the institutions involved, strengthening the competitiveness and technological capabilities of the entire Brazilian oil and gas ecosystem.
 
-## Overview
+## Short description
 
-The project is distributed as a Python add-on for Blender. The main entry point is `__init__.py`, which registers preferences, `OG_Properties`, and all classes loaded by `modules/get_classes()`.
+Explore and analyze oil and gas IFC models using Bonsai.
 
-Main capabilities:
+## Description
 
-- reading and navigating IFC data
-- querying classes and properties through bSDD
-- viewing decomposition and element trees
-- selecting catalog types and layers
-- editing and inspecting properties and documents
-- displaying IFC attributes in the viewport
+InfoVis is a Blender extension for exploring, visualizing, and analyzing information stored in IFC models for the oil and gas industry.
+
+The extension integrates with the active Bonsai IFC session and provides specialized tools for navigating model decomposition, inspecting IFC properties and types, exploring connections, querying bSDD dictionaries, managing catalogs, and performing engineering-oriented analyses.
+
+InfoVis is designed as a companion extension for Bonsai 0.8.5 and requires Bonsai to be installed and enabled. It does not replace Bonsai or maintain a separate IFC session.
+
+## Main features
+
+- IFC spatial and functional decomposition views
+- Property set, attribute, and type inspection
+- IFC element and connection visualization
+- Oil and gas equipment catalog tools
+- bSDD dictionary integration
+- Spreadsheet import and export
+- Engineering data analysis and visualization
+- CDE integration for uploading and downloading IFC information
+- Integration with the IFC model currently open in Bonsai
 
 ## Requirements
 
-- Blender 5.0 or later
-- Blender embedded Python compatible with the target environment
-- Windows, Linux, or macOS
-
-Dependency notes:
-
-- packaged dependencies are distributed through `wheels/` and declared in `blender_manifest.toml`
-- install using Blender's extensions workflow so wheels are resolved automatically
+- Blender 5.1 or newer
+- Windows x64
+- Bonsai 0.8.5 installed and enabled
 
 ## Installation
 
-### Using a zipped release
+1. Install and enable Bonsai 0.8.5.
+2. Install the InfoVis extension package.
+3. Enable InfoVis in Blender.
+4. Open or create an IFC project using Bonsai.
+5. Access the InfoVis tools from the 3D View sidebar.
 
-1. Generate or obtain a release `.zip` file.
-2. In Blender, open `Edit > Preferences > Add-ons`.
-3. Click `Install from Disk`.
-4. Select the `.zip` file generated in `releases/`.
-5. Enable the `InfoVis` add-on.
+## Permissions
 
-### Development installation
+### Network
 
-1. Clone or copy this repository into a working directory.
-2. Generate a release package with one of the scripts below:
+Used for optional CDE and bSDD integrations, including uploading and downloading IFC-related information.
 
-```powershell
-.\build_release.bat release-name
-```
+### Files
 
-```bash
-./build_release.sh release-name
-```
+Used to read and write spreadsheet files selected by the user and to work with IFC-related project data.
 
-3. Install the generated zip in Blender using the `Install from Disk` flow.
+### Clipboard
 
-If you prefer installing without a zip during development, copy the project folder to Blender's add-ons directory, keeping the current structure and package name consistent with `InfoVis`.
+Used only when the user explicitly copies diagnostic or error information.
 
-## Release Build
+## Notes for reviewers
 
-The build scripts copy the required files to `releases/InfoVis/` and generate a final zip in `releases/<name>.zip`.
+InfoVis depends on the Python package distributed with Bonsai 0.8.5 and accesses the active Bonsai IFC session through its public Python modules.
 
-Files and folders included in the package:
+The extension bundles the required Python wheels using the Blender Extensions manifest mechanism. Packages already provided by Blender 5.1—including NumPy, Requests, Packaging, Certifi, Charset Normalizer, IDNA, urllib3, Click, attrs, importlib-metadata, typing-extensions, and zipp—are intentionally not bundled.
 
-- `__init__.py`
-- `modules/`
-- `data/`
-- `wheels/`
-- `resources/`
+Wheels shared with Bonsai use the exact versions distributed by Bonsai 0.8.5. This prevents binary package conflicts in Blender's shared extension environment, particularly for pandas, Pillow, IfcOpenShell, FontTools, ElementPath, and XMLSchema.
 
-## Repository Structure
+The package was validated with Blender 5.1 on Windows x64. A clean installation test was performed by installing and enabling Bonsai 0.8.5 first, followed by InfoVis.
 
-```text
-InfoVis/
-|-- __init__.py
-|-- data/
-|-- docs/
-|-- Example/
-|-- modules/
-|-- releases/
-|-- wheels/
-`-- resources/
-```
+## License
 
-### Main modules
-
-- `modules/dictionary/`: bSDD integration and class properties
-- `modules/decomposition/`: decomposition tree and IFC navigation
-- `modules/catalog/`: product types and layers
-- `modules/connections/`: creating and removing object connections
-- `modules/props/`: properties, documents, and views
-- `modules/types/`: types panel
-- `modules/settings/`: add-on information and visual settings
-- `modules/common/`: shared utilities
-- `modules/og_properties.py`: central application property group
-
-### Support layers
-
-- `data/bsdd.py`: client for the bSDD API
-- `data/catalog.py`: catalog reading and IFC import
-- `data/cde.py`: CDE integration
-- `data/tree.py`: tree refresh and callbacks
-- `data/ifc_utils.py`: helper functions for IFC
-- `resources/`: supporting JSON files
-
-## Documentation
-
-Main documents:
-
-- [docs/guides/GUIA_DE_UTILIZACAO.md](docs/guides/GUIA_DE_UTILIZACAO.md): using the add-on in Blender, panels, flows, and exports
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): add-on architecture, initialization flow, and module organization
-- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md): setup, workflow, and maintenance
-- [docs/reference/GLOSSARY.md](docs/reference/GLOSSARY.md): recurring terms and conventions
-
-Detailed guides:
-
-- [docs/guides/LI_MAPPING_GUIDE.md](docs/guides/LI_MAPPING_GUIDE.md)
-- [docs/guides/OPERATORS_DOCUMENTATION.md](docs/guides/OPERATORS_DOCUMENTATION.md)
-- [docs/guides/PANELS_DOCUMENTATION.md](docs/guides/PANELS_DOCUMENTATION.md)
-- [docs/guides/PROPERTIES_DOCUMENTATION.md](docs/guides/PROPERTIES_DOCUMENTATION.md)
-- [docs/guides/DATA_DOCUMENTATION.md](docs/guides/DATA_DOCUMENTATION.md)
-
-Additional documents:
-
-- `docs/extra/` contains managerial supporting materials and documentation history
-
-### Documentation Format
-
-Project documentation is maintained directly in Markdown files under `docs/`.
-
-## Development Flow
-
-1. Adjust code in `modules/`, `data/`, or `resources/`.
-2. Reinstall or reload the add-on in Blender.
-3. Validate affected panels and operators with a sample IFC file.
-4. Generate a new release zip when needed.
-
-## Example Files
-
-- `Example/C3388.8_UN-31.ifc`: IFC file for manual tests
-- `graphic.html` and `layers.html`: supporting visualization artifacts
-
-## Notes
-
-- `requirements.txt` lists Python dependencies for the project, but Blender packaging depends on the wheel files listed in `blender_manifest.toml`.
-- The name displayed in Blender is defined in `bl_info` inside `__init__.py`.
-
+InfoVis is distributed under the GNU General Public License, version 3.0 or later (`GPL-3.0-or-later`).
