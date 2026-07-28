@@ -1,6 +1,6 @@
 schema_version = "1.0.0"
 id = "infovis"
-version = "1.0.0"
+version = "1.0.1"
 name = "InfoVis"
 tagline = "Viewer for info contained in IFC files for the oil and gas ind"
 maintainer = "Carlos Dias <cld@certi.org.br>"
