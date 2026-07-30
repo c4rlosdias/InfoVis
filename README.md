@@ -4,8 +4,6 @@ InfoVis is an open-source Blender add-on, developed together with IfcOpenShell, 
 
 More than a viewer, InfoVis was designed as an open tool intended to serve the entire sector supply chain. Manufacturers, designers, integrators, and operators often face barriers to technical information access because they rely on proprietary solutions and closed formats. By adopting the OpenBIM standard and providing a free customization that translates the IFC data structure into understandable visualizations, InfoVis reduces these barriers and promotes interoperability across the different links of the chain, from component suppliers to subsea asset operators.
 
-This initiative is aligned with Brazil's Innovation Law (Law No. 10,973/2004, updated by the Legal Framework for Science, Technology, and Innovation - Law No. 13,243/2016), which encourages cooperation between Scientific, Technological, and Innovation Institutions (ICTs) and companies to develop technological solutions of national interest. The partnership between CERTI and Petrobras materializes this spirit: it transforms research and development investment into an open technological asset whose benefits extend beyond the institutions involved, strengthening the competitiveness and technological capabilities of the entire Brazilian oil and gas ecosystem.
-
 ## Short description
 
 Explore and analyze oil and gas IFC models using Bonsai.

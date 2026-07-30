@@ -18,6 +18,7 @@ class Property_info(PropertyGroup):
     index        : IntProperty(name='prop index')
     name         : StringProperty(name='property name')
     description  : StringProperty(name='property description')
+    definition   : StringProperty(name='property definition')
     valuestr     : StringProperty(name='value str')
     valueint     : IntProperty(name='value int')
     valuefloat   : FloatProperty(name='value float')

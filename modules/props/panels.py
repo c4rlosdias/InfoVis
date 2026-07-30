@@ -209,55 +209,87 @@ class Panel_Properties(bpy.types.Panel):
                                     else:
                                         name_prop = f"{item.name.split('_')[1]} {item.datatype}"
                                     
-                                    col.label(text=name_prop)                                        
+                                    name_row = col.row(align=True)
+                                    name_row.alignment = 'LEFT'
+                                    tooltip = name_row.operator(
+                                        "props.property_definition",
+                                        text="",
+                                        icon='INFO',
+                                        emboss=False,
+                                    )
+                                    tooltip.definition = item.definition
+                                    tooltip = name_row.operator(
+                                        "props.property_definition",
+                                        text=name_prop,
+                                        emboss=False,
+                                    )
+                                    tooltip.definition = item.definition
                                     titulos = titulos + item.name  
 
                                 act_prop = f"value{item.type_value}"                                                                                                                            
-                                col.enabled = can_edit_props
-                                col.prop(item, act_prop, text='')                                
+                                value_row = col.row(align=True)
+                                value_row.enabled = can_edit_props
+                                value_row.prop(item, act_prop, text='')
                                 if i%item.n_rows == 0:
                                     col = rowb.column(align=True)   
 
                                 old_title =title
                                 old_name_prop = name_prop
   
-                            else:    
-                                if item.name != old_name_prop:
-                                    rowb = box.row(align=True)
-                                    if props.show_description:
-                                        prop_name =  f' {item.description}' if item.description != '' else " No description"
-                                        icon = 'BLANK'
-                                    else:
-                                        prop_name = f' {item.name}'   
-                                        icon = 'BLANK'
+                            else:
+                                rowb = box.row(align=True)
+                                split = rowb.split(factor=0.55, align=True)
+                                name_col = split.row(align=True)
+                                name_col.alignment = 'LEFT'
 
-                                    rowb.label(text=prop_name)
-                                    op = rowb.operator("settings.add_ifc_label_property", icon='ADD', text="")
+                                if item.name != old_name_prop:
+                                    if props.show_description:
+                                        prop_name = f' {item.description}' if item.description != '' else " No description"
+                                    else:
+                                        prop_name = f' {item.name}'
+
+                                    tooltip = name_col.operator(
+                                        "props.property_definition",
+                                        text="",
+                                        icon='INFO',
+                                        emboss=False,
+                                    )
+                                    tooltip.definition = item.definition
+                                    tooltip = name_col.operator(
+                                        "props.property_definition",
+                                        text=prop_name,
+                                        emboss=False,
+                                    )
+                                    tooltip.definition = item.definition
+
+                                value_col = split.row(align=True)
+                                if item.name != old_name_prop:
+                                    op = value_col.operator(
+                                        "settings.add_ifc_label_property",
+                                        icon='ADD',
+                                        text="",
+                                    )
                                     op.field_name = f"{pset.name}.{item.name}"
                                     op.display_name = item.description if item.description else item.name
-                                     
 
                                 if item.type_prop == 'IfcPropertyEnumeratedValue':
-                                    rowb = box.row(align=True)   
-                                    col = rowb.column(align=True)
+                                    col = value_col.column(align=True)
                                     col.enabled = can_edit_props
                                     col.prop(item, "enumerated", text='')
-                                    col = rowb.column(align=False)
+                                    col = value_col.column(align=False)
                                     col.enabled = can_edit_props
                                     for enum in item.enumerations:
                                         col.prop(enum, "enumerated", text=getattr(enum, f"value{enum.type_value}"))
-                                    old_name_prop = item.name   
-
                                 else:
-                                    col = rowb.column(align=True)
-                                    col.alignment = 'RIGHT'
-                                    act_prop = f"value{item.type_value}"                           
+                                    col = value_col.column(align=True)
+                                    act_prop = f"value{item.type_value}"
                                     col.enabled = can_edit_props
                                     col.prop(item, act_prop, text='')
-                                    col = rowb.column()
-                                    col.scale_x =0.4
+                                    col = value_col.column()
+                                    col.scale_x = 0.4
                                     col.label(text=item.datatype)
-                                    old_name_prop = item.name 
+
+                                old_name_prop = item.name
 
                             i += 1
 

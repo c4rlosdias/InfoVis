@@ -52,6 +52,21 @@ class Operator_props_expand(bpy.types.Operator):
         return {"FINISHED"} 
 
 
+class Operator_property_definition(bpy.types.Operator):
+    """UI-only control that exposes a property's bSDD definition as a tooltip."""
+    bl_idname = "props.property_definition"
+    bl_label = "Property definition"
+
+    definition : bpy.props.StringProperty(name="Definition", options={"HIDDEN"})
+
+    @classmethod
+    def description(cls, context, properties):
+        return properties.definition or "No definition available in the JSON dictionary"
+
+    def execute(self, context):
+        return {"FINISHED"}
+
+
 class Operator_docs_expand(bpy.types.Operator):
     """"""
     bl_idname  = "docs.expand"

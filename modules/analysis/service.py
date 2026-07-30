@@ -14,6 +14,7 @@ from ...data.bsdd_dictionary import (
     get_pset_entry,
     get_pset_items,
     get_property_items,
+    _pset_name_variants,
 )
 
 # Alias kept for compatibility with code that already imported these names from
@@ -120,24 +121,6 @@ def _get_entity_object_type(entity):
         if value:
             return _base_object_type(value)
     return ""
-
-
-def _pset_name_variants(pset_name):
-    """Alternative Pset names for the same bSDD dictionary Pset.
-
-    The dictionary JSON files (resources/subsea_*_completo.json) use the
-    correct spelling "Occurrence", but real IFC files in this project are
-    exported with the typo "Occurence" (single "r") in every occurrence Pset,
-    for example OGSubPset_LineComponentOccurrence in the dictionary versus
-    OGSubPset_LineComponentOccurence in the IFC. Try both variants so the
-    loaded file can use either spelling.
-    """
-    variants = [pset_name]
-    if "Occurrence" in pset_name:
-        variants.append(pset_name.replace("Occurrence", "Occurence"))
-    elif "Occurence" in pset_name:
-        variants.append(pset_name.replace("Occurence", "Occurrence"))
-    return variants
 
 
 def _lookup_property_in_psets(psets, pset_name, prop_name):

@@ -5,6 +5,10 @@ import ifcopenshell.util.element
 import ifcopenshell.util.unit
 
 from .ifc_session import get_entity, get_model
+from .bsdd_dictionary import (
+    get_property_json_definition,
+    get_property_json_description,
+)
 
 
 def set_prop_type(prop, value_prop):
@@ -96,15 +100,38 @@ def get_pset(ifc_obj, pset_name):
     return pset
 
 
-def set_properties(props, ifc_obj, is_a, i):     
+def _get_object_type_key(ifc_obj):
+    """Get the bSDD class key represented by an IFC occurrence or type."""
+    if ifc_obj is None:
+        return ""
+    for attribute in ("ObjectType", "ElementType", "Name"):
+        value = getattr(ifc_obj, attribute, "") or ""
+        if value:
+            return value[:-4] if value.endswith("Type") else value
+    return ""
+
+
+def _get_property_display_description(object_type, pset_name, prop_name, ifc_property):
+    """Prefer the bundled JSON description, preserving IFC as a fallback."""
+    json_description = get_property_json_description(object_type, pset_name, prop_name)
+    if json_description is not None:
+        return json_description
+    if ifc_property is not None:
+        return ifc_property.Description or ""
+    return ""
+
+
+def set_properties(props, ifc_obj, is_a, i, object_type=""):
     if ifc_obj is None:
         return i
+    object_type = object_type or _get_object_type_key(ifc_obj)
     id = ifc_obj.id()
     psets = ifcopenshell.util.element.get_psets(ifc_obj, should_inherit=False )        
     for pset, _props in psets.items():             
 
         _pset = get_pset(ifc_obj, pset)      
-        table = {}    
+        table = {}
+        table_definitions = {}
         new_item = props.prop_metadata.add()            
         new_item.name = pset  
         new_item.description = _pset.Description or ''
@@ -139,7 +166,11 @@ def set_properties(props, ifc_obj, is_a, i):
                 
                 if 'Table' in prop:
                     _prop = get_property(ifc_obj, pset, prop)
-                    table[f'{prop}||{_prop.Description}']=value
+                    description = _get_property_display_description(object_type, pset, prop, _prop)
+                    table_definitions[prop] = (
+                        get_property_json_definition(object_type, pset, prop) or ""
+                    )
+                    table[f'{prop}||{description}']=value
                 else:               
                     if type(value) == list:
                         _prop = get_property(ifc_obj, pset, prop)
@@ -153,7 +184,12 @@ def set_properties(props, ifc_obj, is_a, i):
                             for item_prop in value:    
                                 new_prop = new_item.props.add() 
                                 new_prop.name = prop
-                                new_prop.description = _prop.Description if _prop.Description is not None else ''
+                                new_prop.description = _get_property_display_description(
+                                    object_type, pset, prop, _prop
+                                )
+                                new_prop.definition = (
+                                    get_property_json_definition(object_type, pset, prop) or ""
+                                )
                                 new_prop.datatype = get_unit(ifc_obj, pset, prop)
                                 new_prop.index = j      
                                 new_prop.type_prop = type_prop                                     
@@ -162,7 +198,12 @@ def set_properties(props, ifc_obj, is_a, i):
                         if type_prop == 'IfcPropertyEnumeratedValue':  
                             new_prop = new_item.props.add()                             
                             new_prop.name = prop  
-                            new_prop.description = _prop.Description if _prop.Description is not None else ''
+                            new_prop.description = _get_property_display_description(
+                                object_type, pset, prop, _prop
+                            )
+                            new_prop.definition = (
+                                get_property_json_definition(object_type, pset, prop) or ""
+                            )
                             new_prop.index = j      
                             new_prop.type_prop = type_prop   
                             new_prop.datatype = get_unit(ifc_obj, pset, prop)                                                        
@@ -178,7 +219,12 @@ def set_properties(props, ifc_obj, is_a, i):
                         _prop = get_property(ifc_obj, pset, prop)
                         new_prop = new_item.props.add()  
                         new_prop.name = prop
-                        new_prop.description = _prop.Description if _prop.Description is not None else ''
+                        new_prop.description = _get_property_display_description(
+                            object_type, pset, prop, _prop
+                        )
+                        new_prop.definition = (
+                            get_property_json_definition(object_type, pset, prop) or ""
+                        )
                         new_prop.datatype = get_unit(ifc_obj, pset, prop)
                         new_prop.index = j                                                
                         set_prop_type(new_prop, value)        
@@ -198,6 +244,7 @@ def set_properties(props, ifc_obj, is_a, i):
                     new_prop = new_item.props.add()
                     new_prop.name = name
                     new_prop.description = description
+                    new_prop.definition = table_definitions.get(name, "")
                     new_prop.n_columns = nc 
                     new_prop.n_rows = nr                         
                     new_prop.index = j    
@@ -237,12 +284,13 @@ def refresh_props(context):
             #                 newdocument.location = ''
 
             ifc_type_obj = ifcopenshell.util.element.get_type(ifc_obj)
+            object_type = _get_object_type_key(ifc_obj)
 
             if ifc_obj.is_a('IfcTypeProduct'):
-                set_properties(props, ifc_type_obj, "type", 0)
+                set_properties(props, ifc_type_obj, "type", 0, object_type)
             else:
-                i = set_properties(props, ifc_obj, "instance", 0)
-                set_properties(props, ifc_type_obj, "type", i)
+                i = set_properties(props, ifc_obj, "instance", 0, object_type)
+                set_properties(props, ifc_type_obj, "type", i, object_type)
     except Exception as e:
         print(f"Error refreshing properties: {e}")
 

@@ -118,6 +118,7 @@ def get_classes():
         # --- Properties ---
         _props_ops.Operator_props_load,
         _props_ops.Operator_props_expand,
+        _props_ops.Operator_property_definition,
         _props_ops.Operator_docs_expand,
         _props_ops.Operator_props_graph,
         _props_ops.Operator_props_invert,

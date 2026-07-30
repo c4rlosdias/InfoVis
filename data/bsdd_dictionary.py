@@ -8,6 +8,7 @@ class/Pset/property catalog without parsing the JSON twice.
 import json
 import os
 import re
+from functools import lru_cache
 
 
 _DISCIPLINE_DEFS = {
@@ -181,6 +182,11 @@ def get_dictionary(discipline_key):
                 {
                     "label": prop_data.get("description") or prop_name,
                     "description": prop_data.get("definition") or prop_data.get("description") or prop_name,
+                    # Keep the JSON fields separate.  The Properties panel uses
+                    # the short bSDD description as its display label, while
+                    # other consumers may still need the longer definition.
+                    "json_description": prop_data.get("description") or "",
+                    "json_definition": prop_data.get("definition") or "",
                     "data_type": prop_data.get("dataType") or "",
                     "units": ", ".join(prop_data.get("units") or []),
                 },
@@ -205,6 +211,69 @@ def get_pset_entry(discipline_key, object_type_key, pset_key):
     if not entry:
         return None
     return entry["psets"].get(pset_key)
+
+
+def _pset_name_variants(pset_name):
+    """Return dictionary/IFC spelling variants used by project files."""
+    variants = [pset_name]
+    if "Occurrence" in pset_name:
+        variants.append(pset_name.replace("Occurrence", "Occurence"))
+    elif "Occurence" in pset_name:
+        variants.append(pset_name.replace("Occurence", "Occurrence"))
+    return variants
+
+
+@lru_cache(maxsize=None)
+def _get_property_json_entry(object_type_key, pset_name, prop_name):
+    """Find a property's parsed metadata in the bundled dictionary JSON."""
+    object_type_key = _base_object_type(object_type_key)
+    pset_variants = _pset_name_variants(pset_name or "")
+
+    dictionaries = [get_dictionary(key) for key in _DISCIPLINE_DEFS]
+
+    if object_type_key:
+        for data in dictionaries:
+            current_key = object_type_key
+            visited = set()
+            while current_key and current_key not in visited:
+                visited.add(current_key)
+                object_entry = data["object_types"].get(current_key)
+                if object_entry:
+                    for pset_variant in pset_variants:
+                        pset_entry = object_entry["psets"].get(pset_variant)
+                        if pset_entry and prop_name in pset_entry["properties"]:
+                            return pset_entry["properties"][prop_name]
+                current_key = data["parent_types"].get(current_key)
+
+    for data in dictionaries:
+        for object_entry in data["object_types"].values():
+            for pset_variant in pset_variants:
+                pset_entry = object_entry["psets"].get(pset_variant)
+                if pset_entry and prop_name in pset_entry["properties"]:
+                    return pset_entry["properties"][prop_name]
+
+    return None
+
+
+def get_property_json_description(object_type_key, pset_name, prop_name):
+    """Find a property's short description in the bundled dictionary JSON.
+
+    The object type is preferred so identically named properties can have
+    class-specific descriptions.  Parent classes are also checked because
+    their Psets may be inherited.  If the IFC has no usable ObjectType, a
+    Pset/property lookup across both dictionaries is used as a final fallback.
+
+    Returns ``None`` when the property is absent from the JSON and an empty
+    string when it is present but has no JSON ``description``.
+    """
+    entry = _get_property_json_entry(object_type_key, pset_name, prop_name)
+    return entry["json_description"] if entry is not None else None
+
+
+def get_property_json_definition(object_type_key, pset_name, prop_name):
+    """Find a property's long ``definition`` in the bundled dictionary JSON."""
+    entry = _get_property_json_entry(object_type_key, pset_name, prop_name)
+    return entry["json_definition"] if entry is not None else None
 
 
 def get_object_type_items(discipline_key):
