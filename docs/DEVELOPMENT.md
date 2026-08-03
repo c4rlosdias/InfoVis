@@ -141,8 +141,16 @@ actual package name in the Blender environment.
 
 ## Release Process
 
-The build scripts assemble the package in `releases/InfoVis/` and then create a
-final zip file.
+Build the platform-specific packages from the repository root:
+
+```powershell
+blender --command extension build --split-platforms --output-dir releases
+```
+
+The same command works in PowerShell and in a Linux shell when `blender` is in
+`PATH`. It generates separate Windows x64 and Linux x64 archives, preventing
+native wheels for one operating system from being included in the other
+package.
 
 Packaged content:
 
@@ -157,7 +165,9 @@ Before publishing a release:
 1. confirm the version in `bl_info` inside `__init__.py`
 2. validate zip installation in a clean Blender environment
 3. confirm that JSON resources and bundled libraries are included
-4. record relevant changes in the main documentation
+4. validate both generated archives with
+   `blender --command extension validate`
+5. record relevant changes in the main documentation
 
 ## Related Documentation
 
