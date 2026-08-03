@@ -31,7 +31,7 @@ InfoVis is designed as a companion extension for Bonsai 0.8.5 and requires Bonsa
 ## Requirements
 
 - Blender 5.1 or newer
-- Windows x64
+- Windows x64 or Linux x64 (glibc 2.31 or newer)
 - Bonsai 0.8.5 installed and enabled
 
 ## Installation
@@ -64,7 +64,12 @@ The extension bundles the required Python wheels using the Blender Extensions ma
 
 Wheels shared with Bonsai use the exact versions distributed by Bonsai 0.8.5. This prevents binary package conflicts in Blender's shared extension environment, particularly for pandas, Pillow, IfcOpenShell, FontTools, ElementPath, and XMLSchema.
 
-The package was validated with Blender 5.1 on Windows x64. A clean installation test was performed by installing and enabling Bonsai 0.8.5 first, followed by InfoVis.
+The extension manifest and bundled wheels support Blender 5.1 on Windows x64
+and Linux x64 (glibc 2.31 or newer). The release must be built with Blender's
+`extension build --split-platforms` option so each platform receives only its
+compatible native wheels. A clean installation test was performed on Windows
+x64 by installing and enabling Bonsai 0.8.5 first, followed by InfoVis; Linux
+still requires the equivalent clean-environment validation.
 
 ## License
 
