@@ -1,0 +1,4112 @@
+{
+  "info": {
+    "_postman_id": "6b2de63b-1070-48a7-86f0-711be1f77be6",
+    "name": "CDE API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "31063517"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "/auth/token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();\r",
+                  "pm.environment.set(\"access_token\", response.data.access);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"client_secret\": \"{{password}}\",\r\n  \"client_id\": \"{{username}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "token"
+              ]
+            },
+            "description": "Obtain JWT token.  \nAuthenticate with client_id and secret, returns access and refresh tokens."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "/api/v1/projects",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List projects."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Test Project - fge\",\r\n  \"description\": \"Test project to verify the CDE API\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects"
+              ]
+            },
+            "description": "Create project."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                }
+              ]
+            },
+            "description": "Retrieve project."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"string\",\r\n  \"description\": \"string\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                }
+              ]
+            },
+            "description": "Update project."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"string\",\r\n  \"description\": \"string\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                }
+              ]
+            },
+            "description": "Update project."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                }
+              ]
+            },
+            "description": "Delete project (soft delete)."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}/assets",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id/assets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                }
+              ]
+            },
+            "description": "List assets of the project."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}/assets/{asset_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id/assets/:asset_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id",
+                "assets",
+                ":asset_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                },
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)"
+                }
+              ]
+            },
+            "description": "Associate asset with project."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}/assets/{asset_global_id}/remove",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id/assets/:asset_global_id/remove",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id",
+                "assets",
+                ":asset_global_id",
+                "remove"
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                },
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)"
+                }
+              ]
+            },
+            "description": "Remove asset from project."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}/documents",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id/documents",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                }
+              ]
+            },
+            "description": "List documents across all project assets."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}/elements",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id/elements",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id",
+                "elements"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                }
+              ]
+            },
+            "description": "List BIM elements across all projects assets"
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}/exportations/default",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id/exportations/default",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id",
+                "exportations",
+                "default"
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                }
+              ]
+            },
+            "description": "Default project export (ZIP bundle)"
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}/ids",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id/ids",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id",
+                "ids"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                }
+              ]
+            },
+            "description": "List IDS documents of the project."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}/ifc-files",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id/ifc-files",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id",
+                "ifc-files"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                }
+              ]
+            },
+            "description": "List IFC files across all project assets"
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}/submissions",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id/submissions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id",
+                "submissions"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}"
+                }
+              ]
+            },
+            "description": "List submissions across all project assets."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/projects/{project_global_id}/submissions/reports/current",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/:project_global_id/submissions/reports/current",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "projects",
+                ":project_global_id",
+                "submissions",
+                "reports",
+                "current"
+              ],
+              "variable": [
+                {
+                  "key": "project_global_id",
+                  "value": "{{project_id}}",
+                  "description": "IFC global id of the parent project (22 chars)."
+                }
+              ]
+            },
+            "description": "Consolidated pending submissions report for the project."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Assets",
+      "item": [
+        {
+          "name": "/api/v1/assets",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List assets."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Asset 2\",\r\n  \"type\": \"Facility\",\r\n  \"description\": \"Asset to test psets with same properties\",\r\n  \"parameters\": \"string\",\r\n  \"start_date\": \"2026-06-23\",\r\n  \"end_date\": \"2027-06-23\",\r\n  \"project_id\": \"{{project_id}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets"
+              ]
+            },
+            "description": "Create asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "Retrieve asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"string\",\r\n  \"type\": \"string\",\r\n  \"description\": \"string\",\r\n  \"parameters\": \"string\",\r\n  \"start_date\": \"2026-05-25\",\r\n  \"end_date\": \"2026-05-25\",\r\n  \"project_id\": \"string\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "Update asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"string\",\r\n  \"type\": \"string\",\r\n  \"description\": \"string\",\r\n  \"parameters\": \"string\",\r\n  \"start_date\": \"2026-05-25\",\r\n  \"end_date\": \"2026-05-25\",\r\n  \"project_id\": \"string\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "Update asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"string\",\r\n  \"type\": \"string\",\r\n  \"description\": \"string\",\r\n  \"parameters\": \"string\",\r\n  \"start_date\": \"2026-05-25\",\r\n  \"end_date\": \"2026-05-25\",\r\n  \"project_id\": \"string\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "Delete asset."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "IFC Files",
+      "item": [
+        {
+          "name": "/api/v1/assets/{asset_global_id}/exports",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/exports",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "exports"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "List consolidated IFC export runs."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/exports",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/exports",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "exports"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "Create/reuse consolidated IFC export run."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/exports/{id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/exports/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "exports",
+                ":id"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "id",
+                  "value": "{{export_id}}",
+                  "description": "UUID of the consolidated export run."
+                }
+              ]
+            },
+            "description": "Retrieve consolidated IFC export run."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/exports/{id}/download",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/exports/:id/download",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "exports",
+                ":id",
+                "download"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "id",
+                  "value": "{{export_id}}",
+                  "description": "UUID of the consolidated export run."
+                }
+              ]
+            },
+            "description": "Download consolidated IFC artifact from export run."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ifc-files",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ifc-files",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ifc-files"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "List IFC files of the asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ifc-files",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "ifc_file",
+                  "type": "file",
+                  "uuid": "25b8de26-9d89-4231-98ef-f9967ae1ca65",
+                  "src": "/C:/Users/fge/Documents/Scripts/test_ifc/test_2_CDE/7_CDE_executive_design_v3.ifc"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ifc-files",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ifc-files"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "Upload IFC file to the asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ifc-files/{ifc_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ifc-files/:ifc_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ifc-files",
+                ":ifc_global_id"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "ifc_global_id",
+                  "value": "{{ifc_file_id}}",
+                  "description": "IFC global id of the IFC file (22 chars)."
+                }
+              ]
+            },
+            "description": "Retrieve IFC file."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ifc-files/{ifc_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ifc-files/:ifc_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ifc-files",
+                ":ifc_global_id"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": null,
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": null,
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": null,
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": null,
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "ifc_global_id",
+                  "value": "{{ifc_file_id}}",
+                  "description": "IFC global id of the IFC file (22 chars)."
+                }
+              ]
+            },
+            "description": "Delete IFC file."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/ifc-files/status",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/ifc-files/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ifc-files",
+                "status"
+              ]
+            },
+            "description": "IFC processing status enum."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/ifc-files/statuses",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/ifc-files/statuses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ifc-files",
+                "statuses"
+              ]
+            },
+            "description": "IFC processing status enum."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Elements",
+      "item": [
+        {
+          "name": "/api/v1/assets/{asset_global_id}/elements",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/elements",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "elements"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": "",
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": null,
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "List BIM elements of the asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/elements/{element_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/elements/:element_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "elements",
+                ":element_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "element_global_id",
+                  "value": "{{element_id}}",
+                  "description": "IFC global id of the BIM element (22 chars)."
+                }
+              ]
+            },
+            "description": "Retrieve BIM element."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/elements/{element_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/elements/:element_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "elements",
+                ":element_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "element_global_id",
+                  "value": "{{element_id}}",
+                  "description": "IFC global id of the BIM element (22 chars)."
+                }
+              ]
+            },
+            "description": "Delete BIM element."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/elements/{element_global_id}/history",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/elements/:element_global_id/history",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "elements",
+                ":element_global_id",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": "",
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "element_global_id",
+                  "value": "{{element_id}}"
+                }
+              ]
+            },
+            "description": "Ownership history of BIM element."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/elements/statistics",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/elements/statistics",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "elements",
+                "statistics"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "BIM element statistics for the asset."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "/api/v1/assets/{asset_global_id}/documents",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/documents",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": "",
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "List documents of the asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/documents",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/documents",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "documents"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "Upload document to the asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/documents/{document_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/documents/:document_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "documents",
+                ":document_global_id"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": "",
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "document_global_id",
+                  "value": "{{document_id}}",
+                  "description": "IFC global id of the document (22 chars)."
+                }
+              ]
+            },
+            "description": "Download document from asset."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Submissions",
+      "item": [
+        {
+          "name": "/api/v1/assets/{asset_global_id}/submissions/{submission_global_id}/confirmations",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/submissions/:submission_global_id/confirmations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "submissions",
+                ":submission_global_id",
+                "confirmations"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "submission_global_id",
+                  "value": "{{submission_id}}",
+                  "description": "IFC global id of the submission (22 chars)."
+                }
+              ]
+            },
+            "description": "Confirm submission for the asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/submissions/reports",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/submissions/reports",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "submissions",
+                "reports"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": "",
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "Generate submission report for the asset."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Uploads",
+      "item": [
+        {
+          "name": "/api/v1/assets/{asset_global_id}/uploads",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/uploads",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "uploads"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": "",
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "List ZIP uploads of the asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/uploads",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/uploads",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "uploads"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "Upload ZIP to the asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/uploads/{upload_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/uploads/:upload_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "uploads",
+                ":upload_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "upload_global_id",
+                  "value": "{{upload_id}}",
+                  "description": "IFC global id of the ZIP upload (22 chars)."
+                }
+              ]
+            },
+            "description": "Retrieve ZIP upload."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dictionary",
+      "item": [
+        {
+          "name": "/api/v1/dictionary/terms",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/dictionary/terms",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "dictionary",
+                "terms"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": "",
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "lang",
+                  "value": null,
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "name",
+                  "value": null,
+                  "type": "text",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List BIM dictionary terms."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/dictionary/terms/{term_global_id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/dictionary/terms/:term_global_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "dictionary",
+                "terms",
+                ":term_global_id"
+              ],
+              "variable": [
+                {
+                  "key": "term_global_id",
+                  "value": "{{term_id}}"
+                }
+              ]
+            },
+            "description": "Retrieve BIM dictionary term."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/dictionary/terms/{term_global_id}/assets",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/dictionary/terms/:term_global_id/assets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "dictionary",
+                "terms",
+                ":term_global_id",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "ordering",
+                  "value": "",
+                  "description": "Which field to use when ordering the results.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "A search term.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "term_global_id",
+                  "value": "{{term_id}}"
+                }
+              ]
+            },
+            "description": "List assets registered under a dictionary term."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "IDS Documents",
+      "item": [
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ids",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ids",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ids"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "List IDS documents of the asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ids",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ids",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ids"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                }
+              ]
+            },
+            "description": "Upload IDS document to the asset."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ids/{id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ids/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ids",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "id",
+                  "value": "{{ids_id}}",
+                  "description": "UUID of the IDS document."
+                }
+              ]
+            },
+            "description": "Retrieve IDS document."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ids/{id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ids/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ids",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "id",
+                  "value": "{{ids_id}}",
+                  "description": "UUID of the IDS document."
+                }
+              ]
+            },
+            "description": "Update IDS document."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ids/{id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ids/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ids",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "id",
+                  "value": "{{ids_id}}",
+                  "description": "UUID of the IDS document."
+                }
+              ]
+            },
+            "description": "Partially update IDS document."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ids/{id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ids/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ids",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "id",
+                  "value": "{{ids_id}}",
+                  "description": "UUID of the IDS document."
+                }
+              ]
+            },
+            "description": "Delete IDS document."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ids/{id}/download",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ids/:id/download",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ids",
+                ":id",
+                "download"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "id",
+                  "value": "{{ids_id}}",
+                  "description": "UUID of the IDS document."
+                }
+              ]
+            },
+            "description": "Download IDS file."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "IDS Audit Runs",
+      "item": [
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ifc-files/{ifc_global_id}/ids-runs",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ifc-files/:ifc_global_id/ids-runs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ifc-files",
+                ":ifc_global_id",
+                "ids-runs"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "ifc_global_id",
+                  "value": "{{ifc_file_id}}",
+                  "description": "IFC global id of the IFC file (22 chars)."
+                }
+              ]
+            },
+            "description": "List IDS audit runs."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ifc-files/{ifc_global_id}/ids-runs",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ifc-files/:ifc_global_id/ids-runs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ifc-files",
+                ":ifc_global_id",
+                "ids-runs"
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "ifc_global_id",
+                  "value": "{{ifc_file_id}}",
+                  "description": "IFC global id of the IFC file (22 chars)."
+                }
+              ]
+            },
+            "description": "Start IDS audit on IFC file."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ifc-files/{ifc_global_id}/ids-runs/{id}",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ifc-files/:ifc_global_id/ids-runs/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ifc-files",
+                ":ifc_global_id",
+                "ids-runs",
+                ":id"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "ifc_global_id",
+                  "value": "{{ifc_file_id}}",
+                  "description": "IFC global id of the IFC file (22 chars)."
+                },
+                {
+                  "key": "id",
+                  "value": "{{ids_audit_id}}",
+                  "description": "UUID of the IDS audit run."
+                }
+              ]
+            },
+            "description": "Retrieve IDS audit run."
+          },
+          "response": []
+        },
+        {
+          "name": "/api/v1/assets/{asset_global_id}/ifc-files/{ifc_global_id}/ids-runs/{id}/download-bcf",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/:asset_global_id/ifc-files/:ifc_global_id/ids-runs/:id/download-bcf",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                ":asset_global_id",
+                "ifc-files",
+                ":ifc_global_id",
+                "ids-runs",
+                ":id",
+                "download-bcf"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return per page.",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "The initial index from which to return the results.",
+                  "type": "text",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "asset_global_id",
+                  "value": "{{asset_id}}",
+                  "description": "IFC global id of the parent asset (22 chars)."
+                },
+                {
+                  "key": "ifc_global_id",
+                  "value": "{{ifc_file_id}}",
+                  "description": "IFC global id of the IFC file (22 chars)."
+                },
+                {
+                  "key": "id",
+                  "value": "{{ids_audit_id}}",
+                  "description": "UUID of the IDS audit run."
+                }
+              ]
+            },
+            "description": "Download BCF report from IDS audit run."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

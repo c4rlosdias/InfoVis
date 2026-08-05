@@ -26,11 +26,12 @@ bl_info = {
 
 import bpy
 from bpy.props import PointerProperty
-from bpy.types import Scene
+from bpy.types import Scene, WindowManager
 from bpy.utils import register_class, unregister_class
 
 from .modules import get_classes
 from .modules.og_properties import OG_Properties
+from .modules.cde.properties import CDEProperties
 from .modules.common.operators import register_ifc_label_overlay, unregister_ifc_label_overlay
 from . import data
 from .data import tree as _data_tree
@@ -41,17 +42,6 @@ from .data import tree as _data_tree
 class OilGasAddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
-    cde_url: bpy.props.StringProperty(
-        name="CDE URL",
-        description="Base URL for the CDE API",
-        default="http://localhost:8000",
-    )
-    cde_token: bpy.props.StringProperty(
-        name="CDE Token",
-        description="Authentication token for the CDE",
-        default="",
-        subtype='PASSWORD',
-    )
     debug_mode: bpy.props.BoolProperty(
         name="Debug Mode",
         description="Enable debug mode",
@@ -60,11 +50,7 @@ class OilGasAddonPreferences(bpy.types.AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
-        box = layout.box()
-        box.label(text="CDE Integration", icon='URL')
-        box.prop(self, "cde_url")
-        box.prop(self, "cde_token")
-        box.prop(self, "debug_mode")
+        layout.prop(self, "debug_mode")
 
 
 classes = [
@@ -89,6 +75,7 @@ def register():
     for c in classes:
         register_class(c)
     Scene.og_props = PointerProperty(type=OG_Properties)
+    WindowManager.cde_props = PointerProperty(type=CDEProperties)
     _subscribe_msgbus()
     bpy.app.handlers.load_post.append(_on_load_post)
     register_ifc_label_overlay()
@@ -101,6 +88,8 @@ def unregister():
     unregister_ifc_label_overlay()
     if hasattr(Scene, "og_props"):
         del Scene.og_props
+    if hasattr(WindowManager, "cde_props"):
+        del WindowManager.cde_props
     for c in classes:
         try:
             unregister_class(c)

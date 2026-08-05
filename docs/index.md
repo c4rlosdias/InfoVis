@@ -27,6 +27,7 @@ installation flow, and the current release process.
 |------|------------|-----------|
 | Use the add-on in Blender | [User Guide](guides/GUIA_DE_UTILIZACAO.md) | [Glossary](reference/GLOSSARY.md) |
 | Configure the Item List | [LI Mapping Guide](guides/LI_MAPPING_GUIDE.md) | [User Guide](guides/GUIA_DE_UTILIZACAO.md) |
+| Open an IFC from the CDE | [CDE Integration](guides/CDE_INTEGRATION.md) | [User Guide](guides/GUIA_DE_UTILIZACAO.md) |
 | Understand the add-on structure | [Architecture](ARCHITECTURE.md) | [Glossary](reference/GLOSSARY.md) |
 | Implement code changes | [Development](DEVELOPMENT.md) | Guides in `guides/` |
 | Review operators and panels | [Operators](guides/OPERATORS_DOCUMENTATION.md) | [Panels](guides/PANELS_DOCUMENTATION.md) |
@@ -43,6 +44,7 @@ installation flow, and the current release process.
 ### To Develop
 
 - [Development](DEVELOPMENT.md)
+- [CDE Integration](guides/CDE_INTEGRATION.md)
 - [Operators](guides/OPERATORS_DOCUMENTATION.md)
 - [Panels](guides/PANELS_DOCUMENTATION.md)
 - [Properties](guides/PROPERTIES_DOCUMENTATION.md)

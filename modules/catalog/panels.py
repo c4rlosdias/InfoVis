@@ -1,6 +1,20 @@
 import bpy
 
 
+_LI_SOURCE_LABELS = {
+    'ifc_attribute': 'Element Information',
+    'ifc_property': 'Technical Property',
+    'material': 'Material',
+    'ifc_quantity': 'Quantity',
+    'ifc_class': 'Element Class',
+    'spatial': 'Location',
+    'aggregation_parent': 'Assembly Parent',
+    'computed': 'Calculated Value',
+    'manual': 'Custom Property',
+    'not_applicable': 'Not Applicable',
+}
+
+
 def _draw_catalog_type_tree(layout, item, icon):
     if item.is_hidden:
         return
@@ -102,199 +116,153 @@ class Panel_LI_Mapping(bpy.types.Panel):
         layout = self.layout
         layout.label(text="", icon='SPREADSHEET')
 
+    def _draw_property_picker(self, layout, selected):
+        picker = layout.box()
+        picker.label(text="Choose from the project dictionary", icon='VIEWZOOM')
+        picker.prop(selected, "picker_discipline", text="Discipline")
+        picker.prop(selected, "picker_object_type", text="Element")
+        picker.prop(selected, "picker_pset", text="Property group")
+        picker.prop(selected, "picker_property", text="Information")
+        picker.operator("catag.li_mapping_pick_property", text="Use selected information", icon='CHECKMARK')
+
+    def _draw_simple_source(self, layout, selected):
+        source_box = layout.box()
+        source_box.label(text="Where does this column come from?", icon='PROPERTIES')
+
+        if selected.source_type == 'material':
+            source_box.prop(selected, "source_material_field", text="Material information")
+            if selected.source_material_field == 'property':
+                source_box.prop(selected, "source_pset", text="Property group")
+                source_box.prop(selected, "source_property", text="Property")
+        elif selected.source_type == 'ifc_attribute':
+            source_box.prop(selected, "source_attribute", text="Element field")
+        elif selected.source_type in {'ifc_property', 'manual'}:
+            self._draw_property_picker(source_box, selected)
+        elif selected.source_type == 'ifc_quantity':
+            source_box.prop(selected, "source_quantity_mode", text="Quantity method")
+        elif selected.source_type == 'aggregation_parent':
+            source_box.prop(selected, "source_level", text="Parent level")
+        elif selected.source_type == 'spatial':
+            source_box.prop(selected, "source_level", text="Location type")
+        elif selected.source_type in {'ifc_class', 'computed'}:
+            source_box.label(text="This source is ready. Open Advanced settings to change its rule.")
+        else:
+            source_box.label(text="This column will be left empty in the export.")
+
+    def _draw_extra_fields(self, layout, selected):
+        extra = layout.box()
+        extra.label(text="Extra source fields", icon='SETTINGS')
+        extra.template_list(
+            "BIM_UL_li_mapping_source_items", "", selected, "source_items",
+            selected, "active_source_item_index", rows=4,
+        )
+        row = extra.row(align=True)
+        row.operator("catag.add_li_mapping_source_item", text="Add Field", icon='ADD')
+        row.operator("catag.remove_li_mapping_source_item", text="Remove Field", icon='REMOVE')
+        source_index = selected.active_source_item_index
+        if 0 <= source_index < len(selected.source_items):
+            source_item = selected.source_items[source_index]
+            extra.prop(source_item, "key", text="Key")
+            extra.prop(source_item, "value", text="Value")
+
+    def _draw_support_tables(self, layout, props):
+        support_box = layout.box()
+        support_box.label(text="Support Tables", icon='PRESET')
+        support_box.template_list(
+            "BIM_UL_li_support_tables", "", props, "li_support_tables",
+            props, "active_li_support_table_index", rows=4,
+        )
+        support_index = props.active_li_support_table_index
+        if not (0 <= support_index < len(props.li_support_tables)):
+            return
+        support_table = props.li_support_tables[support_index]
+        detail = support_box.box()
+        detail.prop(support_table, "table_name", text="Table")
+        detail.prop(support_table, "description", text="Comment")
+        detail.template_list(
+            "BIM_UL_li_support_table_rows", "", support_table, "rows",
+            support_table, "active_row_index", rows=5,
+        )
+        row = detail.row(align=True)
+        row.operator("catag.add_li_support_table_row", text="Add Row", icon='ADD')
+        row.operator("catag.remove_li_support_table_row", text="Remove Row", icon='REMOVE')
+        row_index = support_table.active_row_index
+        if 0 <= row_index < len(support_table.rows):
+            support_row = support_table.rows[row_index]
+            detail.prop(support_row, "key", text="Key")
+            detail.prop(support_row, "value", text="Value")
+
     def draw(self, context):
         props = context.scene.og_props
         layout = self.layout
-        box = layout.box()
 
-        row = box.row(align=True)
-        row.operator("catag.load_li_mapping", text="Load", icon='FILE_REFRESH')
-        row.operator("catag.save_li_mapping", text="Save", icon='FILE_TICK')
-        row = box.row(align=True)
-        row.operator("catag.export_li", text="Export LI", icon='EXPORT')
+        action_box = layout.box()
+        action_box.label(text="Generate the Item List from the current IFC model")
+        action_box.operator("catag.export_li", text="Export Item List", icon='EXPORT')
 
-        if props.li_mapping_loaded:
-            row = box.row()
-            row.prop(props, "li_mapping_schema_version", text="Schema")
-            row = box.row()
-            row.prop(props, "li_mapping_reference_sheet", text="Reference Sheet")
-            row = box.row()
-            row.prop(props, "li_mapping_description", text="Description")
-
-            row = box.row()
-            row.label(text="resources/li_mapping.json", icon='FILE')
-
-            box.template_list(
-                "BIM_UL_li_mapping_columns",
-                "",
-                props,
-                "li_mapping_columns",
-                props,
-                "active_li_mapping_index",
-                rows=8,
+        if not props.li_mapping_loaded:
+            action_box.operator(
+                "catag.load_li_mapping",
+                text="Configure Columns",
+                icon='SETTINGS',
             )
+            action_box.label(text="The saved profile will be used when exporting.", icon='INFO')
+            return
 
-            row = box.row(align=True)
-            row.operator("catag.add_li_mapping_column", text="Add Column", icon='ADD')
-            row.operator("catag.remove_li_mapping_column", text="Remove Column", icon='REMOVE')
+        row = action_box.row(align=True)
+        row.operator("catag.save_li_mapping", text="Apply Changes", icon='FILE_TICK')
+        row.operator("catag.load_li_mapping", text="Reload Saved", icon='FILE_REFRESH')
 
-            active_index = props.active_li_mapping_index
-            if 0 <= active_index < len(props.li_mapping_columns):
-                selected = props.li_mapping_columns[active_index]
+        columns_box = layout.box()
+        columns_box.label(text="Item List Columns", icon='SPREADSHEET')
+        columns_box.template_list(
+            "BIM_UL_li_mapping_columns", "", props, "li_mapping_columns",
+            props, "active_li_mapping_index", rows=8,
+        )
+        row = columns_box.row(align=True)
+        row.operator("catag.add_li_mapping_column", text="Add Column", icon='ADD')
+        material = row.operator("catag.add_li_mapping_column", text="Add Material", icon='MATERIAL')
+        material.source_type = 'material'
+        row.operator("catag.remove_li_mapping_column", text="Remove", icon='REMOVE')
 
-                detail = box.box()
-                row = detail.row()
-                row.prop(selected, "column_name", text="Column")
-                row = detail.row()
-                row.prop(selected, "source_type", text="Source")
-                row = detail.row()
-                row.prop(selected, "notes", text="Notes")
+        active_index = props.active_li_mapping_index
+        selected = props.li_mapping_columns[active_index] if 0 <= active_index < len(props.li_mapping_columns) else None
+        if selected is not None:
+            detail = layout.box()
+            detail.label(text="Selected Column")
+            detail.prop(selected, "column_name", text="Column name")
+            detail.prop(selected, "source_type", text="Information source")
+            self._draw_simple_source(detail, selected)
 
-                source_box = detail.box()
-                row = source_box.row()
-                row.label(text="Guided Source", icon='PROPERTIES')
+        advanced = layout.box()
+        advanced.prop(props, "li_mapping_advanced", text="Advanced settings", icon='SETTINGS')
+        if not props.li_mapping_advanced:
+            return
 
-                if selected.source_type in {'ifc_attribute', 'ifc_property', 'manual'}:
-                    row = source_box.row()
-                    row.prop(selected, "source_ifc_class", text="Class")
+        advanced.prop(props, "li_mapping_reference_sheet", text="Reference Sheet")
+        advanced.prop(props, "li_mapping_description", text="Description")
+        advanced.prop(props, "li_mapping_schema_version", text="Schema")
+        advanced.label(text="resources/li_mapping.json", icon='FILE')
 
-                if selected.source_type == 'spatial':
-                    row = source_box.row()
-                    row.prop(selected, "source_level", text="Level (IFC class)")
+        if selected is not None:
+            technical = advanced.box()
+            technical.label(text="Technical source settings")
+            technical.prop(selected, "source_ifc_class", text="IFC Class")
+            technical.prop(selected, "source_pset", text="Pset")
+            technical.prop(selected, "source_property", text="Property")
+            technical.prop(selected, "source_attribute", text="Attribute")
+            technical.prop(selected, "source_fallback_attribute", text="Fallback")
+            technical.prop(selected, "source_mapping_table", text="Mapping Table")
+            technical.prop(selected, "source_selected_by", text="Selected By")
+            technical.prop(selected, "source_template_table", text="Template Table")
+            technical.prop(selected, "source_derived_from", text="Derived From")
+            technical.prop(selected, "source_method", text="Method")
+            technical.prop(selected, "source_format", text="Format")
+            technical.prop(selected, "source_allowed_values", text="Allowed Values")
+            technical.prop(selected, "notes", text="Notes")
+            self._draw_extra_fields(advanced, selected)
 
-                if selected.source_type == 'aggregation_parent':
-                    row = source_box.row()
-                    row.prop(selected, "source_level", text="Level (1=direct parent, 2=grandparent, ...)")
-
-                if selected.source_type in {'ifc_attribute', 'ifc_class', 'spatial', 'aggregation_parent'}:
-                    row = source_box.row()
-                    row.prop(selected, "source_attribute", text="Attribute")
-
-                if selected.source_type in {'ifc_attribute', 'aggregation_parent'}:
-                    row = source_box.row()
-                    row.prop(selected, "source_fallback_attribute", text="Fallback")
-
-                if selected.source_type in {'ifc_property', 'manual'}:
-                    row = source_box.row()
-                    row.prop(selected, "source_pset", text="Pset")
-                    row = source_box.row()
-                    row.prop(selected, "source_property", text="Property")
-                    row = source_box.row()
-                    row.prop(selected, "source_allowed_values", text="Allowed Values")
-
-                    picker_box = source_box.box()
-                    row = picker_box.row()
-                    row.label(text="Pick from bSDD dictionary", icon='VIEWZOOM')
-                    row = picker_box.row()
-                    row.prop(selected, "picker_discipline", text="Discipline")
-                    row = picker_box.row()
-                    row.prop(selected, "picker_object_type", text="Element")
-                    row = picker_box.row()
-                    row.prop(selected, "picker_pset", text="Property set")
-                    row = picker_box.row()
-                    row.prop(selected, "picker_property", text="Property")
-                    row = picker_box.row()
-                    row.operator("catag.li_mapping_pick_property", text="Use this property", icon='CHECKMARK')
-
-                if selected.source_type == 'ifc_class':
-                    row = source_box.row()
-                    row.prop(selected, "source_mapping_table", text="Mapping Table")
-
-                if selected.source_type in {'ifc_quantity', 'computed'}:
-                    row = source_box.row()
-                    if selected.source_type == 'ifc_quantity':
-                        row.prop(selected, "source_quantity_mode", text="Mode")
-                    else:
-                        row.prop(selected, "source_selected_by", text="Selected By")
-
-                if selected.source_type == 'ifc_quantity' and selected.source_quantity_mode == 'mapping':
-                    row = source_box.row()
-                    row.prop(selected, "source_mapping_table", text="Mapping Table")
-                    row = source_box.row()
-                    row.prop(selected, "source_selected_by", text="Selected By")
-
-                if selected.source_type == 'computed':
-                    row = source_box.row()
-                    row.prop(selected, "source_template_table", text="Template Table")
-                    row = source_box.row()
-                    row.prop(selected, "source_derived_from", text="Derived From")
-                    row = source_box.row()
-                    row.prop(selected, "source_method", text="Method")
-
-                if selected.source_type in {'ifc_attribute', 'computed'}:
-                    row = source_box.row()
-                    row.prop(selected, "source_format", text="Format")
-
-                advanced_box = detail.box()
-                row = advanced_box.row()
-                row.label(text="Extra Fields", icon='SETTINGS')
-
-                advanced_box.template_list(
-                    "BIM_UL_li_mapping_source_items",
-                    "",
-                    selected,
-                    "source_items",
-                    selected,
-                    "active_source_item_index",
-                    rows=5,
-                )
-
-                row = advanced_box.row(align=True)
-                row.operator("catag.add_li_mapping_source_item", text="Add Field", icon='ADD')
-                row.operator("catag.remove_li_mapping_source_item", text="Remove Field", icon='REMOVE')
-
-                source_index = selected.active_source_item_index
-                if 0 <= source_index < len(selected.source_items):
-                    source_item = selected.source_items[source_index]
-                    row = advanced_box.row()
-                    row.prop(source_item, "key", text="Key")
-                    row = advanced_box.row()
-                    row.prop(source_item, "value", text="Value")
-
-            support_box = box.box()
-            row = support_box.row()
-            row.label(text="Support Tables", icon='PRESET')
-
-            support_box.template_list(
-                "BIM_UL_li_support_tables",
-                "",
-                props,
-                "li_support_tables",
-                props,
-                "active_li_support_table_index",
-                rows=4,
-            )
-
-            support_index = props.active_li_support_table_index
-            if 0 <= support_index < len(props.li_support_tables):
-                support_table = props.li_support_tables[support_index]
-                detail = support_box.box()
-                row = detail.row()
-                row.prop(support_table, "table_name", text="Table")
-                row = detail.row()
-                row.prop(support_table, "description", text="Comment")
-
-                detail.template_list(
-                    "BIM_UL_li_support_table_rows",
-                    "",
-                    support_table,
-                    "rows",
-                    support_table,
-                    "active_row_index",
-                    rows=6,
-                )
-
-                row = detail.row(align=True)
-                row.operator("catag.add_li_support_table_row", text="Add Row", icon='ADD')
-                row.operator("catag.remove_li_support_table_row", text="Remove Row", icon='REMOVE')
-
-                row_index = support_table.active_row_index
-                if 0 <= row_index < len(support_table.rows):
-                    support_row = support_table.rows[row_index]
-                    row = detail.row()
-                    row.prop(support_row, "key", text="Key")
-                    row = detail.row()
-                    row.prop(support_row, "value", text="Value")
+        self._draw_support_tables(advanced, props)
 
 
 class BIM_UL_products(bpy.types.UIList):
@@ -319,7 +287,7 @@ class BIM_UL_li_mapping_columns(bpy.types.UIList):
             row = layout.row(align=True)
             label_row = row.row(align=True)
             label_row.label(text=item.column_name or "<sem nome>", icon='SPREADSHEET')
-            label_row.label(text=item.source_type)
+            label_row.label(text=_LI_SOURCE_LABELS.get(item.source_type, item.source_type))
 
             controls = row.row(align=True)
             up_row = controls.row(align=True)

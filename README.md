@@ -25,7 +25,8 @@ InfoVis is designed as a companion extension for Bonsai 0.8.5 and requires Bonsa
 - bSDD dictionary integration
 - Spreadsheet import and export
 - Engineering data analysis and visualization
-- CDE integration for uploading and downloading IFC information
+- CDE integration with JWT authentication, project/asset browsing, and direct
+  opening of consolidated IFC models in Bonsai
 - Integration with the IFC model currently open in Bonsai
 
 ## Requirements
@@ -42,11 +43,20 @@ InfoVis is designed as a companion extension for Bonsai 0.8.5 and requires Bonsa
 4. Open or create an IFC project using Bonsai.
 5. Access the InfoVis tools from the 3D View sidebar.
 
+### Open a Model from the CDE
+
+Open the `InfoVis-CDE` sidebar tab, enter the CDE Client ID and Client Secret,
+select a project and asset, generate an export, wait for InfoVis to confirm
+completion, then choose `Open in Bonsai`. See the
+[CDE Integration Guide](docs/guides/CDE_INTEGRATION.md) for the complete flow,
+security behavior, and troubleshooting.
+
 ## Permissions
 
 ### Network
 
-Used for optional CDE and bSDD integrations, including uploading and downloading IFC-related information.
+Used for optional CDE and bSDD integrations, including browsing CDE projects
+and downloading consolidated IFC models.
 
 ### Files
 

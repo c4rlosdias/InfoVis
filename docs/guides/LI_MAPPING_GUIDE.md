@@ -11,17 +11,18 @@ panel lets users edit the mapping without opening the JSON manually, using
 guided fields for IFC attributes, Pset properties, quantities, spatial
 hierarchy, assembly chains, support tables, and calculated values.
 
-The main workflow is:
+The simplified workflow is:
 
 1. Open an IFC model in Blender/Bonsai.
 2. Open `InfoVis-Catalog > LI Mapping`.
-3. Click `Load` to load `resources/li_mapping.json`.
-4. Review or edit the LI columns.
-5. Click `Save` to write the JSON.
-6. Click `Export LI` to generate the `.xlsx`.
+3. Click `Export Item List` to use the saved profile immediately; or click
+   `Configure Columns` to customize it.
+4. Review the columns and their user-facing information sources.
+5. Click `Apply Changes` to save the profile, then export the `.xlsx`.
 
-Important: `Export LI` reads the saved `resources/li_mapping.json` file. If you
-changed anything in the UI, click `Save` before exporting.
+When configuration is open, `Export Item List` also uses the current on-screen
+changes. Technical fields and support tables remain available under `Advanced
+settings`.
 
 ## File Used by the Panel
 
@@ -63,10 +64,12 @@ Any other top-level JSON object is treated as a support table, for example
 
 | Button | Action |
 |--------|--------|
-| `Load` | Loads `resources/li_mapping.json` into the UI and clears the previous state |
-| `Save` | Saves header fields, columns, and support tables back to the JSON |
-| `Export LI` | Opens a file picker and exports the Item List to `.xlsx` |
+| `Configure Columns` | Loads `resources/li_mapping.json` into the column editor |
+| `Reload Saved` | Discards the current on-screen state and reloads the saved profile |
+| `Apply Changes` | Saves columns and advanced settings back to the JSON |
+| `Export Item List` | Exports using the current on-screen configuration, when open, or the saved profile |
 | `Add Column` | Creates a column named `New Column` with source type `manual` |
+| `Add Material` | Creates a ready-to-use material-name column |
 | `Remove Column` | Removes the selected column |
 | `Use this property` | Copies the selected bSDD Pset and property into the selected column |
 | `Add Field` | Adds an extra field to the selected column's `source` object |
@@ -151,6 +154,7 @@ exporter resolves the value.
 |-------------|-----|
 | `ifc_attribute` | Reads a direct attribute from the occurrence or IFC type |
 | `ifc_property` | Reads a property inside a Pset |
+| `material` | Reads material names, metadata, composition, layers, or material properties |
 | `ifc_quantity` | Calculates quantity by count, length, or a support table |
 | `ifc_class` | Reads an IFC class/key and translates it through a support table |
 | `spatial` | Reads a value from an ancestor in the spatial/decomposition hierarchy |
@@ -158,6 +162,35 @@ exporter resolves the value.
 | `computed` | Calculates a value by method or template |
 | `manual` | Represents a manual or optional custom Pset column |
 | `not_applicable` | Represents a column with no IFC source; exports empty |
+
+## Source: material
+
+Use `material` to expose IFC material information without requiring users to
+understand `IfcMaterial`, material sets, lists, layers, or inherited type
+associations. Occurrence materials are read first, followed by type materials;
+duplicates are removed and multiple values are joined with `; `.
+
+| Material information | Exported value |
+|----------------------|----------------|
+| `Material Name` | Material names |
+| `Category` | IFC material categories |
+| `Description` | IFC material descriptions |
+| `Composition` | Names with categories |
+| `Layers and Thicknesses` | Each layer name and thickness |
+| `Material Property` | A property selected by Pset and property name |
+
+JSON example:
+
+```json
+{
+  "column": "Material",
+  "source_type": "material",
+  "source": {
+    "material_field": "name"
+  },
+  "notes": ""
+}
+```
 
 ## Source: ifc_attribute
 

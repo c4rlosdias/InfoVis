@@ -16,6 +16,7 @@ and layouts for that domain.
 | `modules/types/panels.py` | Constructive type panel |
 | `modules/settings/panels.py` | Settings panel, IFC label UIList, and decomposition-view UILists |
 | `modules/analysis/panels.py` | Analysis coloring panel |
+| `modules/cde/panels.py` | CDE connection, project/asset/IFC browser, and CDE UILists |
 
 ## Helper Functions
 
@@ -56,6 +57,7 @@ The panels are organized into these Blender 3D Viewport sidebar categories:
 | `InfoVis-Catalog` | `Catalog`, `LI Mapping` |
 | `InfoVis-Analysis` | `Analysis` |
 | `InfoVis-Settings` | `Settings` |
+| `InfoVis-CDE` | `CDE` |
 
 ## Editing Availability
 
@@ -280,6 +282,30 @@ Features:
 6. Resets colors.
 7. Displays a legend and status text.
 
+## CDE_PT_browser: CDE
+
+Defined in `modules/cde/panels.py`.
+
+| Property | Value |
+|----------|-------|
+| `bl_idname` | `VIEW3D_PT_infovis_cde` |
+| `bl_category` | `InfoVis-CDE` |
+| `bl_label` | `CDE` |
+
+The panel contains five progressive areas:
+
+1. connection URL and JWT credentials
+2. project list
+3. assets for the selected project, including each asset Global ID and type
+4. IFC submissions, shown as non-downloadable source metadata
+5. exports, with generate, refresh, and `Open in Bonsai` actions
+
+Assets, submissions, and exports are shown only after their parent selection
+has been queried. Only an export with status `succeeded` can be opened. The
+status box reports API, download, and Bonsai loading state.
+Credentials and session state live in `WindowManager.cde_props`, not in the
+active IFC model's `Scene.og_props`.
+
 ## UIList Classes
 
 | Class | Use |
@@ -299,6 +325,10 @@ Features:
 | `BIM_UL_ifc_label_attrs` | Viewport label fields |
 | `BIM_UL_decomposition_views` | Decomposition views |
 | `BIM_UL_decomposition_view_relations` | Relations for one decomposition view |
+| `CDE_UL_projects` | Projects returned by the CDE |
+| `CDE_UL_assets` | Assets associated with the selected project |
+| `CDE_UL_ifc_files` | IFC metadata records associated with the selected asset |
+| `CDE_UL_exports` | Generated exports available for status checks and download |
 
 ### UIList Pattern
 

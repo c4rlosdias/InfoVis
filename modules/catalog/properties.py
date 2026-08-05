@@ -33,15 +33,16 @@ class Layer(PropertyGroup):
 
 
 LI_SOURCE_TYPE_ITEMS = [
-    ('ifc_attribute', 'IFC Attribute', 'Direct attribute from the IFC entity'),
-    ('ifc_property', 'IFC Property', 'Property inside a Pset'),
-    ('ifc_quantity', 'IFC Quantity', 'Quantity inside a Qto'),
-    ('ifc_class', 'IFC Class', 'IFC class/type of the occurrence'),
-    ('spatial', 'Spatial', 'Value derived from the spatial hierarchy'),
-    ('aggregation_parent', 'Aggregation Parent', 'Attribute from an assembly ancestor (Nests/IfcRelAggregates); use Level=1 for the direct parent, 2 for the grandparent, etc.'),
-    ('computed', 'Computed', 'Value calculated from other fields'),
-    ('manual', 'Manual', 'Manual value or custom property'),
-    ('not_applicable', 'Not Applicable', 'Field with no direct IFC relationship'),
+    ('ifc_attribute', 'Element Information', 'Name, description, tag, or another element attribute'),
+    ('ifc_property', 'Technical Property', 'Property selected from the project dictionary'),
+    ('material', 'Material', 'Material associated with the element or its type'),
+    ('ifc_quantity', 'Quantity', 'Count or measured quantity'),
+    ('ifc_class', 'Element Class', 'Class or type of the element'),
+    ('spatial', 'Location', 'Value derived from the spatial hierarchy'),
+    ('aggregation_parent', 'Assembly Parent', 'Information inherited from an assembly parent'),
+    ('computed', 'Calculated Value', 'Value calculated from other columns'),
+    ('manual', 'Custom Property', 'Manual value or custom property'),
+    ('not_applicable', 'Not Applicable', 'Column without a direct model value'),
 ]
 
 
@@ -49,6 +50,16 @@ LI_QUANTITY_MODE_ITEMS = [
     ('mapping', 'Mapping Table', 'Uses the quantity mapping table by class'),
     ('count', 'Count Occurrences', 'Counts how many occurrences exist for the IFC type'),
     ('length', 'Sum Length', 'Sums length for linear types'),
+]
+
+
+LI_MATERIAL_FIELD_ITEMS = [
+    ('name', 'Material Name', 'Names of all associated materials'),
+    ('category', 'Category', 'Material categories'),
+    ('description', 'Description', 'Material descriptions'),
+    ('composition', 'Composition', 'Material names with their categories'),
+    ('layer_thickness', 'Layers and Thicknesses', 'Material layer names and thicknesses'),
+    ('property', 'Material Property', 'Property stored in a material property set'),
 ]
 
 
@@ -99,6 +110,7 @@ class LIMappingColumn(PropertyGroup):
     source_method            : StringProperty(name='source method')
     source_format            : StringProperty(name='source format')
     source_allowed_values    : StringProperty(name='source allowed values')
+    source_material_field    : EnumProperty(name='material information', items=LI_MATERIAL_FIELD_ITEMS, default='name')
     source_items             : CollectionProperty(name='source items', type=LIMappingSourceItem)
     active_source_item_index : IntProperty(name='active source item index', default=0)
 

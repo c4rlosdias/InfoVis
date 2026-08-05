@@ -5,6 +5,7 @@
   "source_types": {
     "ifc_attribute": "Direct attribute from the IFC entity (for example: Name, Description, Tag, ObjectType, GlobalId)",
     "ifc_property": "Property inside a Pset (read through ifcopenshell.util.element.get_psets / get_property)",
+    "material": "Material information associated with the occurrence or inherited from its IFC type",
     "ifc_quantity": "Quantity inside a Qto (IfcElementQuantity)",
     "ifc_class": "IFC class/type of the occurrence, mapped to the project bSDD class",
     "spatial": "Derived from the spatial hierarchy (IfcRelContainedInSpatialStructure / IfcRelNests)",
@@ -39,6 +40,14 @@
         "attribute": "Name"
       },
       "notes": ""
+    },
+    {
+      "column": "Material",
+      "source_type": "material",
+      "source": {
+        "material_field": "name"
+      },
+      "notes": "Lists unique materials associated with the occurrence or inherited from its IFC type."
     },
     {
       "column": "Space",

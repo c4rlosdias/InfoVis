@@ -2,7 +2,8 @@
 
 InfoVis is a Blender add-on structured as a modular Python package. It combines
 View3D interface panels, Blender operators, shared state in `PropertyGroup`s,
-data helpers for IFC/bSDD/CDE, and local JSON resources.
+data helpers for IFC/bSDD, a dedicated CDE integration module, and local JSON
+resources.
 
 ## Overview
 
@@ -12,7 +13,7 @@ The application is built around four main blocks:
   and registration lifecycle.
 - `modules/`: panels, operators, `PropertyGroup`s, `UIList`s, and state exposed
   to Blender.
-- `data/`: support functions for IFC, bSDD, catalog, CDE, trees, local
+- `data/`: support functions for IFC, bSDD, catalog, trees, local
   dictionaries, and configuration profiles.
 - `resources/`: domain JSON files used by the catalog, LI Mapping, analysis,
   units, decomposition views, and IFC types.
@@ -29,9 +30,9 @@ flowchart TB
 
     subgraph host["Blender 5.0 / Bonsai BIM"]
         view3d["View3D<br/>InfoVis tab"]
-      addon_prefs["Addon Preferences<br/>CDE URL, token, debug"]
+      addon_prefs["Addon Preferences<br/>debug"]
         scene["bpy.types.Scene<br/>Scene.og_props"]
-        wm["bpy.types.WindowManager<br/>connection objects A, B, C"]
+        wm["bpy.types.WindowManager<br/>runtime CDE state and connection objects"]
         msgbus["bpy.msgbus<br/>LayerObjects.active"]
         handlers["bpy.app.handlers.load_post"]
         overlay["Viewport overlay<br/>IFC labels"]
@@ -64,6 +65,7 @@ flowchart TB
         props_panel["props.Panel_Properties<br/>Psets, documents, table, chart"]
         types_panel["types.Panel_Types<br/>active type and linked elements"]
         settings_panel["settings.Panel_Settings<br/>IFC labels, views, profiles"]
+        cde_panel["cde.CDE_PT_browser<br/>projects, assets, IFC files"]
         uilists["UILists<br/>BIM_UL_* by domain"]
     end
 
@@ -76,6 +78,7 @@ flowchart TB
         conn_ops["connections<br/>add connect, disconnect, select object"]
         props_ops["props<br/>load/edit Psets, docs, charts, tables"]
         settings_ops["settings<br/>labels, decomposition views, config profile"]
+        cde_ops["cde<br/>JWT, browse, export, download, open"]
     end
 
     subgraph data["Data layer - data/"]
@@ -83,7 +86,7 @@ flowchart TB
         bsdd["bsdd.py<br/>bSDD REST client"]
         bsdd_dict["bsdd_dictionary.py<br/>local dictionaries and selectors"]
         catalog_data["catalog.py<br/>Catalog, Import_ifc, PropTempl"]
-        cde["cde.py<br/>CDE_Api"]
+        cde["modules/cde/service.py<br/>CDEClient"]
         tree["tree.py<br/>callbacks, refresh, and tree drawing"]
         ifc_utils["ifc_utils.py<br/>Psets, units, products, IFC connections"]
         decomp_views["decomposition_views.py<br/>presets and view persistence"]
@@ -105,7 +108,7 @@ flowchart TB
 
     subgraph external["External integrations"]
         bsdd_api["buildingSMART bSDD API<br/>api.bsdd.buildingsmart.org"]
-        cde_api["CDE API<br/>URL configured in preferences"]
+        cde_api["CERTI CDE REST API<br/>URL and credentials in panel"]
     end
 
     subgraph support["Support, docs, and release"]
@@ -135,6 +138,7 @@ flowchart TB
     registry --> conn_ops
     registry --> props_ops
     registry --> settings_ops
+    registry --> cde_ops
     registry --> uilists
     registry --> og
 
@@ -156,6 +160,7 @@ flowchart TB
     view3d --> props_panel
     view3d --> types_panel
     view3d --> settings_panel
+    view3d --> cde_panel
 
     dictionary_panel --> dictionary_ops
     decomp_panel --> decomp_ops
@@ -166,6 +171,7 @@ flowchart TB
     props_panel --> props_ops
     types_panel --> catalog_ops
     settings_panel --> settings_ops
+    cde_panel --> cde_ops
     uilists --> og
 
     common_ops --> tree
@@ -193,7 +199,6 @@ flowchart TB
 
     data_init --> bsdd
     data_init --> catalog_data
-    data_init --> cde
     data_init --> tree
     data_init --> ifc_utils
 
@@ -205,7 +210,8 @@ flowchart TB
     catalog_data --> bonsai
     catalog_data --> ifcopenshell
     cde --> cde_api
-    cde --> bonsai
+    cde_ops --> cde
+    cde_ops --> bonsai
     tree --> decomp_views
     tree --> ifc_utils
     tree --> bonsai
@@ -247,8 +253,8 @@ flowchart TB
     class view3d,addon_prefs,scene,wm,msgbus,handlers,overlay hostClass;
     class init,deps,registry entryClass;
     class og,dict_state,decomp_state,catalog_state,props_state,analysis_state,overlay_state,conn_state stateClass;
-    class dictionary_panel,decomp_panel,catalog_panel,li_panel,analysis_panel,conn_panel,props_panel,types_panel,settings_panel,uilists uiClass;
-    class common_ops,dictionary_ops,decomp_ops,catalog_ops,analysis_ops,conn_ops,props_ops,settings_ops,analysis_service opsClass;
+    class dictionary_panel,decomp_panel,catalog_panel,li_panel,analysis_panel,conn_panel,props_panel,types_panel,settings_panel,cde_panel,uilists uiClass;
+    class common_ops,dictionary_ops,decomp_ops,catalog_ops,analysis_ops,conn_ops,props_ops,settings_ops,cde_ops,analysis_service opsClass;
     class data_init,bsdd,bsdd_dict,catalog_data,cde,tree,ifc_utils,decomp_views,config_profile dataClass;
     class bonsai,ifcopenshell,ifctester,matplotlib domainClass;
     class resource_json,dictionary_json,decomp_json,li_json,bsdd_api,cde_api extClass;
@@ -278,7 +284,7 @@ sequenceDiagram
     Registry-->>Init: preferences, PropertyGroups, operators, panels, UILists
     Init->>Blender: register_class() for each class
     Init->>Props: creates Scene.og_props
-    Init->>Blender: creates objects A, B, and C in WindowManager
+    Init->>Blender: creates runtime WindowManager state, including cde_props
     Init->>Tree: registers callback in bpy.msgbus
     Init->>Blender: registers IFC label overlay
 
@@ -316,7 +322,12 @@ InfoVis/
 |   |-- connections/
 |   |-- props/
 |   |-- types/
-|   `-- settings/
+|   |-- settings/
+|   `-- cde/
+|       |-- service.py
+|       |-- properties.py
+|       |-- operators.py
+|       `-- panels.py
 |-- data/
 |   |-- bsdd.py
 |   |-- bsdd_dictionary.py
@@ -343,7 +354,7 @@ InfoVis/
 - relies on wheel dependencies declared in `blender_manifest.toml`
 - declares add-on preferences
 - creates `Scene.og_props`
-- creates temporary `WindowManager` pointers for connections
+- creates runtime `WindowManager` pointers for CDE and connection state
 - registers handlers and the `bpy.msgbus` subscriber
 - enables and disables viewport overlays
 
@@ -368,6 +379,9 @@ operators, and, when needed, `PropertyGroup`s.
 - `modules/types/`: panel dedicated to the active type and its elements.
 - `modules/settings/`: IFC label configuration, decomposition views, and
   configuration profiles.
+- `modules/cde/`: JWT authentication, project/asset/submission browsing,
+  consolidated IFC export generation and polling, export history, download,
+  and Bonsai project opening.
 - `modules/og_properties.py`: central state aggregator for the add-on.
 
 ### Data Layer
@@ -377,7 +391,8 @@ operators, and, when needed, `PropertyGroup`s.
 - `bsdd.py`: HTTP calls to bSDD.
 - `bsdd_dictionary.py`: reading and normalizing local JSON dictionaries.
 - `catalog.py`: catalog reading, IFC import, and property templates.
-- `cde.py`: CDE API integration.
+- `cde.py`: legacy partial CDE helper retained for compatibility. The active
+  integration is `modules/cde/service.py`.
 - `config_profile.py`: configuration profile export, import, and validation.
 - `decomposition_views.py`: decomposition-view presets, validation, and
   persistence.
@@ -405,6 +420,10 @@ Main state groups:
 - IFC labels: displayed attributes and overlay offsets
 - connections: IFC relationship type used to create links
 
+`CDEProperties` is intentionally separate at `WindowManager.cde_props`. It
+holds runtime credentials, status, and remote lists; JWT values remain in the
+in-memory client and are not stored in Blender RNA properties.
+
 ## Class Registration
 
 `modules/__init__.py` is the central registry. The `get_classes()` function
@@ -414,11 +433,12 @@ Current sequence:
 
 1. shared operators and auxiliary types
 2. specialized `PropertyGroup`s
-3. `IFC_Label_Attribute`
-4. decomposition views and relations
-5. `OG_Properties`
-6. domain operators
-7. panels and `UIList`s
+3. CDE and other domain `PropertyGroup`s
+4. `IFC_Label_Attribute`
+5. decomposition views and relations
+6. `OG_Properties`
+7. domain operators
+8. panels and `UIList`s
 
 This order matters because Blender requires property-referenced types to be
 registered before they are used.
@@ -432,7 +452,9 @@ registered before they are used.
 - IfcOpenShell: IFC data reading and writing, Psets, units, relations, and
   helper queries.
 - buildingSMART bSDD: remote dictionary, class, and property lookup.
-- CDE API: information lookup associated with contracts and elements.
+- CERTI CDE API: Client ID/Secret authentication, JWT-protected project and
+  asset browsing, submission metadata, consolidated IFC export generation,
+  per-export polling, history listing, and binary download.
 - Matplotlib, pandas, numpy, and scipy: charts, tables, and interpolation.
 - ifctester: IDS file generation.
 
@@ -487,4 +509,5 @@ Documentation and example files are not included in the installation package.
 - [guides/PROPERTIES_DOCUMENTATION.md](guides/PROPERTIES_DOCUMENTATION.md)
 - [guides/DATA_DOCUMENTATION.md](guides/DATA_DOCUMENTATION.md)
 - [guides/LI_MAPPING_GUIDE.md](guides/LI_MAPPING_GUIDE.md)
+- [guides/CDE_INTEGRATION.md](guides/CDE_INTEGRATION.md)
 - [reference/GLOSSARY.md](reference/GLOSSARY.md)

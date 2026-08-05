@@ -12,6 +12,7 @@ from ...data.catalog import Catalog
 from ...data.ifc_session import get_model, get_object
 from ...data.ifc_utils import build_products
 from ...data.ifc_utils import get_unit_symbol
+from ...data.li_materials import resolve_material_information
 from ...data.tree import refresh_types
 from ..common.operators import _open_in_browser
 
@@ -31,6 +32,7 @@ _GUIDED_SOURCE_FIELDS = {
     'method': 'source_method',
     'format': 'source_format',
     'allowed_values': 'source_allowed_values',
+    'material_field': 'source_material_field',
 }
 
 # 'quantity_mode' is the only guided field that is an EnumProperty (the others
@@ -38,6 +40,7 @@ _GUIDED_SOURCE_FIELDS = {
 # handling in _reset_guided_source_fields.
 _ENUM_GUIDED_FIELDS_DEFAULTS = {
     'source_quantity_mode': 'mapping',
+    'source_material_field': 'name',
 }
 
 # Guided fields (keys from _GUIDED_SOURCE_FIELDS) that are meaningful for each
@@ -48,6 +51,7 @@ _RELEVANT_SOURCE_FIELDS = {
     'ifc_attribute': {'ifc_class', 'attribute', 'fallback_attribute', 'format'},
     'ifc_property': {'ifc_class', 'pset', 'property', 'allowed_values'},
     'manual': {'ifc_class', 'pset', 'property', 'allowed_values'},
+    'material': {'material_field', 'pset', 'property'},
     'spatial': {'level', 'attribute'},
     'aggregation_parent': {'level', 'attribute', 'fallback_attribute'},
     'ifc_class': {'attribute', 'mapping_table'},
@@ -128,6 +132,12 @@ def _build_source_from_column(column):
 
     for key, attr_name in _GUIDED_SOURCE_FIELDS.items():
         if key not in relevant_keys:
+            continue
+        if (
+            column.source_type == 'material'
+            and column.source_material_field != 'property'
+            and key in {'pset', 'property'}
+        ):
             continue
         raw_value = getattr(column, attr_name, '')
         if not raw_value:
@@ -270,9 +280,7 @@ class Operator_save_li_mapping(bpy.types.Operator):
             self.report({'ERROR'}, f"Failed to save LI mapping: {exc}")
             return {'CANCELLED'}
 
-        _clear_li_mapping(props)
-        props.li_mapping_loaded = False
-        self.report({'INFO'}, "LI mapping saved")
+        self.report({'INFO'}, "LI mapping changes applied")
         return {'FINISHED'}
 
 
@@ -281,11 +289,13 @@ class Operator_add_li_mapping_column(bpy.types.Operator):
     bl_label = "add LI mapping column"
     bl_options = {"REGISTER", "UNDO"}
 
+    source_type : bpy.props.StringProperty(name="source type", default='manual')
+
     def execute(self, context):
         props = context.scene.og_props
         column = props.li_mapping_columns.add()
-        column.column_name = "New Column"
-        column.source_type = 'manual'
+        column.column_name = "Material" if self.source_type == 'material' else "New Column"
+        column.source_type = self.source_type
         column.notes = ''
         props.active_li_mapping_index = len(props.li_mapping_columns) - 1
         props.li_mapping_loaded = True
@@ -461,13 +471,24 @@ class Operator_remove_li_support_table_row(bpy.types.Operator):
         return {'FINISHED'}
 
 def get_qtde(type):
-    elements = ifcopenshell.util.element.get_types(type)
+    elements = ifcopenshell.util.element.get_types(type) or []
     qtde = 0
     if type.is_a('IfcPipeSegmentType'):
         for e in elements:
-            pset = ifcopenshell.util.element.get_pset(e, "OGSubPset_FlexiblePipeSegmentOccurence")
-            length = pset["NominalLength"] if "NominalLength" in pset else 0
-            qtde += length
+            pset = (
+                ifcopenshell.util.element.get_pset(
+                    e,
+                    "OGSubPset_FlexiblePipeSegmentOccurence",
+                )
+                or {}
+            )
+            length = pset.get("NominalLength")
+            if length in (None, ''):
+                continue
+            try:
+                qtde += float(length)
+            except (TypeError, ValueError):
+                continue
     else:
         qtde = len(elements)
     return qtde
@@ -905,6 +926,9 @@ def _resolve_column_value(column_data, type_entity, occurrence, mapping_data, ro
     if source_type in {'ifc_property', 'manual'}:
         return _get_property_value(entities, source.get('pset'), source.get('property'))
 
+    if source_type == 'material':
+        return resolve_material_information(type_entity, occurrence, source)
+
     if source_type == 'spatial':
         return _get_spatial_value(type_entity, occurrence, source)
 
@@ -1243,7 +1267,14 @@ class Operator_export_li(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            mapping_data = _load_li_mapping_data()
+            props = context.scene.og_props
+            if props.li_mapping_loaded:
+                mapping_data = li_mapping_payload_from_props(
+                    props,
+                    load_li_mapping_payload(),
+                )
+            else:
+                mapping_data = _load_li_mapping_data()
             model = get_model()
             rows = _build_li_rows(model, mapping_data)
             if not rows:

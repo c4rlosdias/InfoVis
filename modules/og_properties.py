@@ -311,6 +311,7 @@ class OG_Properties(PropertyGroup):
     li_support_tables         : CollectionProperty(name='LI support tables', type=LISupportTable)
     active_li_support_table_index : IntProperty(name='LI support table index', default=0)
     li_mapping_loaded         : BoolProperty(name='LI mapping loaded', default=False)
+    li_mapping_advanced       : BoolProperty(name='Advanced LI configuration', default=False)
 
     # O&G Properties
     active_pset_index        : IntProperty(name='pset index', default=0)

@@ -14,7 +14,7 @@ The package is organized into these main modules:
 | `bsdd.py` | REST client for the buildingSMART Data Dictionary |
 | `bsdd_dictionary.py` | Local dictionary helpers for analysis and LI property pickers |
 | `catalog.py` | IFC import helpers, catalog lookup, and property templates |
-| `cde.py` | CDE API mock/stub for future integration |
+| `cde.py` | Legacy CDE helper retained for compatibility; the active integration lives in `modules/cde/` |
 | `decomposition_views.py` | Decomposition-view defaults, validation, loading, and saving |
 | `tree.py` | Tree loading, refresh functions, callbacks, and UI tree helpers |
 | `ifc_utils.py` | IFC utilities for properties, units, visibility, hierarchy, and connections |
@@ -135,17 +135,25 @@ Pattern: all classes use `@classmethod`.
 
 ### Class `CDE_Api`
 
-Stub/mock CDE API for future Common Data Environment integration.
+Legacy partial CDE helper retained for compatibility with earlier code.
 
 ```python
 cde = CDE_Api(endpoint="https://api.cde.example.com")
-projects = cde.get_projects()   # real HTTP call
-contracts = cde.get_contracts() # mocked data
-assets = cde.get_assets()       # mocked data
-inventory = cde.get_inventory() # mocked data
+projects = cde.get_projects(element)
+contracts = cde.get_contracts(element)
+inventory = cde.get_inventory(element)
 ```
 
-Status: placeholder for a future real CDE integration.
+This class is not used by the `InfoVis-CDE` panel. The production integration
+is organized under `modules/cde/`:
+
+- `service.py`: REST/JWT client, pagination, export polling/history, and binary download
+- `operators.py`: Blender commands and asynchronous orchestration
+- `properties.py`: runtime state
+- `panels.py`: user interface
+
+See [CDE Integration](CDE_INTEGRATION.md) for the current implementation and
+API flow.
 
 ## Module: decomposition_views.py
 

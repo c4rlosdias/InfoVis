@@ -14,6 +14,7 @@ inside `modules/`. Each domain module defines its own PropertyGroups in
 | `modules/catalog/properties.py` | Catalog types, layers, LI mapping columns, LI source items, and support tables |
 | `modules/props/properties.py` | IFC property values, enumerations, Psets, documents, and graph settings |
 | `modules/analysis/properties.py` | Analysis legend entries |
+| `modules/cde/properties.py` | Runtime CDE credentials, status, projects, assets, submissions, and exports |
 | `modules/og_properties.py` | `OG_Properties`, decomposition-view settings, IFC labels, and callbacks |
 
 ## modules/dictionary/properties.py
@@ -252,6 +253,24 @@ Legend item shown after analysis coloring.
 |-------|------|-------------|
 | `label` | String | Legend label |
 | `color` | FloatVector | RGBA color swatch |
+
+## modules/cde/properties.py
+
+CDE properties are attached to `WindowManager.cde_props` because credentials,
+JWT session status, and remote query results are runtime UI state rather than
+IFC model data.
+
+| Class | Main fields | Purpose |
+|-------|-------------|---------|
+| `CDEProjectItem` | `local_id`, `global_id`, `name`, `description`, `assets_count` | One CDE project row |
+| `CDEAssetItem` | `local_id`, `global_id`, `name`, `asset_type` | One asset row |
+| `CDEIfcFileItem` | `local_id`, `global_id`, `asset_global_id`, `name`, `schema`, `status`, `file_size` | One IFC metadata row |
+| `CDEExportItem` | `export_id`, `asset_global_id`, `source_ifc_file_id`, `status`, `filename`, `file_size`, `created_date`, `error_message` | One generated export row |
+| `CDEProperties` | `base_url`, credentials, status fields, collections, active indices | Complete panel runtime state |
+
+`client_secret` uses Blender's `PASSWORD` subtype and is cleared immediately
+after successful authentication. Access and refresh tokens are not RNA
+properties; they remain inside the in-memory `CDEClient`.
 
 ## modules/og_properties.py
 

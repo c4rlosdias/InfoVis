@@ -251,13 +251,14 @@ The main workflow is:
 
 1. Open an IFC model in Blender/Bonsai.
 2. Open `InfoVis-Catalog > LI Mapping`.
-3. Click `Load` to load `resources/li_mapping.json`.
-4. Review or edit the LI columns.
-5. Click `Save` to write the JSON.
-6. Click `Export LI` to generate the `.xlsx`.
+3. Click `Export Item List` to use the saved profile, or `Configure Columns` to
+   customize it.
+4. Review the column names and their information sources.
+5. Use `Add Material` for a ready-to-use material column.
+6. Click `Apply Changes` to save the profile and export the `.xlsx`.
 
-Important: `Export LI` reads the saved `resources/li_mapping.json` file. If you
-changed anything in the UI, click `Save` before exporting.
+When the editor is open, export uses the current on-screen values. Technical
+mapping fields and support tables are hidden under `Advanced settings`.
 
 ### Mapping File
 
@@ -299,10 +300,12 @@ Any other top-level JSON object is treated as a support table, for example
 
 | Button | Action |
 |--------|--------|
-| `Load` | Loads `resources/li_mapping.json` into the UI and clears the previous state |
-| `Save` | Saves header fields, columns, and support tables back to the JSON |
-| `Export LI` | Opens a file picker and exports the Item List to `.xlsx` |
+| `Configure Columns` | Opens the saved mapping in the column editor |
+| `Reload Saved` | Reloads the saved mapping |
+| `Apply Changes` | Saves the current mapping back to the JSON |
+| `Export Item List` | Exports the current open mapping or the saved profile |
 | `Add Column` | Creates a `New Column` column with source type `manual` |
+| `Add Material` | Creates a material-name column |
 | `Remove Column` | Removes the selected column |
 | `Use this property` | Copies the selected bSDD Pset and property into the selected column |
 | `Add Field` | Adds an extra field to the selected column's `source` object |
@@ -385,6 +388,7 @@ exporter resolves the value.
 |-------------|-----|
 | `ifc_attribute` | Reads a direct attribute from the occurrence or IFC type |
 | `ifc_property` | Reads a property inside a Pset |
+| `material` | Reads material names, categories, descriptions, composition, or layers |
 | `ifc_quantity` | Calculates quantity by count, length, or a support table |
 | `ifc_class` | Reads an IFC class/key and translates it through a support table |
 | `spatial` | Reads a value from an ancestor in the spatial/decomposition hierarchy |
@@ -392,6 +396,22 @@ exporter resolves the value.
 | `computed` | Calculates a value by method or template |
 | `manual` | Represents a manual or optional custom Pset column |
 | `not_applicable` | Represents a column with no IFC source; exports empty |
+
+### Source: material
+
+`Add Material` creates this source automatically. It reads materials associated
+with the occurrence and then inherited type materials, removes duplicates, and
+joins multiple results with `; `. The user can choose material name, category,
+description, composition, layers and thicknesses, or a material Pset property.
+
+```json
+{
+  "column": "Material",
+  "source_type": "material",
+  "source": {"material_field": "name"},
+  "notes": ""
+}
+```
 
 ### Source: ifc_attribute
 
@@ -1060,6 +1080,30 @@ The `Analysis` panel colors 3D Viewport objects based on IFC properties.
 
 Use `Reset colors` to restore object colors in the 3D Viewport.
 
+## InfoVis-CDE: Open an IFC from the CDE
+
+The `InfoVis-CDE` sidebar connects to the CERTI CDE with JWT authentication and
+opens a remotely generated IFC model through Bonsai.
+
+1. Enter the CDE URL, Client ID, and Client Secret.
+2. Click `Connect`.
+3. Select a project and click `Load Assets`.
+4. Click `Load IFC Submissions` and select the IFC submission to export.
+5. Click `Export Selected IFC`.
+6. Wait while InfoVis monitors `/exports/{id}` until the export succeeds. The
+   export list refreshes and selects the generated entry automatically.
+7. Click `Open in Bonsai`.
+8. Follow the status shown while the export is downloaded and opened. Use the
+   refresh icon to load exports generated in earlier sessions.
+
+The `IFC Submissions` list contains upload metadata and is not a download list.
+Only completed entries returned by `/exports` can be downloaded. InfoVis opens
+the selected export, not the selected submission.
+
+The Client Secret is cleared after login and JWT values remain in memory. Use
+`Disconnect` to clear the session and all CDE lists. For API details, security,
+and troubleshooting, see [CDE Integration](CDE_INTEGRATION.md).
+
 ## InfoVis-Settings: Settings
 
 The `Settings` panel centralizes visual settings and decomposition views.
@@ -1110,6 +1154,7 @@ refreshes the corresponding editors in the UI.
 | `Settings > Decomposition views > Save` | `resources/decomposition_view.json` |
 | `Settings > Config profile > Export` | `.json` file chosen by the user |
 | `Settings > Config profile > Import` | `resources/li_mapping.json` and `resources/decomposition_view.json` |
+| `CDE > Open in Bonsai` | Temporary IFC cache under the OS `infovis_cde` directory |
 
 ## Troubleshooting
 
@@ -1123,6 +1168,11 @@ refreshes the corresponding editors in the UI.
 | Chart generation fails | The document must be CSV and the path must exist |
 | LI export creates no rows | Confirm that the IFC has `IfcTypeProduct` entities with occurrences |
 | Labels do not show a property | Use `Pset.Property` format and reload the object properties |
+| CDE login reports no access token | Reload the current extension; the API returns the JWT inside `data.access` |
+| CDE query returns no projects/assets | Confirm that the authenticated client has access to those records |
+| CDE download returns HTTP 406 | Reload the current extension; binary downloads use `Accept: */*` |
+| CDE export remains queued/running | Wait for server processing or inspect the export in the CDE |
+| CDE IFC does not open | Confirm Bonsai is enabled and review the method/endpoint shown in the error |
 
 ## Best Practices
 

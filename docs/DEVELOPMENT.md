@@ -78,7 +78,8 @@ The generated package is written to `releases/dev-local.zip`.
 1. add the class in `modules/<domain>/operators.py`
 2. register the class in `modules/__init__.py`
 3. expose the action in the appropriate panel when needed
-4. use `data/` to encapsulate IFC, bSDD, or CDE access
+4. use `data/` for shared IFC/bSDD logic or a domain service such as
+   `modules/cde/service.py` for a self-contained external integration
 
 ### New Panel or UIList
 
@@ -86,6 +87,9 @@ The generated package is written to `releases/dev-local.zip`.
 2. register it in `modules/__init__.py`
 3. read and write state only through `context.scene.og_props` or related
    Blender properties
+
+Runtime credentials and remote session state should use a non-model property
+container such as `WindowManager.cde_props`.
 
 ### New `PropertyGroup`
 
@@ -98,7 +102,9 @@ The generated package is written to `releases/dev-local.zip`.
 
 Prefer keeping logic out of panel `draw()` methods. If the feature talks to
 APIs, IFC files, catalogs, or data transformations, the natural destination is
-usually `data/`.
+usually `data/` or an explicitly isolated domain service. Keep network and file
+I/O outside Blender's UI thread, and return to the main thread before calling
+`bpy` operators or changing RNA properties.
 
 ## Practical Project Rules
 
@@ -107,6 +113,7 @@ usually `data/`.
 - preserve `OG_Properties` as the shared state between modules
 - keep `wheels/` aligned with the dependency list in `blender_manifest.toml`
 - test in Blender after any change involving registration, UI, or callbacks
+- never log CDE Client Secrets, access tokens, or refresh tokens
 
 ## Manual Validation
 

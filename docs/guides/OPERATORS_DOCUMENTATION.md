@@ -16,6 +16,7 @@ Add-on.
 | `modules/props/operators.py` | IFC property editing, document handling, tables, and charts |
 | `modules/settings/operators.py` | IFC viewport labels and decomposition-view configuration |
 | `modules/analysis/operators.py` | Viewport analysis coloring and reset |
+| `modules/cde/operators.py` | JWT login, CDE browsing, asynchronous IFC export/download, and Bonsai loading |
 
 All operator classes are registered centrally through `modules/__init__.py` and
 `get_classes()`.
@@ -226,6 +227,30 @@ Dependencies:
 
 - `modules/analysis/service.py`: value collection, validation, color palettes,
   gradients, legend entries, and reset behavior.
+
+## modules/cde/operators.py
+
+Operators for the CDE REST integration.
+
+| Class | `bl_idname` | Description |
+|-------|-------------|-------------|
+| `CDE_OT_login` | `cde.login` | Authenticates with Client ID/Secret, stores JWT in memory, and loads projects |
+| `CDE_OT_logout` | `cde.logout` | Clears tokens, lists, indices, and connection status |
+| `CDE_OT_load_projects` | `cde.load_projects` | Loads all accessible projects, including paginated responses |
+| `CDE_OT_load_assets` | `cde.load_assets` | Loads assets for the selected project GlobalId |
+| `CDE_OT_load_ifc_files` | `cde.load_ifc_files` | Loads IFC submission metadata for the selected asset GlobalId |
+| `CDE_OT_load_exports` | `cde.load_exports` | Lists generated exports and their current status |
+| `CDE_OT_generate_export` | `cde.generate_export` | Requires an IFC submission, requests its export, polls its detail endpoint, refreshes the list, and selects it |
+| `CDE_OT_open_ifc` | `cde.open_ifc` | Downloads the selected succeeded export asynchronously and opens it through Bonsai |
+
+`CDE_OT_open_ifc` never downloads from the submission list. It requires a
+selected export with status `succeeded`, then uses a single-worker
+`ThreadPoolExecutor` for network and file I/O. A Blender modal timer reads
+completion on the main thread and invokes `bpy.ops.bim.load_project`. Blender
+API calls are never made from the worker.
+
+The module-level `CDEClient` holds the JWT only for the current process. See
+[CDE Integration](CDE_INTEGRATION.md) for the complete REST flow.
 
 ## Typical Flow
 

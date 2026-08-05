@@ -19,6 +19,9 @@ from .props import panels as _props_panels
 from .props import properties as _props_props
 from .settings import panels as _settings_panels
 from .settings import operators as _settings_ops
+from .cde import operators as _cde_ops
+from .cde import panels as _cde_panels
+from .cde import properties as _cde_props
 from .og_properties import (
     OG_Properties,
     IFC_Label_Attribute,
@@ -53,11 +56,19 @@ def get_classes():
         _props_props.Pset_info,
         _decomp_props.Container,
         _analysis_props.AnalysisLegendItem,
+        _cde_props.CDEProjectItem,
+        _cde_props.CDEAssetItem,
+        _cde_props.CDEIfcFileItem,
+        _cde_props.CDEExportItem,
+        _cde_props.CDEProperties,
         IFC_Label_Attribute,
         Decomposition_View_Relation,
         Decomposition_View,
         # --- OG_Properties (central property bag) ---
         OG_Properties,
+        # --- CDE (registered first so its sidebar tab appears at the top) ---
+        *_cde_ops.CLASSES,
+        *_cde_panels.CLASSES,
         # --- Dictionary ---
         _dict_ops.Operator_get_properties,
         _dict_ops.Operator_get_classes,
